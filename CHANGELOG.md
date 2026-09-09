@@ -106,3 +106,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase Auth 승인 도메인 누락, Google provider 비활성화, popup 조기 종료에 대한 사용자 안내 메시지를 추가했다.
 - 홈 화면에서 Realtime Database `liveLocations/{familyId}`를 구독해 가족별 위치 상태를 표시하도록 연결했다.
 - 가족 위치 카드에 좌표, 업데이트 시각, 정확도, 배터리/충전 상태를 표시하는 Family Pins MVP UI를 추가했다.
+- 가족 위치 카드에서 `어디야?`, `언제 와?`, `오는 길에 마트 들러줘!` 빠른 메시지를 가족 전체방으로 전송하는 Quick Message 기능을 추가했다.
+- Location MVP 하위 작업 완료에 맞춰 Phase 07 Map / Location 체크 상태를 완료로 갱신했다.

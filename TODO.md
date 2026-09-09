@@ -13,7 +13,7 @@
 - [x] Phase 04: Authentication
 - [ ] Phase 05: Family 생성 / 초대
 - [x] Phase 06: Home Dashboard
-- [ ] Phase 07: Map / Location
+- [x] Phase 07: Map / Location
 - [x] Phase 08: Calendar
 - [ ] Phase 09: Memo
 - [x] Phase 10: Poll
@@ -111,7 +111,7 @@
 - [x] Firebase Realtime Sync
 - [x] Family Pins
 - [x] Battery Status
-- [ ] Quick Message
+- [x] Quick Message
 
 ## Calendar
 

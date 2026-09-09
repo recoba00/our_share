@@ -28,7 +28,11 @@ import {
   getDDayLabel,
   getThisMonthEvents,
 } from "../../features/calendar/utils/calendarEventUtils";
-import { subscribeChatRooms } from "../../features/chat/services/chatService";
+import {
+  getOrCreateFamilyRoom,
+  sendTextMessage,
+  subscribeChatRooms,
+} from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
 import { subscribeFamilyLocations } from "../../features/location/services/locationService";
@@ -37,6 +41,8 @@ import { subscribeMemos } from "../../features/memo/services/memoService";
 import type { Memo } from "../../features/memo/types/memoTypes";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
+
+const quickMessages = ["어디야?", "언제 와?", "오는 길에 마트 들러줘!"];
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
@@ -52,6 +58,7 @@ export function HomePage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -230,6 +237,36 @@ export function HomePage() {
     }
   }
 
+  async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
+    if (!activeFamily || !user) {
+      setFeedback("가족 정보를 먼저 불러와주세요.");
+      return;
+    }
+
+    setSendingQuickMessageTo(`${member.userId}-${message}`);
+    setFeedback("");
+
+    try {
+      const roomId = await getOrCreateFamilyRoom({
+        createdBy: user.uid,
+        familyId: activeFamily.id,
+      });
+
+      await sendTextMessage({
+        createdBy: user.uid,
+        familyId: activeFamily.id,
+        roomId,
+        text: createQuickMessageText(member, message),
+      });
+
+      setFeedback("가족 전체방으로 빠른 메시지를 보냈습니다.");
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setSendingQuickMessageTo("");
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-slate-800 p-6 text-white shadow-lg">
@@ -354,6 +391,8 @@ export function HomePage() {
                   key={member.userId}
                   location={liveLocations[member.userId]}
                   member={member}
+                  onQuickMessage={handleSendQuickMessage}
+                  sendingMessageKey={sendingQuickMessageTo}
                 />
               ))}
             </div>
@@ -475,9 +514,13 @@ function DashboardList({
 function FamilyLocationPin({
   location,
   member,
+  onQuickMessage,
+  sendingMessageKey,
 }: {
   location?: LiveLocation;
   member: FamilyMemberProfile;
+  onQuickMessage: (member: FamilyMemberProfile, message: string) => void;
+  sendingMessageKey: string;
 }) {
   return (
     <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
@@ -503,6 +546,23 @@ function FamilyLocationPin({
             <span>{formatBattery(location)}</span>
           </div>
         ) : null}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {quickMessages.map((message) => {
+            const messageKey = `${member.userId}-${message}`;
+
+            return (
+              <button
+                className="rounded-full border border-[var(--color-border)] bg-white px-3 py-1 text-xs font-bold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand disabled:opacity-50"
+                disabled={sendingMessageKey === messageKey}
+                key={message}
+                onClick={() => onQuickMessage(member, message)}
+                type="button"
+              >
+                {sendingMessageKey === messageKey ? "전송중" : message}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );
@@ -563,6 +623,11 @@ function formatBattery(location: LiveLocation) {
   }
 
   return location.charging ? `충전중 ${location.battery}%` : `배터리 ${location.battery}%`;
+}
+
+function createQuickMessageText(member: FamilyMemberProfile, message: string) {
+  const name = member.displayName ?? member.nickname;
+  return `${name}님, ${message}`;
 }
 
 function getErrorMessage(error: unknown) {
