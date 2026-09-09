@@ -9,6 +9,7 @@ import { useAuth } from "../../features/auth/useAuth";
 import {
   createSecretRoom,
   getOrCreateFamilyRoom,
+  markRoomMessagesAsRead,
   sendTextMessage,
   subscribeChatRooms,
   subscribeMessages,
@@ -111,6 +112,17 @@ export function ChatPage() {
       roomId: selectedRoom.id,
     });
   }, [selectedRoom]);
+
+  useEffect(() => {
+    if (!user || messages.length === 0) {
+      return;
+    }
+
+    void markRoomMessagesAsRead({
+      messages,
+      userId: user.uid,
+    }).catch((error: Error) => setStatusMessage(error.message));
+  }, [messages, user]);
 
   async function handleCreateSecretRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -237,10 +249,11 @@ export function ChatPage() {
           ) : (
             messages.map((message) => {
               const isMine = message.createdBy === user?.uid;
+              const readCount = message.readBy.length;
 
               return (
                 <div
-                  className={`flex ${isMine ? "justify-end" : "justify-start"}`}
+                  className={`grid gap-1 ${isMine ? "justify-items-end" : "justify-items-start"}`}
                   key={message.id}
                 >
                   {message.type === "POLL" ? (
@@ -258,6 +271,9 @@ export function ChatPage() {
                       {message.text}
                     </p>
                   )}
+                  <span className="px-2 text-[10px] font-bold text-[var(--color-text-secondary)]">
+                    {isMine ? `읽음 ${readCount}명` : message.readBy.includes(user?.uid ?? "") ? "읽음" : "안 읽음"}
+                  </span>
                 </div>
               );
             })

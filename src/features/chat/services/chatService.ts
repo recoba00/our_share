@@ -7,6 +7,8 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
+  arrayUnion,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
@@ -208,6 +210,32 @@ export async function sendPollMessage({
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function markRoomMessagesAsRead({
+  messages,
+  userId,
+}: {
+  messages: ChatMessage[];
+  userId: string;
+}) {
+  const unreadMessages = messages.filter(
+    (message) => message.createdBy !== userId && !message.readBy.includes(userId)
+  );
+
+  if (unreadMessages.length === 0) {
+    return;
+  }
+
+  const batch = writeBatch(db);
+
+  unreadMessages.forEach((message) => {
+    batch.update(doc(db, "messages", message.id), {
+      readBy: arrayUnion(userId),
+    });
+  });
+
+  await batch.commit();
 }
 
 function getTime(value: unknown) {

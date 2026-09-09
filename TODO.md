@@ -151,6 +151,6 @@
 - [x] Family Invite Entry
 - [x] Chat Poll Create
 - [x] Send Poll to Chat Room
-- [ ] Read Status
+- [x] Read Status
 - [x] Text Message Only MVP
 - [ ] Image/File Upload Later
