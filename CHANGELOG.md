@@ -36,3 +36,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Realtime Database 기반 위치 공유 서비스와 `liveLocations/{familyId}/{userId}` 쓰기 흐름을 추가했다.
 - 브라우저 Geolocation 권한 요청, 현재 위치 조회, 배터리 상태 조회를 홈 화면의 현재 위치 공유 액션에 연결했다.
 - `npm run lint`, `npm run build`, 로컬 브라우저 렌더링 검증을 통과했다.
+- Dothome에서 개발용 루트 `index.html`이 서빙되어 화면이 보이지 않는 문제를 진단했다.
+- Dothome 배포는 프로젝트 루트가 아니라 `dist` 폴더 내용만 업로드해야 함을 `DEPLOYMENT.md`에 문서화했다.
+- SPA 라우팅을 위해 `public/.htaccess`를 추가했다.

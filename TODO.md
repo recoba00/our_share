@@ -29,10 +29,11 @@
 - [x] 초기 커밋 생성
 - [x] GitHub 원격 저장소 push
 - [x] 서버 호스팅 제공자 결정: Dothome
-- [ ] Dothome 호스팅 경로 연결: `https://recoba00.dothome.co.kr/our_share`
-- [ ] 배포 환경 변수 구성
-- [ ] 빌드/배포 명령 확인
-- [ ] 배포 URL 문서화
+- [ ] Dothome 호스팅 경로 연결: `http://recoba00.dothome.co.kr/our_share`
+- [x] 배포 환경 변수 구성
+- [x] 빌드/배포 명령 확인
+- [x] 배포 URL 문서화
+- [ ] Dothome 서버에 `dist` 폴더 내용만 업로드
 - [x] Firebase 프로젝트 생성
 - [x] Firebase Console에서 기본 설정 진행
 - [x] Firebase Web App 생성
