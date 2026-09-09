@@ -136,13 +136,13 @@
 
 ## Chat
 
-- [ ] Family Room
+- [x] Family Room
 - [ ] DM
 - [ ] Private Group
-- [ ] Secret Room
-- [ ] Family Invite Entry
+- [x] Secret Room
+- [x] Family Invite Entry
 - [ ] Chat Poll Create
 - [ ] Send Poll to Chat Room
 - [ ] Read Status
-- [ ] Text Message Only MVP
+- [x] Text Message Only MVP
 - [ ] Image/File Upload Later
