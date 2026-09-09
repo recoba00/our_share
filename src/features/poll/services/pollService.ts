@@ -2,11 +2,13 @@ import {
   collection,
   doc,
   getDocs,
+  onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
   where,
+  type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import type { Poll, PollType, PollVote } from "../types/pollTypes";
@@ -64,6 +66,24 @@ export async function getPolls(familyId: string): Promise<Poll[]> {
   return snapshot.docs.map((pollDoc) => pollDoc.data() as Poll);
 }
 
+export function subscribePolls({
+  familyId,
+  onChange,
+}: {
+  familyId: string;
+  onChange: (polls: Poll[]) => void;
+}): Unsubscribe {
+  const pollsQuery = query(collection(db, "polls"), where("familyId", "==", familyId));
+
+  return onSnapshot(pollsQuery, (snapshot) => {
+    const polls = snapshot.docs
+      .map((pollDoc) => pollDoc.data() as Poll)
+      .sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+
+    onChange(polls);
+  });
+}
+
 export async function votePoll({
   poll,
   selectedOptions,
@@ -110,4 +130,12 @@ export async function getPollVotes(pollIds: string[]): Promise<Record<string, Po
     acc[vote.pollId] = [...(acc[vote.pollId] ?? []), vote];
     return acc;
   }, {});
+}
+
+function getTime(value: unknown) {
+  if (value && typeof value === "object" && "seconds" in value) {
+    return Number((value as { seconds: number }).seconds) * 1000;
+  }
+
+  return 0;
 }

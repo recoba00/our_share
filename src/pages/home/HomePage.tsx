@@ -1,6 +1,7 @@
 import {
   BatteryHigh,
   CalendarDots,
+  ChatCircleDots,
   GoogleLogo,
   LinkSimple,
   MapPin,
@@ -21,13 +22,15 @@ import {
   joinFamilyByInviteCode,
 } from "../../features/family/services/familyService";
 import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
+import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
+import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
+import { subscribeChatRooms } from "../../features/chat/services/chatService";
+import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
-
-const family = [
-  { name: "아빠", place: "회사", time: "5분 전", battery: "83%" },
-  { name: "엄마", place: "집", time: "방금", battery: "충전 중" },
-  { name: "나", place: "학교 근처", time: "12분 전", battery: "61%" },
-];
+import { subscribeMemos } from "../../features/memo/services/memoService";
+import type { Memo } from "../../features/memo/types/memoTypes";
+import { subscribePolls } from "../../features/poll/services/pollService";
+import type { Poll } from "../../features/poll/types/pollTypes";
 
 export function HomePage() {
   const { signIn, status, user } = useAuth();
@@ -39,8 +42,12 @@ export function HomePage() {
     name: string;
   } | null>(null);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
+  const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [memos, setMemos] = useState<Memo[]>([]);
+  const [polls, setPolls] = useState<Poll[]>([]);
   const locationShare = useMyLocationShare({
     familyId: activeFamily?.id ?? null,
     userId: user?.uid ?? null,
@@ -59,6 +66,38 @@ export function HomePage() {
       setActiveFamily(result);
       setMembers(await getFamilyMembers(result.id));
     });
+  }, [activeFamily, user]);
+
+  useEffect(() => {
+    if (!activeFamily || !user) {
+      return;
+    }
+
+    const unsubscribes = [
+      subscribeCalendarEvents({
+        familyId: activeFamily.id,
+        onChange: setCalendarEvents,
+        userId: user.uid,
+      }),
+      subscribeChatRooms({
+        familyId: activeFamily.id,
+        onChange: setChatRooms,
+        userId: user.uid,
+      }),
+      subscribeMemos({
+        familyId: activeFamily.id,
+        onChange: setMemos,
+        userId: user.uid,
+      }),
+      subscribePolls({
+        familyId: activeFamily.id,
+        onChange: setPolls,
+      }),
+    ];
+
+    return () => {
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
   }, [activeFamily, user]);
 
   async function handleCreateFamily() {
@@ -186,21 +225,24 @@ export function HomePage() {
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          {family.map((member) => (
-            <div key={member.name} className="rounded-2xl bg-white/15 p-4 backdrop-blur">
+          {members.slice(0, 3).map((member) => (
+            <div key={member.userId} className="rounded-2xl bg-white/15 p-4 backdrop-blur">
               <div className="flex items-center justify-between">
-                <strong>{member.name}</strong>
+                <strong>{member.displayName ?? member.nickname}</strong>
                 <BatteryHigh size={18} />
               </div>
               <p className="mt-3 flex items-center gap-1 text-sm">
                 <MapPin size={16} weight="fill" />
-                {member.place}
+                위치 공유 대기
               </p>
-              <p className="mt-1 text-xs opacity-80">
-                {member.time} · {member.battery}
-              </p>
+              <p className="mt-1 text-xs opacity-80">앱에서 현재 위치 공유 필요</p>
             </div>
           ))}
+          {members.length === 0 && (
+            <div className="rounded-2xl bg-white/15 p-4 text-sm backdrop-blur sm:col-span-3">
+              가족을 만들거나 초대 코드로 참여하면 가족 상황이 표시됩니다.
+            </div>
+          )}
         </div>
       </section>
 
@@ -279,34 +321,45 @@ export function HomePage() {
             <CalendarDots className="text-brand" size={22} weight="bold" />
             <h3 className="text-base font-bold">이달의 일정</h3>
           </div>
-          <ul className="mt-4 space-y-3 text-sm">
-            <li className="flex justify-between">
-              <span>가족 외식</span>
-              <strong>오늘 18:30</strong>
-            </li>
-            <li className="flex justify-between">
-              <span>할머니 생신</span>
-              <strong>D-7</strong>
-            </li>
-            <li className="flex justify-between">
-              <span>아빠 휴무</span>
-              <strong>9/18</strong>
-            </li>
-          </ul>
+          <DashboardList
+            emptyText="이번 달 일정이 없습니다."
+            items={getThisMonthEvents(calendarEvents).slice(0, 4).map((event) => ({
+              label: event.title,
+              meta: formatEventMeta(event),
+            }))}
+          />
         </Card>
         <Card>
           <div className="flex items-center gap-2">
             <Note className="text-brand" size={22} weight="bold" />
             <h3 className="text-base font-bold">최근 메모와 투표</h3>
           </div>
-          <div className="mt-4 grid gap-3 text-sm">
-            <p className="rounded-xl bg-[var(--color-surface-muted)] p-3">
-              마트에서 우유 사오기
-            </p>
-            <p className="rounded-xl bg-brand-soft p-3 text-emerald-800">
-              주말 메뉴 투표 진행 중
-            </p>
+          <DashboardList
+            emptyText="최근 메모나 투표가 없습니다."
+            items={[
+              ...memos.slice(0, 2).map((memo) => ({
+                label: memo.title,
+                meta: memo.type === "SENSITIVE" ? "민감 메모" : "일반 메모",
+              })),
+              ...polls.slice(0, 2).map((poll) => ({
+                label: poll.title,
+                meta: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
+              })),
+            ].slice(0, 4)}
+          />
+        </Card>
+        <Card>
+          <div className="flex items-center gap-2">
+            <ChatCircleDots className="text-brand" size={22} weight="bold" />
+            <h3 className="text-base font-bold">최근 채팅</h3>
           </div>
+          <DashboardList
+            emptyText="최근 채팅이 없습니다."
+            items={chatRooms.slice(0, 4).map((room) => ({
+              label: room.name,
+              meta: room.lastMessageText ?? "아직 대화가 없습니다.",
+            }))}
+          />
         </Card>
       </div>
 
@@ -345,6 +398,60 @@ export function HomePage() {
       </Card>
     </div>
   );
+}
+
+function DashboardList({
+  emptyText,
+  items,
+}: {
+  emptyText: string;
+  items: { label: string; meta: string }[];
+}) {
+  if (items.length === 0) {
+    return (
+      <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+        {emptyText}
+      </p>
+    );
+  }
+
+  return (
+    <ul className="mt-4 space-y-3 text-sm">
+      {items.map((item) => (
+        <li className="flex justify-between gap-3" key={`${item.label}-${item.meta}`}>
+          <span className="truncate">{item.label}</span>
+          <strong className="shrink-0 text-[var(--color-text-secondary)]">
+            {item.meta}
+          </strong>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+function formatEventMeta(event: CalendarEvent) {
+  const tags = [
+    event.startDate.slice(5),
+    event.repeat === "YEARLY" ? "매년" : "",
+    event.isDayOff ? "휴무" : "",
+  ].filter(Boolean);
+
+  return tags.join(" · ");
+}
+
+function getThisMonthEvents(events: CalendarEvent[]) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const monthPrefix = `${year}-${month}`;
+
+  return events.filter((event) => {
+    if (event.repeat === "YEARLY") {
+      return event.startDate.slice(5, 7) === month || event.endDate.slice(5, 7) === month;
+    }
+
+    return event.startDate.startsWith(monthPrefix) || event.endDate.startsWith(monthPrefix);
+  });
 }
 
 function getErrorMessage(error: unknown) {

@@ -12,7 +12,7 @@
 - [x] Phase 03: Firebase 연결
 - [x] Phase 04: Authentication
 - [ ] Phase 05: Family 생성 / 초대
-- [ ] Phase 06: Home Dashboard
+- [x] Phase 06: Home Dashboard
 - [ ] Phase 07: Map / Location
 - [ ] Phase 08: Calendar
 - [ ] Phase 09: Memo
@@ -93,6 +93,14 @@
 - [x] Join Family
 - [x] Family Member List
 - [ ] Member Permissions
+
+## Home
+
+- [x] Family Status Summary
+- [x] This Month Calendar Summary
+- [x] Recent Memo Summary
+- [x] Active Poll Summary
+- [x] Recent Chat Summary
 
 ## Location
 
