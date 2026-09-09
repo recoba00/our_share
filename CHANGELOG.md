@@ -10,3 +10,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 초기 문서 정리 커밋을 생성했다.
 - GitHub 저장소 URL, Dothome 호스팅 URL, Firebase 프로젝트 생성 예정 상태를 문서에 반영했다.
 - Git 원격 저장소 `origin`을 `https://github.com/recoba00/our_share.git`로 연결했다.
+- 로컬 `master` 브랜치를 GitHub `origin/master`로 push했다.
+- Firebase CLI가 현재 환경에 설치되어 있지 않음을 확인했다.
