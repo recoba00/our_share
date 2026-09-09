@@ -87,6 +87,8 @@ VITE_FIREBASE_APP_ID
 VITE_FIREBASE_MEASUREMENT_ID
 ```
 
+Firebase 관련 Secrets가 하나라도 비어 있으면 배포 workflow가 `Validate Firebase build secrets` 단계에서 중단된다. 이 검사를 통과하지 못하면 Firebase 초기화값이 빠진 JS가 배포되어 웹 화면이 비어 보일 수 있다.
+
 ## SPA 라우팅
 
 `/our_share/calendar`, `/our_share/chat` 같은 경로 새로고침을 위해 `.htaccess`를 `dist`에 포함한다.

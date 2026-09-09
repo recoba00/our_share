@@ -53,3 +53,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 채팅 화면에 가족 초대 코드 표시와 비밀방 생성 흐름을 추가했다.
 - 채팅 MVP는 Storage 없이 텍스트 메시지만 지원하도록 유지했다.
 - `npm run lint`, `npm run build`, 로컬 `/our_share/chat` 응답 검증을 통과했다.
+- Dothome 서버의 `our_share` 폴더를 비운 뒤 GitHub Actions 배포를 다시 트리거했다.
+- 배포된 HTML/JS/CSS가 Dothome에서 200으로 내려오는 것을 확인했다.
+- 배포 JS에 Firebase 환경변수가 주입되지 않은 상태를 확인하고, GitHub Actions에 Firebase build secrets 누락 검증 단계를 추가했다.
