@@ -47,14 +47,18 @@ Firebase 사용.
 - Firebase Auth: 이메일 로그인 또는 소셜 로그인, 가족 구성원 사용자 식별
 - Firestore: 일반 앱 데이터 저장
 - Realtime Database: 실시간 위치, 접속 상태, 기기 상태 저장
-- Firebase Storage: 프로필 이미지, 채팅 이미지, 가족 공유 파일 저장
+- Firebase Storage: MVP에서는 사용하지 않고 후순위로 보류
 - Cloud Functions: 알림 발송, 민감정보 서버 처리, 가족 초대 처리, 예약 알림
 
 ## 외부 연동
 
 - GitHub Repository: `https://github.com/recoba00/our_share`
 - Hosting URL: `https://recoba00.dothome.co.kr/our_share`
-- Firebase Project: 생성 예정
+- Firebase Project: 생성 및 기본 설정 진행
+- Firebase Auth: Google 로그인 사용
+- Cloud Firestore: 서울 리전
+- Realtime Database: 싱가포르 리전
+- Firebase Storage: Spark 요금제에서는 보류
 
 ## 앱 정보 구조
 
@@ -256,7 +260,6 @@ Chat Room 타입:
 초기 지원:
 
 - 텍스트
-- 이미지
 - 읽음 상태
 - 메시지 시간
 
@@ -264,6 +267,7 @@ Chat Room 타입:
 
 - 답장
 - 이모지
+- 이미지
 - 파일
 - 메시지 검색
 - 메시지 삭제
@@ -317,11 +321,24 @@ role:
 - onlinePresence
 - deviceStatus
 
-### Storage
+### Firebase Storage
 
-사용 대상:
+MVP에서는 Firebase Storage를 사용하지 않는다.
 
-- 프로필 이미지
+이유:
+
+- Firebase Storage 사용을 위해 Blaze 요금제 전환 필요
+- MVP에서는 불필요한 과금 계정 연결을 피한다
+
+MVP 정책:
+
+- 프로필 이미지는 Firebase Auth Google `photoURL` 사용
+- 채팅은 텍스트 메시지만 지원
+- 파일/이미지 업로드 기능은 후순위
+
+추후 Blaze 요금제 전환 시 Firebase Storage로 추가할 기능:
+
+- 프로필 이미지 업로드
 - 채팅 이미지
 - 가족 공유 파일
 
@@ -423,5 +440,6 @@ Store 분리:
 
 - 채팅
 - 민감정보 보관
+- 파일/이미지 업로드
 - 백그라운드 위치
 - AI 기능

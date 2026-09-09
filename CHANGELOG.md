@@ -12,3 +12,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Git 원격 저장소 `origin`을 `https://github.com/recoba00/our_share.git`로 연결했다.
 - 로컬 `master` 브랜치를 GitHub `origin/master`로 push했다.
 - Firebase CLI가 현재 환경에 설치되어 있지 않음을 확인했다.
+- Firebase Storage를 Spark 요금제 MVP 필수 설정에서 제외하고 보류 정책으로 변경했다.
+- Firebase Auth Google 로그인, Cloud Firestore 서울 리전, Realtime Database 싱가포르 리전 설정 상태를 문서에 반영했다.

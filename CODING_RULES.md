@@ -176,6 +176,10 @@ Color는 CSS Variable / Tailwind Theme Token으로 관리한다.
 - `.env`는 git에 커밋하지 않는다.
 - Firebase 데이터 전체를 Zustand에 복제하지 않는다.
 - 서버 데이터 캐싱과 동기화는 가능한 TanStack Query를 사용한다.
+- MVP에서는 Firebase Storage를 사용하지 않는다.
+- 프로필 이미지는 Firebase Auth Google `photoURL`을 사용한다.
+- 채팅은 MVP에서 텍스트 메시지만 지원한다.
+- 파일/이미지 업로드는 Blaze 요금제 전환 후 Firebase Storage로 추가한다.
 
 ## 컴포넌트 작성 규칙
 

@@ -28,10 +28,13 @@
 - [ ] 배포 환경 변수 구성
 - [ ] 빌드/배포 명령 확인
 - [ ] 배포 URL 문서화
-- [ ] Firebase 프로젝트 생성
-- [ ] Firebase CLI 설치 또는 Firebase Console에서 프로젝트 생성
+- [x] Firebase 프로젝트 생성
+- [x] Firebase Console에서 기본 설정 진행
 - [ ] Firebase Web App 생성
-- [ ] Firebase Auth / Firestore / Realtime Database / Storage 활성화
+- [x] Firebase Auth Google 로그인 활성화
+- [x] Cloud Firestore 서울 리전 활성화
+- [x] Realtime Database 싱가포르 리전 활성화
+- [x] Firebase Storage 보류 정책 반영
 - [ ] Firebase 설정값 `.env` 구성
 
 ## Initial
@@ -109,3 +112,5 @@
 - [ ] DM
 - [ ] Private Group
 - [ ] Read Status
+- [ ] Text Message Only MVP
+- [ ] Image/File Upload Later
