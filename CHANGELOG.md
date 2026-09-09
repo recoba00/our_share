@@ -73,3 +73,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 홈에서 가족 구성원, 이달의 캘린더 일정, 최근 메모, 최근 투표, 최근 채팅방 상태를 표시하도록 연결했다.
 - 투표 목록을 홈에서 실시간으로 재사용할 수 있도록 `subscribePolls` 서비스를 추가했다.
 - `npm run lint`, `npm run build`, 로컬 `/our_share/` 응답 검증을 통과했다.
+- PWA manifest, SVG 앱 아이콘, 서비스 워커, 서비스 워커 등록 모듈을 추가했다.
+- 앱 HTML에 manifest, favicon, apple touch icon, description 메타 정보를 연결했다.
+- Dothome HTTP 접속에서는 서비스 워커/PWA 설치가 제한될 수 있음을 `DEPLOYMENT.md`에 문서화했다.

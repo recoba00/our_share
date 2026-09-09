@@ -94,3 +94,9 @@ Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드�
 `/our_share/calendar`, `/our_share/chat` 같은 경로 새로고침을 위해 `.htaccess`를 `dist`에 포함한다.
 
 `public/.htaccess`는 Vite 빌드 시 자동으로 `dist/.htaccess`로 복사된다.
+
+## PWA
+
+`public/manifest.webmanifest`, `public/sw.js`, `public/pwa-icon.svg`는 Vite 빌드 시 `dist`에 복사된다.
+
+서비스 워커와 오프라인 캐시는 HTTPS 또는 localhost에서만 동작한다. Dothome을 HTTP로 접속하는 동안에는 화면은 표시되지만 서비스 워커 등록과 PWA 설치 조건이 제한될 수 있다.

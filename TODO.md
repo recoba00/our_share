@@ -50,7 +50,7 @@
 
 - [x] React + TypeScript + Vite
 - [x] Tailwind 설정
-- [ ] PWA 설정
+- [x] PWA 설정
 - [x] Pretendard
 - [x] Phosphor Icons
 - [x] Firebase 프로젝트 연결
