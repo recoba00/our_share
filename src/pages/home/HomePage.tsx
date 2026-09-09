@@ -31,6 +31,8 @@ import {
 import { subscribeChatRooms } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
+import { subscribeFamilyLocations } from "../../features/location/services/locationService";
+import type { LiveLocation } from "../../features/location/types/locationTypes";
 import { subscribeMemos } from "../../features/memo/services/memoService";
 import type { Memo } from "../../features/memo/types/memoTypes";
 import { subscribePolls } from "../../features/poll/services/pollService";
@@ -50,6 +52,7 @@ export function HomePage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const locationShare = useMyLocationShare({
@@ -97,6 +100,7 @@ export function HomePage() {
         familyId: activeFamily.id,
         onChange: setPolls,
       }),
+      subscribeFamilyLocations(activeFamily.id, setLiveLocations),
     ];
 
     return () => {
@@ -238,13 +242,22 @@ export function HomePage() {
             <div key={member.userId} className="rounded-2xl bg-white/15 p-4 backdrop-blur">
               <div className="flex items-center justify-between">
                 <strong>{member.displayName ?? member.nickname}</strong>
-                <BatteryHigh size={18} />
+                <BatteryHigh
+                  className={liveLocations[member.userId]?.charging ? "text-emerald-100" : ""}
+                  size={18}
+                />
               </div>
               <p className="mt-3 flex items-center gap-1 text-sm">
                 <MapPin size={16} weight="fill" />
-                위치 공유 대기
+                {liveLocations[member.userId]
+                  ? formatLocationPreview(liveLocations[member.userId])
+                  : "위치 공유 대기"}
               </p>
-              <p className="mt-1 text-xs opacity-80">앱에서 현재 위치 공유 필요</p>
+              <p className="mt-1 text-xs opacity-80">
+                {liveLocations[member.userId]
+                  ? formatUpdatedAt(liveLocations[member.userId].updatedAt)
+                  : "앱에서 현재 위치 공유 필요"}
+              </p>
             </div>
           ))}
           {members.length === 0 && (
@@ -325,6 +338,27 @@ export function HomePage() {
       </Card>
 
       <div className="grid gap-4 lg:col-span-2 lg:grid-cols-2">
+        <Card>
+          <div className="flex items-center gap-2">
+            <MapPin className="text-brand" size={22} weight="bold" />
+            <h3 className="text-base font-bold">가족 위치</h3>
+          </div>
+          {members.length === 0 ? (
+            <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+              가족 구성원이 있으면 위치 핀이 표시됩니다.
+            </p>
+          ) : (
+            <div className="mt-4 grid gap-3">
+              {members.map((member) => (
+                <FamilyLocationPin
+                  key={member.userId}
+                  location={liveLocations[member.userId]}
+                  member={member}
+                />
+              ))}
+            </div>
+          )}
+        </Card>
         <Card>
           <div className="flex items-center gap-2">
             <CalendarDots className="text-brand" size={22} weight="bold" />
@@ -438,6 +472,42 @@ function DashboardList({
   );
 }
 
+function FamilyLocationPin({
+  location,
+  member,
+}: {
+  location?: LiveLocation;
+  member: FamilyMemberProfile;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+      <Avatar alt={member.displayName ?? member.nickname} src={member.photoURL} />
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center justify-between gap-3">
+          <strong className="truncate">{member.displayName ?? member.nickname}</strong>
+          <span
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+              location ? "bg-brand-soft text-brand" : "bg-slate-200 text-slate-500"
+            }`}
+          >
+            {location ? "공유중" : "대기"}
+          </span>
+        </div>
+        <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">
+          {location ? formatLocationPreview(location) : "아직 공유된 위치가 없습니다."}
+        </p>
+        {location ? (
+          <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-text-secondary)]">
+            <span>{formatUpdatedAt(location.updatedAt)}</span>
+            <span>정확도 {formatAccuracy(location.accuracy)}</span>
+            <span>{formatBattery(location)}</span>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
 function formatEventMeta(event: CalendarEvent) {
   const tags = [
     getDDayLabel(event),
@@ -447,6 +517,52 @@ function formatEventMeta(event: CalendarEvent) {
   ].filter(Boolean);
 
   return tags.join(" · ");
+}
+
+function formatLocationPreview(location: LiveLocation) {
+  return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+}
+
+function formatUpdatedAt(updatedAt: number) {
+  const diffMs = Date.now() - updatedAt;
+  const diffMinutes = Math.max(0, Math.floor(diffMs / 60_000));
+
+  if (diffMinutes < 1) {
+    return "방금 업데이트";
+  }
+
+  if (diffMinutes < 60) {
+    return `${diffMinutes}분 전 업데이트`;
+  }
+
+  const diffHours = Math.floor(diffMinutes / 60);
+
+  if (diffHours < 24) {
+    return `${diffHours}시간 전 업데이트`;
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    month: "2-digit",
+  }).format(new Date(updatedAt));
+}
+
+function formatAccuracy(accuracy: number | null) {
+  if (accuracy === null) {
+    return "알 수 없음";
+  }
+
+  return `${Math.round(accuracy)}m`;
+}
+
+function formatBattery(location: LiveLocation) {
+  if (location.battery === null) {
+    return "배터리 알 수 없음";
+  }
+
+  return location.charging ? `충전중 ${location.battery}%` : `배터리 ${location.battery}%`;
 }
 
 function getErrorMessage(error: unknown) {

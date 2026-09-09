@@ -109,7 +109,7 @@
 - [x] Geolocation Permission
 - [x] Current Location
 - [x] Firebase Realtime Sync
-- [ ] Family Pins
+- [x] Family Pins
 - [x] Battery Status
 - [ ] Quick Message
 

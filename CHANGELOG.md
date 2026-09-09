@@ -104,3 +104,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Google 로그인 popup 실패 원인을 화면에 표시하도록 AuthProvider와 로그인 UI를 보완했다.
 - popup 차단 또는 중복 popup 요청 시 Firebase redirect 로그인으로 fallback되도록 인증 서비스를 개선했다.
 - Firebase Auth 승인 도메인 누락, Google provider 비활성화, popup 조기 종료에 대한 사용자 안내 메시지를 추가했다.
+- 홈 화면에서 Realtime Database `liveLocations/{familyId}`를 구독해 가족별 위치 상태를 표시하도록 연결했다.
+- 가족 위치 카드에 좌표, 업데이트 시각, 정확도, 배터리/충전 상태를 표시하는 Family Pins MVP UI를 추가했다.
