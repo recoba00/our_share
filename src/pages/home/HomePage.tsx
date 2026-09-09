@@ -37,7 +37,7 @@ import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
 export function HomePage() {
-  const { signIn, status, user } = useAuth();
+  const { authError, signIn, status, user } = useAuth();
   const [familyName, setFamilyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [activeFamily, setActiveFamily] = useState<{
@@ -190,6 +190,11 @@ export function HomePage() {
             <GoogleLogo size={20} weight="bold" />
             Google로 로그인
           </Button>
+          {authError ? (
+            <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+              {authError}
+            </p>
+          ) : null}
         </Card>
       </div>
     );

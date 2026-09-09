@@ -4,7 +4,7 @@ import { Card } from "../common/Card";
 import { useAuth } from "../../features/auth/useAuth";
 
 export function RequireAuth({ children }: PropsWithChildren) {
-  const { signIn, status } = useAuth();
+  const { authError, signIn, status } = useAuth();
 
   if (status === "loading") {
     return (
@@ -26,6 +26,11 @@ export function RequireAuth({ children }: PropsWithChildren) {
         <Button className="mt-5 w-full" onClick={signIn}>
           Google로 로그인
         </Button>
+        {authError ? (
+          <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
+            {authError}
+          </p>
+        ) : null}
       </Card>
     );
   }

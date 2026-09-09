@@ -101,3 +101,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 홈 대시보드의 이달 일정 요약에도 D-Day 정보를 표시하도록 연결했다.
 - 캘린더 화면에서 날짜 후보를 입력해 `DATE` 타입 투표를 바로 생성하는 Calendar Vote 흐름을 추가했다.
 - 캘린더 MVP 하위 작업 완료에 맞춰 Phase 08 Calendar 체크 상태를 완료로 갱신했다.
+- Google 로그인 popup 실패 원인을 화면에 표시하도록 AuthProvider와 로그인 UI를 보완했다.
+- popup 차단 또는 중복 popup 요청 시 Firebase redirect 로그인으로 fallback되도록 인증 서비스를 개선했다.
+- Firebase Auth 승인 도메인 누락, Google provider 비활성화, popup 조기 종료에 대한 사용자 안내 메시지를 추가했다.

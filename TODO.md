@@ -82,6 +82,8 @@
 
 - [x] Login UI
 - [x] Google Login Action
+- [x] Google Login Error Feedback
+- [x] Google Login Redirect Fallback
 - [x] Signup via Google Auth
 - [x] Logout
 - [x] Auth Guard
