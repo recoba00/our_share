@@ -116,7 +116,7 @@
 - [x] Calendar UI
 - [x] Event CRUD
 - [x] Anniversary
-- [ ] D-Day
+- [x] D-Day
 - [ ] Calendar Vote
 - [x] Schedule Create
 - [x] Yearly Recurring Schedule

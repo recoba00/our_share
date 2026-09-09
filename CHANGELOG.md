@@ -92,3 +92,10 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - RTDB `liveLocations`, `onlinePresence`, `deviceStatus` 읽기/쓰기 조건을 membership mirror 기준으로 강화했다.
 - 클라이언트 기반 membership mirror는 MVP용이며 운영 보안 경계로는 Admin SDK 또는 Cloud Functions 기반 동기화가 필요함을 문서화했다.
 - 기존 사용자에 대한 RTDB membership backfill과 서버 권한 mirror 동기화는 후속 작업으로 남겼다.
+
+## 2026-09-10
+
+- 캘린더 날짜 계산 유틸을 `features/calendar/utils`로 분리했다.
+- 캘린더 월간 그리드와 일정 목록에 D-Day 배지를 표시하도록 추가했다.
+- 매년 반복 일정은 올해 날짜가 지났으면 다음 해 기준으로 D-Day를 계산하도록 구성했다.
+- 홈 대시보드의 이달 일정 요약에도 D-Day 정보를 표시하도록 연결했다.

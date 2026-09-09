@@ -24,6 +24,10 @@ import {
 import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
 import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
+import {
+  getDDayLabel,
+  getThisMonthEvents,
+} from "../../features/calendar/utils/calendarEventUtils";
 import { subscribeChatRooms } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
@@ -431,27 +435,13 @@ function DashboardList({
 
 function formatEventMeta(event: CalendarEvent) {
   const tags = [
+    getDDayLabel(event),
     event.startDate.slice(5),
     event.repeat === "YEARLY" ? "매년" : "",
     event.isDayOff ? "휴무" : "",
   ].filter(Boolean);
 
   return tags.join(" · ");
-}
-
-function getThisMonthEvents(events: CalendarEvent[]) {
-  const today = new Date();
-  const year = today.getFullYear();
-  const month = String(today.getMonth() + 1).padStart(2, "0");
-  const monthPrefix = `${year}-${month}`;
-
-  return events.filter((event) => {
-    if (event.repeat === "YEARLY") {
-      return event.startDate.slice(5, 7) === month || event.endDate.slice(5, 7) === month;
-    }
-
-    return event.startDate.startsWith(monthPrefix) || event.endDate.startsWith(monthPrefix);
-  });
 }
 
 function getErrorMessage(error: unknown) {

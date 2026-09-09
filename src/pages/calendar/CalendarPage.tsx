@@ -24,6 +24,13 @@ import type {
   CalendarEventCategory,
   CalendarEventRepeat,
 } from "../../features/calendar/types/calendarTypes";
+import {
+  createMonthDays,
+  getDDayLabel,
+  isEventVisibleInMonth,
+  isEventVisibleOnDate,
+  toDateInputValue,
+} from "../../features/calendar/utils/calendarEventUtils";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
 
 const weekLabels = ["일", "월", "화", "수", "목", "금", "토"];
@@ -236,7 +243,7 @@ export function CalendarPage() {
                 <div className="mt-1 grid gap-1">
                   {dayEvents.slice(0, 3).map((event) => (
                     <button
-                      className={`truncate rounded-full px-2 py-1 text-left text-[10px] font-bold ${
+                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-left text-[10px] font-bold ${
                         event.isDayOff
                           ? "bg-amber-100 text-amber-800"
                           : "bg-brand text-white"
@@ -245,8 +252,11 @@ export function CalendarPage() {
                       onClick={() => editEvent(event)}
                       type="button"
                     >
-                      {event.repeat === "YEARLY" ? "↻ " : ""}
-                      {event.title}
+                      <span className="min-w-0 truncate">
+                        {event.repeat === "YEARLY" ? "↻ " : ""}
+                        {event.title}
+                      </span>
+                      <span className="shrink-0 opacity-80">{getDDayLabel(event)}</span>
                     </button>
                   ))}
                   {dayEvents.length > 3 ? (
@@ -274,9 +284,14 @@ export function CalendarPage() {
               >
                 <div className="flex items-center justify-between gap-3">
                   <strong>{event.title}</strong>
-                  <span className="shrink-0 rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
-                    {categoryOptions.find((option) => option.value === event.category)?.label}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+                      {getDDayLabel(event)}
+                    </span>
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                      {categoryOptions.find((option) => option.value === event.category)?.label}
+                    </span>
+                  </div>
                 </div>
                 <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                   {event.startDate}
@@ -402,47 +417,4 @@ export function CalendarPage() {
 
 function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
-}
-
-function createMonthDays(viewDate: Date) {
-  const year = viewDate.getFullYear();
-  const month = viewDate.getMonth();
-  const firstDate = new Date(year, month, 1);
-  const startDate = new Date(year, month, 1 - firstDate.getDay());
-
-  return Array.from({ length: 42 }, (_, index) => {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + index);
-
-    return {
-      date,
-      isCurrentMonth: date.getMonth() === month,
-      key: toDateInputValue(date),
-    };
-  });
-}
-
-function isEventVisibleInMonth(event: CalendarEvent, viewDate: Date) {
-  return createMonthDays(viewDate).some((day) => isEventVisibleOnDate(event, day.date));
-}
-
-function isEventVisibleOnDate(event: CalendarEvent, date: Date) {
-  const target = toDateInputValue(date);
-
-  if (event.repeat === "YEARLY") {
-    const start = event.startDate.slice(5);
-    const end = event.endDate.slice(5);
-    const monthDay = target.slice(5);
-    return start <= monthDay && monthDay <= end;
-  }
-
-  return event.startDate <= target && target <= event.endDate;
-}
-
-function toDateInputValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
 }
