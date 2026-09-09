@@ -1,6 +1,7 @@
 import { LockKey, PaperPlaneTilt, UserPlus } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
@@ -14,6 +15,8 @@ import {
 } from "../../features/chat/services/chatService";
 import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { subscribePolls } from "../../features/poll/services/pollService";
+import type { Poll } from "../../features/poll/types/pollTypes";
 
 export function ChatPage() {
   const { user } = useAuth();
@@ -24,6 +27,7 @@ export function ChatPage() {
   } | null>(null);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [polls, setPolls] = useState<Poll[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [messageText, setMessageText] = useState("");
   const [secretRoomName, setSecretRoomName] = useState("");
@@ -32,6 +36,10 @@ export function ChatPage() {
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === selectedRoomId) ?? rooms[0],
     [rooms, selectedRoomId]
+  );
+  const pollMap = useMemo(
+    () => new Map(polls.map((poll) => [poll.id, poll])),
+    [polls]
   );
 
   useEffect(() => {
@@ -81,6 +89,17 @@ export function ChatPage() {
       userId: user.uid,
     });
   }, [activeFamily, user]);
+
+  useEffect(() => {
+    if (!activeFamily) {
+      return;
+    }
+
+    return subscribePolls({
+      familyId: activeFamily.id,
+      onChange: setPolls,
+    });
+  }, [activeFamily]);
 
   useEffect(() => {
     if (!selectedRoom) {
@@ -201,7 +220,15 @@ export function ChatPage() {
       </Card>
 
       <Card className="min-h-[520px]">
-        <h3 className="text-lg font-bold">{selectedRoom?.name ?? "채팅방"}</h3>
+        <div className="flex items-center justify-between gap-3">
+          <h3 className="text-lg font-bold">{selectedRoom?.name ?? "채팅방"}</h3>
+          <Link
+            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white px-4 text-sm font-bold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-muted)]"
+            to="/poll"
+          >
+            투표 만들기
+          </Link>
+        </div>
         <div className="mt-4 flex min-h-[360px] flex-col justify-end gap-3 rounded-2xl bg-slate-50 p-4">
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
@@ -216,13 +243,21 @@ export function ChatPage() {
                   className={`flex ${isMine ? "justify-end" : "justify-start"}`}
                   key={message.id}
                 >
-                  <p
-                    className={`max-w-[280px] rounded-2xl p-3 text-sm shadow-sm ${
-                      isMine ? "bg-brand text-white" : "bg-white"
-                    }`}
-                  >
-                    {message.text}
-                  </p>
+                  {message.type === "POLL" ? (
+                    <PollMessageCard
+                      isMine={isMine}
+                      message={message}
+                      poll={message.pollId ? pollMap.get(message.pollId) : undefined}
+                    />
+                  ) : (
+                    <p
+                      className={`max-w-[280px] rounded-2xl p-3 text-sm shadow-sm ${
+                        isMine ? "bg-brand text-white" : "bg-white"
+                      }`}
+                    >
+                      {message.text}
+                    </p>
+                  )}
                 </div>
               );
             })
@@ -241,6 +276,38 @@ export function ChatPage() {
           </Button>
         </form>
       </Card>
+    </div>
+  );
+}
+
+function PollMessageCard({
+  isMine,
+  message,
+  poll,
+}: {
+  isMine: boolean;
+  message: ChatMessage;
+  poll: Poll | undefined;
+}) {
+  return (
+    <div
+      className={`w-full max-w-[320px] rounded-2xl p-4 text-sm shadow-sm ${
+        isMine ? "bg-brand text-white" : "bg-white"
+      }`}
+    >
+      <p className="text-xs font-bold opacity-80">채팅방 투표</p>
+      <strong className="mt-1 block">{poll?.title ?? message.text.replace("투표: ", "")}</strong>
+      <p className={`mt-2 text-xs ${isMine ? "text-emerald-50" : "text-[var(--color-text-secondary)]"}`}>
+        {poll ? `${poll.options.length}개 보기 · ${poll.multipleChoice ? "복수 선택" : "단일 선택"}` : "투표 메뉴에서 확인"}
+      </p>
+      <Link
+        className={`mt-3 inline-flex h-9 items-center rounded-xl px-3 text-xs font-bold ${
+          isMine ? "bg-white text-brand" : "bg-brand text-white"
+        }`}
+        to="/poll"
+      >
+        투표하러 가기
+      </Link>
     </div>
   );
 }

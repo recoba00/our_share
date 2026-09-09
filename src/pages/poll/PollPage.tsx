@@ -4,6 +4,12 @@ import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
 import { useAuth } from "../../features/auth/useAuth";
+import {
+  getOrCreateFamilyRoom,
+  sendPollMessage,
+  subscribeChatRooms,
+} from "../../features/chat/services/chatService";
+import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
 import {
   createPoll,
@@ -17,6 +23,8 @@ export function PollPage() {
   const { user } = useAuth();
   const [family, setFamily] = useState<{ id: string; name: string } | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
+  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [selectedRoomId, setSelectedRoomId] = useState("");
   const [votes, setVotes] = useState<Record<string, PollVote[]>>({});
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -35,6 +43,21 @@ export function PollPage() {
     void loadPollData(user.uid);
   }, [user]);
 
+  useEffect(() => {
+    if (!family || !user) {
+      return;
+    }
+
+    return subscribeChatRooms({
+      familyId: family.id,
+      onChange: (nextRooms) => {
+        setRooms(nextRooms);
+        setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");
+      },
+      userId: user.uid,
+    });
+  }, [family, user]);
+
   async function loadPollData(userId: string) {
     setIsLoading(true);
     setFeedback("");
@@ -50,7 +73,12 @@ export function PollPage() {
       }
 
       const nextPolls = await getPolls(nextFamily.id);
+      const familyRoomId = await getOrCreateFamilyRoom({
+        createdBy: userId,
+        familyId: nextFamily.id,
+      });
       setFamily({ id: nextFamily.id, name: nextFamily.name });
+      setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
       setPolls(nextPolls);
       setVotes(await getPollVotes(nextPolls.map((poll) => poll.id)));
     } catch (error) {
@@ -108,6 +136,31 @@ export function PollPage() {
       });
       await loadPollData(user.uid);
       setFeedback("투표를 반영했습니다.");
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleSendPollToChat(poll: Poll) {
+    if (!user || !family || !selectedRoomId) {
+      setFeedback("투표를 보낼 채팅방을 선택해주세요.");
+      return;
+    }
+
+    setIsLoading(true);
+    setFeedback("");
+
+    try {
+      await sendPollMessage({
+        createdBy: user.uid,
+        familyId: family.id,
+        pollId: poll.id,
+        pollTitle: poll.title,
+        roomId: selectedRoomId,
+      });
+      setFeedback("투표를 채팅방으로 전송했습니다.");
     } catch (error) {
       setFeedback(getErrorMessage(error));
     } finally {
@@ -184,6 +237,22 @@ export function PollPage() {
             <Plus size={18} weight="bold" />
             투표 만들기
           </Button>
+          {family ? (
+            <label className="grid gap-2 text-sm font-semibold">
+              전송할 채팅방
+              <select
+                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-medium outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                onChange={(event) => setSelectedRoomId(event.target.value)}
+                value={selectedRoomId}
+              >
+                {rooms.map((room) => (
+                  <option key={room.id} value={room.id}>
+                    {room.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           {feedback && (
             <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
               {feedback}
@@ -222,8 +291,10 @@ export function PollPage() {
             <PollCard
               key={poll.id}
               onSelect={toggleOption}
+              onSendPoll={handleSendPollToChat}
               onVote={handleVote}
               poll={poll}
+              roomSelected={Boolean(selectedRoomId)}
               selected={selectedOptions[poll.id] ?? []}
               votes={votes[poll.id] ?? []}
             />
@@ -236,14 +307,18 @@ export function PollPage() {
 
 function PollCard({
   onSelect,
+  onSendPoll,
   onVote,
   poll,
+  roomSelected,
   selected,
   votes,
 }: {
   onSelect: (poll: Poll, option: string) => void;
+  onSendPoll: (poll: Poll) => void;
   onVote: (poll: Poll) => void;
   poll: Poll;
+  roomSelected: boolean;
   selected: string[];
   votes: PollVote[];
 }) {
@@ -270,7 +345,7 @@ function PollCard({
             </p>
           )}
         </div>
-        <Button variant="secondary">
+        <Button disabled={!roomSelected} onClick={() => onSendPoll(poll)} variant="secondary">
           <ChatCircleDots size={18} weight="bold" />
           채팅방 전송
         </Button>

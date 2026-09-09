@@ -25,6 +25,14 @@ type SendTextMessageInput = {
   text: string;
 };
 
+type SendPollMessageInput = {
+  createdBy: string;
+  familyId: string;
+  pollId: string;
+  pollTitle: string;
+  roomId: string;
+};
+
 export async function getOrCreateFamilyRoom({
   createdBy,
   familyId,
@@ -162,6 +170,41 @@ export async function sendTextMessage({
 
   await updateDoc(doc(db, "chatRooms", roomId), {
     lastMessageText: normalizedText,
+    lastMessageAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function sendPollMessage({
+  createdBy,
+  familyId,
+  pollId,
+  pollTitle,
+  roomId,
+}: SendPollMessageInput) {
+  const normalizedTitle = pollTitle.trim();
+
+  if (!pollId) {
+    throw new Error("전송할 투표를 찾을 수 없습니다.");
+  }
+
+  const messageRef = doc(collection(db, "messages"));
+  const messageText = `투표: ${normalizedTitle}`;
+
+  await setDoc(messageRef, {
+    id: messageRef.id,
+    familyId,
+    roomId,
+    type: "POLL",
+    text: messageText,
+    pollId,
+    createdBy,
+    createdAt: serverTimestamp(),
+    readBy: [createdBy],
+  });
+
+  await updateDoc(doc(db, "chatRooms", roomId), {
+    lastMessageText: messageText,
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });

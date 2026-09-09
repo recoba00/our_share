@@ -140,7 +140,7 @@
 - [x] Multiple Choice
 - [x] Date Poll
 - [x] Result
-- [ ] Send Poll to Chat Room
+- [x] Send Poll to Chat Room
 
 ## Chat
 
@@ -149,8 +149,8 @@
 - [ ] Private Group
 - [x] Secret Room
 - [x] Family Invite Entry
-- [ ] Chat Poll Create
-- [ ] Send Poll to Chat Room
+- [x] Chat Poll Create
+- [x] Send Poll to Chat Room
 - [ ] Read Status
 - [x] Text Message Only MVP
 - [ ] Image/File Upload Later
