@@ -113,3 +113,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firestore/Realtime Database 보안 규칙 초안에서 가족 역할 변경을 OWNER 중심으로 제한하도록 보완했다.
 - Realtime Database 위치 validate 규칙에서 `accuracy` null 값을 허용하도록 클라이언트 쓰기 구조와 맞췄다.
 - Family MVP 하위 작업 완료에 맞춰 Phase 05 Family 생성 / 초대 체크 상태를 완료로 갱신했다.
+- 공통 `Modal` 컴포넌트를 추가하고 Escape/배경 클릭 닫기, footer 슬롯, 접근성 role을 지원하도록 구성했다.
+- 모바일 중심 `BottomSheet` 컴포넌트를 추가하고 데스크톱에서는 중앙 시트처럼 보이도록 반응형 스타일을 적용했다.
+- 앱 전역 `ToastProvider`와 `useToast` 훅을 추가해 success/error/info 알림을 어디서든 띄울 수 있게 구성했다.
+- Design System / Common UI 하위 작업 완료에 맞춰 Phase 02 체크 상태를 완료로 갱신했다.

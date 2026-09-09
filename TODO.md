@@ -8,7 +8,7 @@
 ## 개발 순서
 
 - [x] Phase 01: 프로젝트 초기 세팅
-- [ ] Phase 02: Design System / Common UI
+- [x] Phase 02: Design System / Common UI
 - [x] Phase 03: Firebase 연결
 - [x] Phase 04: Authentication
 - [x] Phase 05: Family 생성 / 초대
@@ -72,9 +72,9 @@
 - [x] Input
 - [x] Card
 - [x] Avatar
-- [ ] Modal
-- [ ] Bottom Sheet
-- [ ] Toast
+- [x] Modal
+- [x] Bottom Sheet
+- [x] Toast
 - [x] Bottom Navigation
 - [x] Figma Handoff Ready Token Structure
 
