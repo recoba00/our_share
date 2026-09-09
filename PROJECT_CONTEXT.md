@@ -54,11 +54,12 @@ Firebase 사용.
 
 - GitHub Repository: `https://github.com/recoba00/our_share`
 - Hosting URL: `https://recoba00.dothome.co.kr/our_share`
-- Firebase Project: 생성 및 기본 설정 진행
+- Firebase Project: `our-share-6baf5`
 - Firebase Auth: Google 로그인 사용
 - Cloud Firestore: 서울 리전
 - Realtime Database: 싱가포르 리전
 - Firebase Storage: Spark 요금제에서는 보류
+- Firebase Web App: 생성 완료
 
 ## 앱 정보 구조
 

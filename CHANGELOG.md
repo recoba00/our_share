@@ -14,3 +14,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase CLI가 현재 환경에 설치되어 있지 않음을 확인했다.
 - Firebase Storage를 Spark 요금제 MVP 필수 설정에서 제외하고 보류 정책으로 변경했다.
 - Firebase Auth Google 로그인, Cloud Firestore 서울 리전, Realtime Database 싱가포르 리전 설정 상태를 문서에 반영했다.
+- Firebase Web App 설정값을 로컬 `.env`에 추가하고, Git 공유용 `.env.example`을 생성했다.
+- Firebase 프로젝트 ID를 `our-share-6baf5`로 문서에 반영했다.
+- Realtime Database 연결에 필요한 `databaseURL` 확인 항목을 `TODO.md`에 추가했다.

@@ -30,12 +30,13 @@
 - [ ] 배포 URL 문서화
 - [x] Firebase 프로젝트 생성
 - [x] Firebase Console에서 기본 설정 진행
-- [ ] Firebase Web App 생성
+- [x] Firebase Web App 생성
 - [x] Firebase Auth Google 로그인 활성화
 - [x] Cloud Firestore 서울 리전 활성화
 - [x] Realtime Database 싱가포르 리전 활성화
 - [x] Firebase Storage 보류 정책 반영
-- [ ] Firebase 설정값 `.env` 구성
+- [x] Firebase 설정값 `.env` 구성
+- [ ] Realtime Database `databaseURL` 확인 후 `.env`에 추가
 
 ## Initial
 
@@ -44,8 +45,8 @@
 - [ ] PWA 설정
 - [ ] Pretendard
 - [ ] Phosphor Icons
-- [ ] Firebase 프로젝트 연결
-- [ ] `.env` 구성
+- [x] Firebase 프로젝트 연결
+- [x] `.env` 구성
 
 ## Design System
 
