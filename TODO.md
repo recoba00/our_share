@@ -77,17 +77,17 @@
 
 ## Authentication
 
-- [ ] Login UI
-- [ ] Google Login Action
+- [x] Login UI
+- [x] Google Login Action
 - [ ] Signup
-- [ ] Logout
+- [x] Logout
 - [ ] Auth Guard
 
 ## Family
 
-- [ ] Family Create
-- [ ] Invite Code
-- [ ] Join Family
+- [x] Family Create
+- [x] Invite Code
+- [x] Join Family
 - [ ] Family Member List
 - [ ] Member Permissions
 

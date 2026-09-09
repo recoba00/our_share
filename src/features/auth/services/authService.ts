@@ -4,7 +4,7 @@ import {
   signOut,
   type User,
 } from "firebase/auth";
-import { doc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
 import { auth, db, googleProvider } from "../../../lib/firebase/app";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
@@ -21,16 +21,19 @@ export async function logout() {
   await signOut(auth);
 }
 
-async function syncUserProfile(user: User) {
+export async function syncUserProfile(user: User) {
+  const userRef = doc(db, "users", user.uid);
+  const userSnapshot = await getDoc(userRef);
+
   await setDoc(
-    doc(db, "users", user.uid),
+    userRef,
     {
       id: user.uid,
       displayName: user.displayName,
       email: user.email,
       photoURL: user.photoURL,
       updatedAt: serverTimestamp(),
-      createdAt: serverTimestamp(),
+      ...(!userSnapshot.exists() ? { createdAt: serverTimestamp() } : {}),
     },
     { merge: true }
   );

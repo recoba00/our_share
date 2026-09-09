@@ -29,3 +29,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - `홈 / 채팅 / 투표 / 메모 / 캘린더` 하단 네비게이션과 반응형 앱 Shell을 구현했다.
 - Firebase Auth, Firestore, Realtime Database 초기화 모듈과 Google 로그인 서비스 초안을 추가했다.
 - `npm run build`와 `npm run lint` 검증을 통과했다.
+- 앱 전역 `AuthProvider`와 `useAuth` 훅을 추가해 Firebase 로그인 상태를 구독하도록 구성했다.
+- Google 로그인/로그아웃 UI와 사용자 `users` 문서 동기화를 연결했다.
+- Firestore 기반 가족 생성, 초대 코드 생성, 초대 코드 참여 서비스를 추가했다.
+- 홈 화면에 로그인 전 시작 화면과 로그인 후 가족 생성/초대 코드 참여 폼을 연결했다.
