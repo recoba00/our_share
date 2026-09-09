@@ -8,6 +8,7 @@ import {
   query,
   serverTimestamp,
   setDoc,
+  updateDoc,
   where,
 } from "firebase/firestore";
 import { ref, set } from "firebase/database";
@@ -22,6 +23,13 @@ type CreateFamilyInput = {
 type JoinFamilyInput = {
   inviteCode: string;
   user: User;
+};
+
+type UpdateFamilyMemberRoleInput = {
+  actorUserId: string;
+  familyId: string;
+  role: Exclude<FamilyRole, "OWNER">;
+  targetUserId: string;
 };
 
 export async function createFamily({ name, owner }: CreateFamilyInput) {
@@ -135,6 +143,40 @@ export async function getFamilyMembers(
       };
     })
   );
+}
+
+export async function updateFamilyMemberRole({
+  actorUserId,
+  familyId,
+  role,
+  targetUserId,
+}: UpdateFamilyMemberRoleInput) {
+  const actorSnapshot = await getDoc(doc(db, "familyMembers", `${familyId}_${actorUserId}`));
+  const targetRef = doc(db, "familyMembers", `${familyId}_${targetUserId}`);
+  const targetSnapshot = await getDoc(targetRef);
+
+  if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
+    throw new Error("가족 역할은 OWNER만 변경할 수 있습니다.");
+  }
+
+  if (!targetSnapshot.exists()) {
+    throw new Error("변경할 가족 구성원을 찾을 수 없습니다.");
+  }
+
+  if (targetSnapshot.data().role === "OWNER") {
+    throw new Error("OWNER 역할은 이 화면에서 변경할 수 없습니다.");
+  }
+
+  await updateDoc(targetRef, {
+    role,
+    updatedAt: serverTimestamp(),
+  });
+
+  await set(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`), {
+    role,
+    userId: targetUserId,
+    updatedAt: Date.now(),
+  });
 }
 
 async function upsertFamilyMember({

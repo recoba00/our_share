@@ -108,3 +108,8 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 가족 위치 카드에 좌표, 업데이트 시각, 정확도, 배터리/충전 상태를 표시하는 Family Pins MVP UI를 추가했다.
 - 가족 위치 카드에서 `어디야?`, `언제 와?`, `오는 길에 마트 들러줘!` 빠른 메시지를 가족 전체방으로 전송하는 Quick Message 기능을 추가했다.
 - Location MVP 하위 작업 완료에 맞춰 Phase 07 Map / Location 체크 상태를 완료로 갱신했다.
+- 가족 OWNER가 홈의 가족 구성원 목록에서 `PARENT`, `MEMBER`, `CHILD` 역할을 변경할 수 있는 Member Permissions MVP를 추가했다.
+- 역할 변경 시 Firestore `familyMembers` 문서와 Realtime Database membership mirror를 함께 갱신하도록 연결했다.
+- Firestore/Realtime Database 보안 규칙 초안에서 가족 역할 변경을 OWNER 중심으로 제한하도록 보완했다.
+- Realtime Database 위치 validate 규칙에서 `accuracy` null 값을 허용하도록 클라이언트 쓰기 구조와 맞췄다.
+- Family MVP 하위 작업 완료에 맞춰 Phase 05 Family 생성 / 초대 체크 상태를 완료로 갱신했다.

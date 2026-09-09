@@ -57,8 +57,31 @@ service cloud.firestore {
           )
         );
       allow update: if signedIn() &&
-        (resource.data.userId == request.auth.uid ||
-          isFamilyOwner(resource.data.familyId));
+        (
+          (
+            isFamilyOwner(resource.data.familyId) &&
+            resource.data.role != "OWNER" &&
+            request.resource.data.familyId == resource.data.familyId &&
+            request.resource.data.userId == resource.data.userId &&
+            (
+              request.resource.data.role == "PARENT" ||
+              request.resource.data.role == "MEMBER" ||
+              request.resource.data.role == "CHILD"
+            ) &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "role",
+              "updatedAt"
+            ])
+          ) ||
+          (
+            resource.data.userId == request.auth.uid &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "nickname",
+              "relation",
+              "updatedAt"
+            ])
+          )
+        );
       allow delete: if signedIn() &&
         (resource.data.userId == request.auth.uid ||
           isFamilyOwner(resource.data.familyId));

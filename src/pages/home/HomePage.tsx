@@ -20,8 +20,12 @@ import {
   getFamilyMembers,
   getFirstFamilyForUser,
   joinFamilyByInviteCode,
+  updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
-import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
+import type {
+  FamilyMemberProfile,
+  FamilyRole,
+} from "../../features/family/types/familyTypes";
 import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
 import {
@@ -43,6 +47,17 @@ import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
 const quickMessages = ["어디야?", "언제 와?", "오는 길에 마트 들러줘!"];
+const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = [
+  "PARENT",
+  "MEMBER",
+  "CHILD",
+];
+const roleLabels: Record<FamilyRole, string> = {
+  CHILD: "자녀",
+  MEMBER: "구성원",
+  OWNER: "오너",
+  PARENT: "부모",
+};
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
@@ -59,6 +74,7 @@ export function HomePage() {
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
+  const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -267,6 +283,39 @@ export function HomePage() {
     }
   }
 
+  async function handleUpdateMemberRole(
+    member: FamilyMemberProfile,
+    nextRole: Exclude<FamilyRole, "OWNER">
+  ) {
+    if (!activeFamily || !user) {
+      setFeedback("가족 정보를 먼저 불러와주세요.");
+      return;
+    }
+
+    setUpdatingMemberRoleId(member.userId);
+    setFeedback("");
+
+    try {
+      await updateFamilyMemberRole({
+        actorUserId: user.uid,
+        familyId: activeFamily.id,
+        role: nextRole,
+        targetUserId: member.userId,
+      });
+
+      setMembers(await getFamilyMembers(activeFamily.id));
+      setFeedback(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`);
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setUpdatingMemberRoleId("");
+    }
+  }
+
+  const isFamilyOwner = members.some(
+    (member) => member.userId === user?.uid && member.role === "OWNER"
+  );
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-slate-800 p-6 text-white shadow-lg">
@@ -466,8 +515,27 @@ export function HomePage() {
                     {member.displayName ?? member.nickname}
                   </strong>
                   <p className="mt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {member.role} · {member.email ?? "이메일 없음"}
+                    {roleLabels[member.role]} · {member.email ?? "이메일 없음"}
                   </p>
+                  {isFamilyOwner && member.role !== "OWNER" ? (
+                    <select
+                      className="mt-3 h-9 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-xs font-bold outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                      disabled={updatingMemberRoleId === member.userId}
+                      onChange={(event) =>
+                        void handleUpdateMemberRole(
+                          member,
+                          event.target.value as Exclude<FamilyRole, "OWNER">
+                        )
+                      }
+                      value={member.role}
+                    >
+                      {editableRoleOptions.map((role) => (
+                        <option key={role} value={role}>
+                          {roleLabels[role]}
+                        </option>
+                      ))}
+                    </select>
+                  ) : null}
                 </div>
               </div>
             ))}

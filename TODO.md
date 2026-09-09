@@ -11,7 +11,7 @@
 - [ ] Phase 02: Design System / Common UI
 - [x] Phase 03: Firebase 연결
 - [x] Phase 04: Authentication
-- [ ] Phase 05: Family 생성 / 초대
+- [x] Phase 05: Family 생성 / 초대
 - [x] Phase 06: Home Dashboard
 - [x] Phase 07: Map / Location
 - [x] Phase 08: Calendar
@@ -94,7 +94,7 @@
 - [x] Invite Code
 - [x] Join Family
 - [x] Family Member List
-- [ ] Member Permissions
+- [x] Member Permissions
 
 ## Home
 
