@@ -128,6 +128,20 @@ Icons:
 
 - Phosphor Icons
 
+Grid:
+
+- 4pt Grid System을 사용한다.
+- spacing, gap, padding, margin은 4px 단위로 설계한다.
+- Tailwind spacing scale을 우선 사용하고, 임의 px 값은 최소화한다.
+
+Responsive:
+
+- 1440px desktop을 기본 기준으로 설계한다.
+- tablet, mobile 화면을 함께 고려한다.
+- 주요 breakpoint는 Tailwind 기본 breakpoint를 우선 사용한다.
+- mobile에서는 하단 네비게이션 접근성을 최우선으로 둔다.
+- desktop에서는 중앙 콘텐츠 폭과 사이드 여백을 안정적으로 유지한다.
+
 Radius:
 
 - small: 8px
@@ -139,14 +153,24 @@ Spacing:
 
 - Tailwind 기본 spacing 사용
 
-Color는 CSS Variable / Tailwind Theme Token으로 관리한다.
+Color:
+
+- neutral palette는 Slate를 기본으로 사용한다.
+- brand primary는 우선 Emerald 500을 사용한다.
+- secondary/accent/success/warning/error는 Emerald와 Slate에 어울리도록 토큰으로 정의한다.
+- 브랜드 컬러 변경 시 한 번에 교체할 수 있도록 CSS Variable / Tailwind Theme Token으로 관리한다.
+- 컴포넌트마다 직접 hex 값을 반복 작성하지 않는다.
 
 예:
 
 - `--color-primary`
+- `--color-primary-hover`
+- `--color-primary-soft`
 - `--color-secondary`
+- `--color-accent`
 - `--color-background`
 - `--color-surface`
+- `--color-surface-muted`
 - `--color-text-primary`
 - `--color-text-secondary`
 - `--color-border`
@@ -154,8 +178,9 @@ Color는 CSS Variable / Tailwind Theme Token으로 관리한다.
 - `--color-warning`
 - `--color-error`
 
-컴포넌트마다 직접 hex 값을 반복 작성하지 않는다.
 디자인 시스템을 우회하여 페이지에 독립적인 스타일을 만들지 않는다.
+Figma 디자인 연동 전까지 Codex가 기본 디자인 시스템을 먼저 구축한다.
+추후 Figma 디자인이 확정되면 기존 토큰과 공통 컴포넌트를 수정해 전체 UI에 반영한다.
 
 ## TypeScript 규칙
 

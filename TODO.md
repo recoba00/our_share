@@ -56,6 +56,15 @@
 ## Design System
 
 - [ ] Design Token
+- [ ] Slate Neutral Palette
+- [ ] Emerald 500 Brand Token
+- [ ] Brand Color Swap Structure
+- [ ] 4pt Grid System
+- [ ] Responsive Layout: 1440 Desktop
+- [ ] Responsive Layout: Tablet
+- [ ] Responsive Layout: Mobile
+- [ ] Pretendard Font
+- [ ] Phosphor Icons
 - [ ] Button
 - [ ] Input
 - [ ] Card
@@ -64,6 +73,7 @@
 - [ ] Bottom Sheet
 - [ ] Toast
 - [ ] Bottom Navigation
+- [ ] Figma Handoff Ready Token Structure
 
 ## Authentication
 

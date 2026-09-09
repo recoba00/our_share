@@ -14,6 +14,19 @@
 
 가족 관리와 설정은 하단 탭에 두지 않고 보조 메뉴 또는 각 화면의 액션 메뉴에서 진입한다.
 
+## Design Baseline
+
+- Tailwind CSS 기반으로 구성한다.
+- 폰트는 Pretendard를 사용한다.
+- 아이콘은 Phosphor Icons를 사용한다.
+- 레이아웃은 4pt Grid System을 사용한다.
+- 1440px desktop을 기본 기준으로 하고 tablet, mobile을 함께 고려한다.
+- mobile에서는 하단 네비게이션 접근성과 터치 영역을 우선한다.
+- neutral palette는 Slate를 기본으로 사용한다.
+- brand primary는 Emerald 500을 우선 사용한다.
+- 브랜드 컬러는 CSS Variable / Tailwind Theme Token으로 관리해 추후 한 번에 변경할 수 있게 한다.
+- Figma 디자인 연동 전까지 Codex가 기본 디자인 시스템을 먼저 구성하고, 이후 Figma 기준으로 토큰과 공통 컴포넌트를 교체한다.
+
 ## 홈
 
 ### 화면 목적

@@ -35,10 +35,13 @@ Version: 2.0
 - Tailwind CSS 기반
 - Pretendard
 - Phosphor Icons
-- Mobile First
-- 기본 디자인 폭: 360px
-- max-width: 768px
-- 좌우 기본 padding: 16px
+- 4pt Grid System
+- 반응형 레이아웃: 1440px desktop, tablet, mobile 고려
+- Slate 기반 neutral palette
+- Brand color: Emerald 500
+- Brand color는 CSS Variable / Tailwind Theme Token으로 관리하여 추후 한 번에 변경 가능하게 구성
+- Figma 디자인 연동 전까지 Codex가 기본 디자인 시스템을 선제 구축
+- 추후 Figma 디자인이 확정되면 기존 토큰/컴포넌트 구조에 맞춰 반영
 
 ### Backend
 

@@ -19,6 +19,32 @@
 - 매년 반복 일정
 - 휴무일 체크
 
+## Design System Requirement
+
+### 목적
+
+Figma 디자인이 확정되기 전까지 Codex가 일관된 기본 디자인 시스템을 구축하고, 이후 Figma 디자인을 토큰과 공통 컴포넌트 단위로 반영할 수 있게 한다.
+
+### 필수 기준
+
+- Tailwind CSS 기반
+- Pretendard 폰트
+- Phosphor Icons
+- 4pt Grid System
+- 1440px desktop 기본 대응
+- tablet 대응
+- mobile 대응
+- Slate 기반 neutral palette
+- Emerald 500 기반 brand primary
+- CSS Variable / Tailwind Theme Token 기반 컬러 관리
+
+### 완료 기준
+
+- 브랜드 컬러 변경 시 토큰 수정만으로 주요 UI 컬러가 변경된다.
+- 공통 버튼, 입력, 카드, 하단 네비게이션이 디자인 토큰을 사용한다.
+- 화면별 독립 hex 색상 반복 사용이 없다.
+- mobile/tablet/desktop에서 주요 레이아웃이 깨지지 않는다.
+
 ## Authentication
 
 ### 목적
