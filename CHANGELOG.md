@@ -18,3 +18,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase 프로젝트 ID를 `our-share-6baf5`로 문서에 반영했다.
 - Realtime Database 연결에 필요한 `databaseURL` 확인 항목을 `TODO.md`에 추가했다.
 - Realtime Database URL을 로컬 `.env`에 추가하고 문서에 반영했다.
+- 하단 네비게이션을 `홈 / 채팅 / 투표 / 메모 / 캘린더` 구조로 재정의했다.
+- 화면 기획서 `SCREEN_SPEC.md`와 기능 정의서 `FEATURE_SPEC.md` 초안을 추가했다.
+- 채팅 내 가족 초대, 비밀방, 투표 생성/전송 흐름과 메모/캘린더 세부 기능을 문서화했다.

@@ -1,5 +1,10 @@
 # TODO
 
+## 문서 / 기획
+
+- [x] 화면 기획서 작성: `SCREEN_SPEC.md`
+- [x] 기능 정의서 작성: `FEATURE_SPEC.md`
+
 ## 개발 순서
 
 - [ ] Phase 01: 프로젝트 초기 세팅
@@ -91,6 +96,9 @@
 - [ ] Anniversary
 - [ ] D-Day
 - [ ] Calendar Vote
+- [ ] Schedule Create
+- [ ] Yearly Recurring Schedule
+- [ ] Holiday / Day Off Check
 
 ## Memo
 
@@ -98,6 +106,10 @@
 - [ ] Memo CRUD
 - [ ] Secret Memo
 - [ ] visibleTo permission
+- [ ] Public Memo
+- [ ] Sensitive Memo
+- [ ] Sensitive Memo Checkbox
+- [ ] Personal Password Verification
 
 ## Poll
 
@@ -112,6 +124,10 @@
 - [ ] Family Room
 - [ ] DM
 - [ ] Private Group
+- [ ] Secret Room
+- [ ] Family Invite Entry
+- [ ] Chat Poll Create
+- [ ] Send Poll to Chat Room
 - [ ] Read Status
 - [ ] Text Message Only MVP
 - [ ] Image/File Upload Later
