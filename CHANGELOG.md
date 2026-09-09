@@ -58,3 +58,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 배포 JS에 Firebase 환경변수가 주입되지 않은 상태를 확인하고, GitHub Actions에 Firebase build secrets 누락 검증 단계를 추가했다.
 - Firebase Web App 설정값을 `src/lib/firebase/app.ts`의 기본 fallback으로 추가해 GitHub Secrets 없이도 Dothome 정적 배포가 동작하도록 수정했다.
 - Firebase 설정 fallback 도입에 맞춰 GitHub Actions의 Firebase build secrets 필수 검증 단계를 제거했다.
+- GitHub Actions의 미등록 Secret이 빈 문자열로 주입되는 경우에도 Firebase 기본 설정을 사용하도록 fallback 조건을 보완했다.
