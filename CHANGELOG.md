@@ -59,3 +59,8 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase Web App 설정값을 `src/lib/firebase/app.ts`의 기본 fallback으로 추가해 GitHub Secrets 없이도 Dothome 정적 배포가 동작하도록 수정했다.
 - Firebase 설정 fallback 도입에 맞춰 GitHub Actions의 Firebase build secrets 필수 검증 단계를 제거했다.
 - GitHub Actions의 미등록 Secret이 빈 문자열로 주입되는 경우에도 Firebase 기본 설정을 사용하도록 fallback 조건을 보완했다.
+- Firestore 기반 메모 타입과 서비스를 추가했다.
+- 메모 화면에 가족별 메모 실시간 목록, 일반 메모 생성, 민감 메모 생성, 선택 메모 상세 열람 흐름을 연결했다.
+- 민감 메모 본문은 개인 비밀번호 기반 Web Crypto AES-GCM 암호화 후 저장하고, 열람 시 비밀번호로 복호화하도록 구성했다.
+- `visibleTo` 기반 민감 메모 표시 필터를 추가했다.
+- `npm run lint`, `npm run build`, 로컬 `/our_share/memo` 응답 검증을 통과했다.

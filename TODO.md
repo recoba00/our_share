@@ -116,14 +116,14 @@
 
 ## Memo
 
-- [ ] Memo List
-- [ ] Memo CRUD
-- [ ] Secret Memo
-- [ ] visibleTo permission
-- [ ] Public Memo
-- [ ] Sensitive Memo
-- [ ] Sensitive Memo Checkbox
-- [ ] Personal Password Verification
+- [x] Memo List
+- [x] Memo CRUD
+- [x] Secret Memo
+- [x] visibleTo permission
+- [x] Public Memo
+- [x] Sensitive Memo
+- [x] Sensitive Memo Checkbox
+- [x] Personal Password Verification
 
 ## Poll
 
