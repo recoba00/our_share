@@ -23,3 +23,9 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 채팅 내 가족 초대, 비밀방, 투표 생성/전송 흐름과 메모/캘린더 세부 기능을 문서화했다.
 - Tailwind, Pretendard, Phosphor Icons, 4pt Grid System, 반응형 기준, Slate/Emerald 기반 디자인 토큰 정책을 문서화했다.
 - Figma 디자인 연동 전에는 Codex가 기본 디자인 시스템을 구축하고, 추후 토큰/공통 컴포넌트 단위로 교체하는 방침을 추가했다.
+- React + TypeScript + Vite 앱 골격을 추가했다.
+- Tailwind CSS, Pretendard, Phosphor Icons, Firebase, React Router 의존성을 추가했다.
+- Slate/Emerald 기반 CSS Variable 디자인 토큰과 Tailwind theme token 연결을 구성했다.
+- `홈 / 채팅 / 투표 / 메모 / 캘린더` 하단 네비게이션과 반응형 앱 Shell을 구현했다.
+- Firebase Auth, Firestore, Realtime Database 초기화 모듈과 Google 로그인 서비스 초안을 추가했다.
+- `npm run build`와 `npm run lint` 검증을 통과했다.

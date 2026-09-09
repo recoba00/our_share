@@ -7,9 +7,9 @@
 
 ## 개발 순서
 
-- [ ] Phase 01: 프로젝트 초기 세팅
+- [x] Phase 01: 프로젝트 초기 세팅
 - [ ] Phase 02: Design System / Common UI
-- [ ] Phase 03: Firebase 연결
+- [x] Phase 03: Firebase 연결
 - [ ] Phase 04: Authentication
 - [ ] Phase 05: Family 생성 / 초대
 - [ ] Phase 06: Home Dashboard
@@ -45,39 +45,40 @@
 
 ## Initial
 
-- [ ] React + TypeScript + Vite
-- [ ] Tailwind 설정
+- [x] React + TypeScript + Vite
+- [x] Tailwind 설정
 - [ ] PWA 설정
-- [ ] Pretendard
-- [ ] Phosphor Icons
+- [x] Pretendard
+- [x] Phosphor Icons
 - [x] Firebase 프로젝트 연결
 - [x] `.env` 구성
 
 ## Design System
 
-- [ ] Design Token
-- [ ] Slate Neutral Palette
-- [ ] Emerald 500 Brand Token
-- [ ] Brand Color Swap Structure
-- [ ] 4pt Grid System
-- [ ] Responsive Layout: 1440 Desktop
-- [ ] Responsive Layout: Tablet
-- [ ] Responsive Layout: Mobile
-- [ ] Pretendard Font
-- [ ] Phosphor Icons
-- [ ] Button
+- [x] Design Token
+- [x] Slate Neutral Palette
+- [x] Emerald 500 Brand Token
+- [x] Brand Color Swap Structure
+- [x] 4pt Grid System
+- [x] Responsive Layout: 1440 Desktop
+- [x] Responsive Layout: Tablet
+- [x] Responsive Layout: Mobile
+- [x] Pretendard Font
+- [x] Phosphor Icons
+- [x] Button
 - [ ] Input
-- [ ] Card
+- [x] Card
 - [ ] Avatar
 - [ ] Modal
 - [ ] Bottom Sheet
 - [ ] Toast
-- [ ] Bottom Navigation
-- [ ] Figma Handoff Ready Token Structure
+- [x] Bottom Navigation
+- [x] Figma Handoff Ready Token Structure
 
 ## Authentication
 
-- [ ] Login
+- [ ] Login UI
+- [ ] Google Login Action
 - [ ] Signup
 - [ ] Logout
 - [ ] Auth Guard
