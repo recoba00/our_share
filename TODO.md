@@ -14,7 +14,7 @@
 - [ ] Phase 05: Family 생성 / 초대
 - [x] Phase 06: Home Dashboard
 - [ ] Phase 07: Map / Location
-- [ ] Phase 08: Calendar
+- [x] Phase 08: Calendar
 - [ ] Phase 09: Memo
 - [x] Phase 10: Poll
 - [ ] Phase 11: Notification
@@ -117,7 +117,7 @@
 - [x] Event CRUD
 - [x] Anniversary
 - [x] D-Day
-- [ ] Calendar Vote
+- [x] Calendar Vote
 - [x] Schedule Create
 - [x] Yearly Recurring Schedule
 - [x] Holiday / Day Off Check

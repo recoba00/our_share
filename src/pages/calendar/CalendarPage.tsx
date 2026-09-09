@@ -3,6 +3,7 @@ import {
   CaretLeft,
   CaretRight,
   Repeat,
+  SealQuestion,
   Sun,
   Trash,
 } from "@phosphor-icons/react";
@@ -32,6 +33,7 @@ import {
   toDateInputValue,
 } from "../../features/calendar/utils/calendarEventUtils";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { createPoll } from "../../features/poll/services/pollService";
 
 const weekLabels = ["일", "월", "화", "수", "목", "금", "토"];
 const categoryOptions: { label: string; value: CalendarEventCategory }[] = [
@@ -63,6 +65,9 @@ export function CalendarPage() {
   const [repeat, setRepeat] = useState<CalendarEventRepeat>("NONE");
   const [allDay, setAllDay] = useState(true);
   const [isDayOff, setIsDayOff] = useState(false);
+  const [voteTitle, setVoteTitle] = useState("");
+  const [voteDescription, setVoteDescription] = useState("");
+  const [voteOptionsText, setVoteOptionsText] = useState(getDefaultDatePollOptions(today));
   const [statusMessage, setStatusMessage] = useState("");
 
   const monthDays = useMemo(() => createMonthDays(viewDate), [viewDate]);
@@ -152,6 +157,35 @@ export function CalendarPage() {
       setStatusMessage("일정을 삭제했습니다.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.");
+    }
+  }
+
+  async function handleCreateDatePoll(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!activeFamily || !user) {
+      return;
+    }
+
+    try {
+      await createPoll({
+        createdBy: user.uid,
+        description: voteDescription,
+        familyId: activeFamily.id,
+        multipleChoice: false,
+        options: voteOptionsText.split("\n"),
+        title: voteTitle,
+        type: "DATE",
+      });
+
+      setVoteTitle("");
+      setVoteDescription("");
+      setVoteOptionsText(getDefaultDatePollOptions(viewDate));
+      setStatusMessage("날짜 투표를 만들었습니다. 투표 메뉴에서 채팅방으로 전송할 수 있어요.");
+    } catch (error) {
+      setStatusMessage(
+        error instanceof Error ? error.message : "날짜 투표 생성에 실패했습니다."
+      );
     }
   }
 
@@ -410,6 +444,40 @@ export function CalendarPage() {
             {statusMessage}
           </p>
         ) : null}
+
+        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
+          <div className="flex items-center gap-2">
+            <SealQuestion className="text-brand" size={20} weight="bold" />
+            <h3 className="text-lg font-bold">날짜 투표 만들기</h3>
+          </div>
+          <form className="mt-4 grid gap-3" onSubmit={handleCreateDatePoll}>
+            <Input
+              label="투표 제목"
+              onChange={(event) => setVoteTitle(event.target.value)}
+              placeholder="예: 가족 모임 날짜 정하기"
+              value={voteTitle}
+            />
+            <Input
+              label="설명"
+              onChange={(event) => setVoteDescription(event.target.value)}
+              placeholder="선택 사항"
+              value={voteDescription}
+            />
+            <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+              후보 날짜
+              <textarea
+                className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                onChange={(event) => setVoteOptionsText(event.target.value)}
+                placeholder="한 줄에 하나씩 입력"
+                value={voteOptionsText}
+              />
+            </label>
+            <Button type="submit" variant="secondary">
+              <SealQuestion size={18} weight="bold" />
+              날짜 투표 생성
+            </Button>
+          </form>
+        </div>
       </Card>
     </div>
   );
@@ -417,4 +485,14 @@ export function CalendarPage() {
 
 function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
+}
+
+function getDefaultDatePollOptions(baseDate: Date) {
+  return [0, 1, 2]
+    .map((offset) => {
+      const date = new Date(baseDate);
+      date.setDate(baseDate.getDate() + offset);
+      return toDateInputValue(date);
+    })
+    .join("\n");
 }
