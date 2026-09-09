@@ -93,11 +93,11 @@
 
 ## Location
 
-- [ ] Geolocation Permission
-- [ ] Current Location
-- [ ] Firebase Realtime Sync
+- [x] Geolocation Permission
+- [x] Current Location
+- [x] Firebase Realtime Sync
 - [ ] Family Pins
-- [ ] Battery Status
+- [x] Battery Status
 - [ ] Quick Message
 
 ## Calendar

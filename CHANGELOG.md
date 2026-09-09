@@ -33,3 +33,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Google 로그인/로그아웃 UI와 사용자 `users` 문서 동기화를 연결했다.
 - Firestore 기반 가족 생성, 초대 코드 생성, 초대 코드 참여 서비스를 추가했다.
 - 홈 화면에 로그인 전 시작 화면과 로그인 후 가족 생성/초대 코드 참여 폼을 연결했다.
+- Realtime Database 기반 위치 공유 서비스와 `liveLocations/{familyId}/{userId}` 쓰기 흐름을 추가했다.
+- 브라우저 Geolocation 권한 요청, 현재 위치 조회, 배터리 상태 조회를 홈 화면의 현재 위치 공유 액션에 연결했다.
+- `npm run lint`, `npm run build`, 로컬 브라우저 렌더링 검증을 통과했다.

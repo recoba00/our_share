@@ -2,6 +2,7 @@ import type { User } from "firebase/auth";
 import {
   collection,
   doc,
+  getDoc,
   getDocs,
   limit,
   query,
@@ -73,6 +74,33 @@ export async function joinFamilyByInviteCode({
   return {
     id: familyDoc.id,
     name: familyDoc.data().name as string,
+  };
+}
+
+export async function getFirstFamilyForUser(userId: string) {
+  const membersQuery = query(
+    collection(db, "familyMembers"),
+    where("userId", "==", userId),
+    limit(1)
+  );
+  const memberSnapshot = await getDocs(membersQuery);
+  const memberDoc = memberSnapshot.docs[0];
+
+  if (!memberDoc) {
+    return null;
+  }
+
+  const familyId = memberDoc.data().familyId as string;
+  const familySnapshot = await getDoc(doc(db, "families", familyId));
+
+  if (!familySnapshot.exists()) {
+    return null;
+  }
+
+  return {
+    id: familySnapshot.id,
+    name: familySnapshot.data().name as string,
+    inviteCode: familySnapshot.data().inviteCode as string,
   };
 }
 

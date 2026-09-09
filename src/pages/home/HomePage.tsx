@@ -15,8 +15,10 @@ import { Input } from "../../components/common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createFamily,
+  getFirstFamilyForUser,
   joinFamilyByInviteCode,
 } from "../../features/family/services/familyService";
+import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
 
 const family = [
   { name: "아빠", place: "회사", time: "5분 전", battery: "83%" },
@@ -28,8 +30,17 @@ export function HomePage() {
   const { signIn, status, user } = useAuth();
   const [familyName, setFamilyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
+  const [activeFamily, setActiveFamily] = useState<{
+    id: string;
+    inviteCode: string;
+    name: string;
+  } | null>(null);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const locationShare = useMyLocationShare({
+    familyId: activeFamily?.id ?? null,
+    userId: user?.uid ?? null,
+  });
 
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
@@ -42,6 +53,11 @@ export function HomePage() {
 
     try {
       const result = await createFamily({ name: familyName.trim(), owner: user });
+      setActiveFamily({
+        id: result.id,
+        inviteCode: result.inviteCode,
+        name: familyName.trim(),
+      });
       setFeedback(`가족이 생성되었습니다. 초대 코드: ${result.inviteCode}`);
       setFamilyName("");
     } catch (error) {
@@ -64,6 +80,11 @@ export function HomePage() {
       const result = await joinFamilyByInviteCode({
         inviteCode,
         user,
+      });
+      setActiveFamily({
+        id: result.id,
+        inviteCode: inviteCode.trim().toUpperCase(),
+        name: result.name,
       });
       setFeedback(`${result.name} 가족에 참여했습니다.`);
       setInviteCode("");
@@ -110,6 +131,31 @@ export function HomePage() {
     );
   }
 
+  async function handleLoadFamily() {
+    if (!user) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setFeedback("");
+
+    try {
+      const result = await getFirstFamilyForUser(user.uid);
+
+      if (!result) {
+        setFeedback("아직 참여한 가족이 없습니다.");
+        return;
+      }
+
+      setActiveFamily(result);
+      setFeedback(`${result.name} 가족 정보를 불러왔습니다.`);
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-slate-800 p-6 text-white shadow-lg">
@@ -153,6 +199,17 @@ export function HomePage() {
           </div>
         </div>
         <div className="mt-5 grid gap-4">
+          {activeFamily && (
+            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+                현재 가족
+              </p>
+              <strong className="mt-1 block">{activeFamily.name}</strong>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                초대 코드: {activeFamily.inviteCode}
+              </p>
+            </div>
+          )}
           <Input
             label="새 가족 이름"
             onChange={(event) => setFamilyName(event.target.value)}
@@ -173,9 +230,22 @@ export function HomePage() {
             <LinkSimple size={18} weight="bold" />
             초대 코드로 참여
           </Button>
+          <Button disabled={isSubmitting} onClick={handleLoadFamily} variant="secondary">
+            <UsersThree size={18} weight="bold" />
+            내 가족 불러오기
+          </Button>
+          <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
+            <MapPin size={18} weight="bold" />
+            현재 위치 공유
+          </Button>
           {feedback && (
             <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
               {feedback}
+            </p>
+          )}
+          {locationShare.message && (
+            <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold text-[var(--color-text-secondary)]">
+              {locationShare.message}
             </p>
           )}
         </div>
