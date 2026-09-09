@@ -20,13 +20,17 @@
 
 - [x] Git 저장소 초기화
 - [x] `.gitignore` 구성
-- [ ] 원격 Git 저장소 연결
+- [x] GitHub 원격 저장소 연결: `https://github.com/recoba00/our_share`
 - [x] 초기 커밋 생성
-- [ ] 서버 호스팅 제공자 결정
-- [ ] 호스팅 프로젝트 생성
+- [x] 서버 호스팅 제공자 결정: Dothome
+- [ ] Dothome 호스팅 경로 연결: `https://recoba00.dothome.co.kr/our_share`
 - [ ] 배포 환경 변수 구성
 - [ ] 빌드/배포 명령 확인
 - [ ] 배포 URL 문서화
+- [ ] Firebase 프로젝트 생성
+- [ ] Firebase Web App 생성
+- [ ] Firebase Auth / Firestore / Realtime Database / Storage 활성화
+- [ ] Firebase 설정값 `.env` 구성
 
 ## Initial
 

@@ -8,3 +8,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Git 저장소 및 서버 호스팅 연동 필요 항목을 `TODO.md`에 추가했다.
 - 로컬 Git 저장소를 초기화하고 기본 `.gitignore`를 추가했다.
 - 초기 문서 정리 커밋을 생성했다.
+- GitHub 저장소 URL, Dothome 호스팅 URL, Firebase 프로젝트 생성 예정 상태를 문서에 반영했다.
+- Git 원격 저장소 `origin`을 `https://github.com/recoba00/our_share.git`로 연결했다.

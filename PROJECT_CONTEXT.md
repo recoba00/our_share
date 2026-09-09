@@ -50,6 +50,12 @@ Firebase 사용.
 - Firebase Storage: 프로필 이미지, 채팅 이미지, 가족 공유 파일 저장
 - Cloud Functions: 알림 발송, 민감정보 서버 처리, 가족 초대 처리, 예약 알림
 
+## 외부 연동
+
+- GitHub Repository: `https://github.com/recoba00/our_share`
+- Hosting URL: `https://recoba00.dothome.co.kr/our_share`
+- Firebase Project: 생성 예정
+
 ## 앱 정보 구조
 
 Bottom Navigation:

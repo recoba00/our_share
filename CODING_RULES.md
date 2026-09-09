@@ -199,3 +199,5 @@ Color는 CSS Variable / Tailwind Theme Token으로 관리한다.
 - 배포 환경 변수는 로컬 `.env`와 분리해 호스팅 서비스의 환경 변수 관리 기능에 등록한다.
 - 배포 URL이 확정되면 `PROJECT_CONTEXT.md` 또는 별도 배포 문서에 기록한다.
 - 빌드 명령, 배포 명령, Firebase 설정 변경은 `CHANGELOG.md`에 기록한다.
+- Dothome 접속 계정과 비밀번호는 문서, Git 설정, 소스코드에 저장하지 않는다.
+- GitHub 접속 계정과 비밀번호 또는 토큰은 문서, Git 설정, 소스코드에 저장하지 않는다.
