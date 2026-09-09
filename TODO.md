@@ -161,5 +161,7 @@
 - [x] Realtime Database Rules Draft
 - [x] Firebase Rules Deployment Guide
 - [ ] Firebase Console Rules Publish
-- [ ] Realtime Database Membership Mirror
+- [x] Realtime Database Membership Mirror
+- [ ] Realtime Database Membership Backfill
+- [ ] Admin SDK Membership Mirror Sync
 - [ ] Firestore Rules Test

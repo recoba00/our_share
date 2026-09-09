@@ -88,3 +88,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Realtime Database 보안 규칙 초안 `database.rules.json`을 추가했다.
 - Firebase Rules 배포용 `firebase.json`과 콘솔 적용 안내 `SECURITY_RULES.md`를 추가했다.
 - RTDB Rules는 Firestore membership을 직접 참조할 수 없으므로 가족 단위 위치 읽기 제한을 후속 membership mirror 작업으로 남겼다.
+- 가족 생성/초대 참여 시 Realtime Database `familyMembers/{familyId}/{userId}` mirror를 함께 기록하도록 추가했다.
+- RTDB `liveLocations`, `onlinePresence`, `deviceStatus` 읽기/쓰기 조건을 membership mirror 기준으로 강화했다.
+- 클라이언트 기반 membership mirror는 MVP용이며 운영 보안 경계로는 Admin SDK 또는 Cloud Functions 기반 동기화가 필요함을 문서화했다.
+- 기존 사용자에 대한 RTDB membership backfill과 서버 권한 mirror 동기화는 후속 작업으로 남겼다.

@@ -2,28 +2,37 @@
   "rules": {
     ".read": false,
     ".write": false,
+    "familyMembers": {
+      "$familyId": {
+        "$userId": {
+          ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['role', 'userId', 'updatedAt']) && newData.child('userId').val() == $userId && newData.child('role').isString() && newData.child('updatedAt').isNumber()"
+        }
+      }
+    },
     "liveLocations": {
       "$familyId": {
-        ".read": "auth != null",
+        ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
         "$userId": {
-          ".write": "auth != null && auth.uid == $userId",
+          ".write": "auth != null && auth.uid == $userId && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
           ".validate": "newData.hasChildren(['latitude', 'longitude', 'accuracy', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('longitude').isNumber() && newData.child('accuracy').isNumber() && newData.child('updatedAt').isNumber()"
         }
       }
     },
     "onlinePresence": {
       "$familyId": {
-        ".read": "auth != null",
+        ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
         "$userId": {
-          ".write": "auth != null && auth.uid == $userId"
+          ".write": "auth != null && auth.uid == $userId && root.child('familyMembers').child($familyId).child(auth.uid).exists()"
         }
       }
     },
     "deviceStatus": {
       "$familyId": {
-        ".read": "auth != null",
+        ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
         "$userId": {
-          ".write": "auth != null && auth.uid == $userId"
+          ".write": "auth != null && auth.uid == $userId && root.child('familyMembers').child($familyId).child(auth.uid).exists()"
         }
       }
     }

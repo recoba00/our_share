@@ -10,7 +10,8 @@ import {
   setDoc,
   where,
 } from "firebase/firestore";
-import { db } from "../../../lib/firebase/app";
+import { ref, set } from "firebase/database";
+import { db, realtimeDb } from "../../../lib/firebase/app";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 
 type CreateFamilyInput = {
@@ -161,6 +162,12 @@ async function upsertFamilyMember({
     },
     { merge: true }
   );
+
+  await set(ref(realtimeDb, `familyMembers/${familyId}/${user.uid}`), {
+    role,
+    userId: user.uid,
+    updatedAt: Date.now(),
+  });
 }
 
 function createInviteCode() {
