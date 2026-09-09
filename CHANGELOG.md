@@ -64,3 +64,8 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 민감 메모 본문은 개인 비밀번호 기반 Web Crypto AES-GCM 암호화 후 저장하고, 열람 시 비밀번호로 복호화하도록 구성했다.
 - `visibleTo` 기반 민감 메모 표시 필터를 추가했다.
 - `npm run lint`, `npm run build`, 로컬 `/our_share/memo` 응답 검증을 통과했다.
+- Firestore 기반 캘린더 일정 타입과 서비스를 추가했다.
+- 캘린더 화면에 가족별 일정 실시간 목록, 월간 그리드, 일정 등록/수정/삭제 흐름을 연결했다.
+- 매년 반복 일정과 휴무일 체크 옵션을 `calendarEvents` 데이터에 저장하고 월간 캘린더에 표시하도록 구현했다.
+- 기념일/생일 분류를 일정 카테고리로 선택할 수 있게 추가했다.
+- `npm run lint`, `npm run build`, 로컬 `/our_share/calendar` 응답 검증을 통과했다.

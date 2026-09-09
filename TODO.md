@@ -105,14 +105,14 @@
 
 ## Calendar
 
-- [ ] Calendar UI
-- [ ] Event CRUD
-- [ ] Anniversary
+- [x] Calendar UI
+- [x] Event CRUD
+- [x] Anniversary
 - [ ] D-Day
 - [ ] Calendar Vote
-- [ ] Schedule Create
-- [ ] Yearly Recurring Schedule
-- [ ] Holiday / Day Off Check
+- [x] Schedule Create
+- [x] Yearly Recurring Schedule
+- [x] Holiday / Day Off Check
 
 ## Memo
 
