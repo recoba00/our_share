@@ -16,7 +16,7 @@
 - [ ] Phase 07: Map / Location
 - [ ] Phase 08: Calendar
 - [ ] Phase 09: Memo
-- [ ] Phase 10: Poll
+- [x] Phase 10: Poll
 - [ ] Phase 11: Notification
 - [ ] Phase 12: Chat
 - [ ] Phase 13: Security 강화
@@ -127,11 +127,12 @@
 
 ## Poll
 
-- [ ] Poll Create
-- [ ] Poll Vote
-- [ ] Multiple Choice
-- [ ] Date Poll
-- [ ] Result
+- [x] Poll Create
+- [x] Poll Vote
+- [x] Multiple Choice
+- [x] Date Poll
+- [x] Result
+- [ ] Send Poll to Chat Room
 
 ## Chat
 
