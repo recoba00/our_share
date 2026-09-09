@@ -87,7 +87,7 @@ VITE_FIREBASE_APP_ID
 VITE_FIREBASE_MEASUREMENT_ID
 ```
 
-Firebase 관련 Secrets가 하나라도 비어 있으면 배포 workflow가 `Validate Firebase build secrets` 단계에서 중단된다. 이 검사를 통과하지 못하면 Firebase 초기화값이 빠진 JS가 배포되어 웹 화면이 비어 보일 수 있다.
+Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드에 기본 fallback을 둔다. GitHub Secrets를 등록하면 배포 시 해당 값이 우선 적용되고, 등록하지 않아도 현재 MVP Firebase 프로젝트로 빌드된다.
 
 ## SPA 라우팅
 
