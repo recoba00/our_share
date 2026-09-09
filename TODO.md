@@ -154,3 +154,12 @@
 - [x] Read Status
 - [x] Text Message Only MVP
 - [ ] Image/File Upload Later
+
+## Security
+
+- [x] Firestore Rules Draft
+- [x] Realtime Database Rules Draft
+- [x] Firebase Rules Deployment Guide
+- [ ] Firebase Console Rules Publish
+- [ ] Realtime Database Membership Mirror
+- [ ] Firestore Rules Test

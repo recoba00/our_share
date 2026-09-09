@@ -1,0 +1,31 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "liveLocations": {
+      "$familyId": {
+        ".read": "auth != null",
+        "$userId": {
+          ".write": "auth != null && auth.uid == $userId",
+          ".validate": "newData.hasChildren(['latitude', 'longitude', 'accuracy', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('longitude').isNumber() && newData.child('accuracy').isNumber() && newData.child('updatedAt').isNumber()"
+        }
+      }
+    },
+    "onlinePresence": {
+      "$familyId": {
+        ".read": "auth != null",
+        "$userId": {
+          ".write": "auth != null && auth.uid == $userId"
+        }
+      }
+    },
+    "deviceStatus": {
+      "$familyId": {
+        ".read": "auth != null",
+        "$userId": {
+          ".write": "auth != null && auth.uid == $userId"
+        }
+      }
+    }
+  }
+}

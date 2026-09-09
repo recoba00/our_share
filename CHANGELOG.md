@@ -84,3 +84,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 채팅방 진입 시 상대 메시지를 `readBy` 배열에 자동 추가하는 읽음 처리 서비스를 구현했다.
 - 채팅 메시지 하단에 내 메시지 읽음 인원 수와 수신 메시지 읽음 상태를 표시했다.
 - `npm run lint`, `npm run build`, 로컬 `/our_share/chat` 응답 검증을 통과했다.
+- Firestore 보안 규칙 초안 `firestore.rules`를 추가했다.
+- Realtime Database 보안 규칙 초안 `database.rules.json`을 추가했다.
+- Firebase Rules 배포용 `firebase.json`과 콘솔 적용 안내 `SECURITY_RULES.md`를 추가했다.
+- RTDB Rules는 Firestore membership을 직접 참조할 수 없으므로 가족 단위 위치 읽기 제한을 후속 membership mirror 작업으로 남겼다.
