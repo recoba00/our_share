@@ -57,7 +57,7 @@ Firebase 사용.
 - Firebase Project: `our-share-6baf5`
 - Firebase Auth: Google 로그인 사용
 - Cloud Firestore: 서울 리전
-- Realtime Database: 싱가포르 리전
+- Realtime Database: 싱가포르 리전, `https://our-share-6baf5-default-rtdb.asia-southeast1.firebasedatabase.app`
 - Firebase Storage: Spark 요금제에서는 보류
 - Firebase Web App: 생성 완료
 

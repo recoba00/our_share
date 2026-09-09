@@ -36,7 +36,7 @@
 - [x] Realtime Database 싱가포르 리전 활성화
 - [x] Firebase Storage 보류 정책 반영
 - [x] Firebase 설정값 `.env` 구성
-- [ ] Realtime Database `databaseURL` 확인 후 `.env`에 추가
+- [x] Realtime Database `databaseURL` 확인 후 `.env`에 추가
 
 ## Initial
 

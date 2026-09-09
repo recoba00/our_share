@@ -17,3 +17,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase Web App 설정값을 로컬 `.env`에 추가하고, Git 공유용 `.env.example`을 생성했다.
 - Firebase 프로젝트 ID를 `our-share-6baf5`로 문서에 반영했다.
 - Realtime Database 연결에 필요한 `databaseURL` 확인 항목을 `TODO.md`에 추가했다.
+- Realtime Database URL을 로컬 `.env`에 추가하고 문서에 반영했다.
