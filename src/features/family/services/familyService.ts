@@ -11,7 +11,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
-import type { FamilyRole } from "../types/familyTypes";
+import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 
 type CreateFamilyInput = {
   name: string;
@@ -102,6 +102,38 @@ export async function getFirstFamilyForUser(userId: string) {
     name: familySnapshot.data().name as string,
     inviteCode: familySnapshot.data().inviteCode as string,
   };
+}
+
+export async function getFamilyMembers(
+  familyId: string
+): Promise<FamilyMemberProfile[]> {
+  const membersQuery = query(
+    collection(db, "familyMembers"),
+    where("familyId", "==", familyId)
+  );
+  const memberSnapshot = await getDocs(membersQuery);
+
+  return Promise.all(
+    memberSnapshot.docs.map(async (memberDoc) => {
+      const member = memberDoc.data();
+      const userId = member.userId as string;
+      const userSnapshot = await getDoc(doc(db, "users", userId));
+      const profile = userSnapshot.exists() ? userSnapshot.data() : {};
+
+      return {
+        familyId: member.familyId as string,
+        userId,
+        role: member.role as FamilyRole,
+        nickname: member.nickname as string,
+        relation: member.relation as string,
+        permissions: (member.permissions ?? []) as string[],
+        createdAt: member.createdAt,
+        displayName: (profile.displayName as string | null) ?? null,
+        email: (profile.email as string | null) ?? null,
+        photoURL: (profile.photoURL as string | null) ?? null,
+      };
+    })
+  );
 }
 
 async function upsertFamilyMember({

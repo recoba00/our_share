@@ -17,3 +17,9 @@ export type FamilyMember = {
   permissions: string[];
   createdAt: unknown;
 };
+
+export type FamilyMemberProfile = FamilyMember & {
+  displayName: string | null;
+  email: string | null;
+  photoURL: string | null;
+};

@@ -41,3 +41,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - SPA 라우팅을 위해 `public/.htaccess`를 추가했다.
 - GitHub Actions 배포 workflow를 `npm ci`, `npm run build`, `dist` FTP 업로드 순서로 수정했다.
 - GitHub Actions 빌드에 필요한 Firebase/Vite secrets 목록을 `DEPLOYMENT.md`에 추가했다.
+- 로그인 필요 화면을 위한 `RequireAuth` 컴포넌트를 추가하고 채팅/투표/메모/캘린더 라우트에 적용했다.
+- 가족 구성원 목록 조회 서비스를 추가하고 홈 화면에 가족 구성원 프로필 목록을 표시하도록 연결했다.
+- 공통 `Avatar` 컴포넌트를 추가했다.

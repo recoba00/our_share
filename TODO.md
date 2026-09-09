@@ -10,7 +10,7 @@
 - [x] Phase 01: 프로젝트 초기 세팅
 - [ ] Phase 02: Design System / Common UI
 - [x] Phase 03: Firebase 연결
-- [ ] Phase 04: Authentication
+- [x] Phase 04: Authentication
 - [ ] Phase 05: Family 생성 / 초대
 - [ ] Phase 06: Home Dashboard
 - [ ] Phase 07: Map / Location
@@ -69,9 +69,9 @@
 - [x] Pretendard Font
 - [x] Phosphor Icons
 - [x] Button
-- [ ] Input
+- [x] Input
 - [x] Card
-- [ ] Avatar
+- [x] Avatar
 - [ ] Modal
 - [ ] Bottom Sheet
 - [ ] Toast
@@ -82,16 +82,16 @@
 
 - [x] Login UI
 - [x] Google Login Action
-- [ ] Signup
+- [x] Signup via Google Auth
 - [x] Logout
-- [ ] Auth Guard
+- [x] Auth Guard
 
 ## Family
 
 - [x] Family Create
 - [x] Invite Code
 - [x] Join Family
-- [ ] Family Member List
+- [x] Family Member List
 - [ ] Member Permissions
 
 ## Location

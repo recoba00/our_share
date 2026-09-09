@@ -8,16 +8,19 @@ import {
   Plus,
   UsersThree,
 } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Avatar } from "../../components/common/Avatar";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createFamily,
+  getFamilyMembers,
   getFirstFamilyForUser,
   joinFamilyByInviteCode,
 } from "../../features/family/services/familyService";
+import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
 import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
 
 const family = [
@@ -35,12 +38,28 @@ export function HomePage() {
     inviteCode: string;
     name: string;
   } | null>(null);
+  const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const locationShare = useMyLocationShare({
     familyId: activeFamily?.id ?? null,
     userId: user?.uid ?? null,
   });
+
+  useEffect(() => {
+    if (!user || activeFamily) {
+      return;
+    }
+
+    void getFirstFamilyForUser(user.uid).then(async (result) => {
+      if (!result) {
+        return;
+      }
+
+      setActiveFamily(result);
+      setMembers(await getFamilyMembers(result.id));
+    });
+  }, [activeFamily, user]);
 
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
@@ -58,6 +77,7 @@ export function HomePage() {
         inviteCode: result.inviteCode,
         name: familyName.trim(),
       });
+      setMembers(await getFamilyMembers(result.id));
       setFeedback(`가족이 생성되었습니다. 초대 코드: ${result.inviteCode}`);
       setFamilyName("");
     } catch (error) {
@@ -86,6 +106,7 @@ export function HomePage() {
         inviteCode: inviteCode.trim().toUpperCase(),
         name: result.name,
       });
+      setMembers(await getFamilyMembers(result.id));
       setFeedback(`${result.name} 가족에 참여했습니다.`);
       setInviteCode("");
     } catch (error) {
@@ -148,6 +169,7 @@ export function HomePage() {
       }
 
       setActiveFamily(result);
+      setMembers(await getFamilyMembers(result.id));
       setFeedback(`${result.name} 가족 정보를 불러왔습니다.`);
     } catch (error) {
       setFeedback(getErrorMessage(error));
@@ -291,11 +313,35 @@ export function HomePage() {
       <Card className="lg:col-span-2">
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
-          <h3 className="text-base font-bold">다음 구현 대상</h3>
+          <h3 className="text-base font-bold">가족 구성원</h3>
         </div>
-        <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-          가족 구성원 목록과 권한 관리 화면을 이어서 연결합니다.
-        </p>
+        {members.length > 0 ? (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {members.map((member) => (
+              <div
+                className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4"
+                key={member.userId}
+              >
+                <Avatar
+                  alt={member.displayName ?? member.nickname}
+                  src={member.photoURL}
+                />
+                <div className="min-w-0">
+                  <strong className="block truncate">
+                    {member.displayName ?? member.nickname}
+                  </strong>
+                  <p className="mt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
+                    {member.role} · {member.email ?? "이메일 없음"}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
+            가족을 만들거나 초대 코드로 참여하면 구성원이 표시됩니다.
+          </p>
+        )}
       </Card>
     </div>
   );

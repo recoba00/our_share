@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { RequireAuth } from "../components/auth/RequireAuth";
 import { AppLayout } from "../components/layout/AppLayout";
 import { AuthProvider } from "../features/auth/AuthProvider";
 import { CalendarPage } from "../pages/calendar/CalendarPage";
@@ -13,10 +14,10 @@ export function App() {
       <AppLayout>
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/chat" element={<ChatPage />} />
-          <Route path="/poll" element={<PollPage />} />
-          <Route path="/memo" element={<MemoPage />} />
-          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+          <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
+          <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
+          <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AppLayout>
