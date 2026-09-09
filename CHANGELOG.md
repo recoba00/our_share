@@ -39,3 +39,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Dothome에서 개발용 루트 `index.html`이 서빙되어 화면이 보이지 않는 문제를 진단했다.
 - Dothome 배포는 프로젝트 루트가 아니라 `dist` 폴더 내용만 업로드해야 함을 `DEPLOYMENT.md`에 문서화했다.
 - SPA 라우팅을 위해 `public/.htaccess`를 추가했다.
+- GitHub Actions 배포 workflow를 `npm ci`, `npm run build`, `dist` FTP 업로드 순서로 수정했다.
+- GitHub Actions 빌드에 필요한 Firebase/Vite secrets 목록을 `DEPLOYMENT.md`에 추가했다.

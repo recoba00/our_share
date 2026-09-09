@@ -63,6 +63,30 @@ http://recoba00.dothome.co.kr/our_share/
 
 만약 `/src/main.tsx`가 보이면 빌드 결과물이 아니라 개발용 루트 파일이 업로드된 상태다.
 
+## GitHub Actions
+
+`.github/workflows/deploy.yml`은 `master` 브랜치 push 시 아래 순서로 동작한다.
+
+1. 저장소 checkout
+2. Node.js 설치
+3. `npm ci`
+4. `npm run build`
+5. `dist` 폴더 내용만 Dothome `html/our_share/`에 FTP 업로드
+
+GitHub Repository Secrets에 아래 값을 등록해야 한다.
+
+```text
+FTP_PASSWORD
+VITE_FIREBASE_API_KEY
+VITE_FIREBASE_AUTH_DOMAIN
+VITE_FIREBASE_PROJECT_ID
+VITE_FIREBASE_DATABASE_URL
+VITE_FIREBASE_STORAGE_BUCKET
+VITE_FIREBASE_MESSAGING_SENDER_ID
+VITE_FIREBASE_APP_ID
+VITE_FIREBASE_MEASUREMENT_ID
+```
+
 ## SPA 라우팅
 
 `/our_share/calendar`, `/our_share/chat` 같은 경로 새로고침을 위해 `.htaccess`를 `dist`에 포함한다.
