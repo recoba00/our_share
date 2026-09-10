@@ -174,7 +174,7 @@
 - [x] Firestore Rules Draft
 - [x] Realtime Database Rules Draft
 - [x] Firebase Rules Deployment Guide
-- [ ] Firebase Console Rules Publish
+- [x] Firebase Console Rules Publish
 - [x] Realtime Database Membership Mirror
 - [x] Realtime Database Membership Backfill
 - [x] Family Invite Index

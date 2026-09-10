@@ -9,6 +9,11 @@ MVP 기능에서 사용하는 Firebase 데이터 접근을 로그인 사용자�
 - Firestore: `firestore.rules`
 - Realtime Database: `database.rules.json`
 - Firebase CLI 설정: `firebase.json`
+- Firebase Project Alias: `.firebaserc`
+
+## 배포 상태
+
+2026-09-10에 Firebase CLI `15.30.0`으로 `our-share-6baf5` 프로젝트에 Firestore Rules와 Realtime Database Rules를 게시했다.
 
 ## Firestore 적용 방법
 

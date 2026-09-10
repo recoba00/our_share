@@ -138,3 +138,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firestore Rules에서 family member 생성, 일정/메모/투표/채팅/메시지/투표값의 필드 크기와 update bypass 방어 조건을 보강했다.
 - Realtime Database Rules에서 membership mirror 역할 쓰기와 위치 좌표 validate 조건을 강화했다.
 - `SECURITY_RULES.md`에 `familyInvites` 기반 초대 정책과 RTDB mirror backfill MVP 방식을 문서화했다.
+- Firebase CLI `15.30.0`으로 `our-share-6baf5` 프로젝트에 Firestore Rules와 Realtime Database Rules를 실제 게시했다.
+- Firebase CLI 기본 프로젝트를 명시하기 위해 `.firebaserc`를 추가했다.
+- Rules 게시 완료에 맞춰 `TODO.md`의 Firebase Console Rules Publish 항목을 완료로 갱신했다.
