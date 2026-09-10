@@ -20,6 +20,20 @@ type CreateSecretRoomInput = {
   name: string;
 };
 
+type CreateDirectRoomInput = {
+  createdBy: string;
+  familyId: string;
+  targetUserId: string;
+  targetUserName: string;
+};
+
+type CreatePrivateGroupRoomInput = {
+  createdBy: string;
+  familyId: string;
+  memberIds: string[];
+  name: string;
+};
+
 type SendTextMessageInput = {
   createdBy: string;
   familyId: string;
@@ -94,6 +108,75 @@ export async function createSecretRoom({
   return roomRef.id;
 }
 
+export async function getOrCreateDirectRoom({
+  createdBy,
+  familyId,
+  targetUserId,
+  targetUserName,
+}: CreateDirectRoomInput) {
+  if (createdBy === targetUserId) {
+    throw new Error("본인과의 1:1 채팅방은 만들 수 없습니다.");
+  }
+
+  const memberIds = [createdBy, targetUserId].sort();
+  const roomId = `${familyId}_direct_${memberIds.join("_")}`;
+  const roomRef = doc(db, "chatRooms", roomId);
+
+  await setDoc(
+    roomRef,
+    {
+      id: roomId,
+      familyId,
+      type: "DIRECT",
+      name: `${targetUserName}님과의 대화`,
+      memberIds,
+      createdBy,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+      lastMessageText: null,
+      lastMessageAt: null,
+    },
+    { merge: true }
+  );
+
+  return roomId;
+}
+
+export async function createPrivateGroupRoom({
+  createdBy,
+  familyId,
+  memberIds,
+  name,
+}: CreatePrivateGroupRoomInput) {
+  const normalizedName = name.trim();
+  const normalizedMemberIds = Array.from(new Set([createdBy, ...memberIds]));
+
+  if (!normalizedName) {
+    throw new Error("그룹방 이름을 입력해주세요.");
+  }
+
+  if (normalizedMemberIds.length < 2) {
+    throw new Error("그룹방에는 본인 외 구성원 1명 이상이 필요합니다.");
+  }
+
+  const roomRef = doc(collection(db, "chatRooms"));
+
+  await setDoc(roomRef, {
+    id: roomRef.id,
+    familyId,
+    type: "PRIVATE_GROUP",
+    name: normalizedName,
+    memberIds: normalizedMemberIds,
+    createdBy,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    lastMessageText: null,
+    lastMessageAt: null,
+  });
+
+  return roomRef.id;
+}
+
 export function subscribeChatRooms({
   familyId,
   onChange,
@@ -115,7 +198,7 @@ export function subscribeChatRooms({
         (room) =>
           room.type === "FAMILY" ||
           room.createdBy === userId ||
-          room.memberIds.includes(userId)
+          (room.memberIds ?? []).includes(userId)
       )
       .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
 

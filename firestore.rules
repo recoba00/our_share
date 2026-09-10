@@ -28,6 +28,15 @@ service cloud.firestore {
         (visibleTo.size() == 0 || request.auth.uid in visibleTo);
     }
 
+    function canAccessChatRoom(room) {
+      return isFamilyMember(room.familyId) &&
+        (
+          room.type == "FAMILY" ||
+          room.createdBy == request.auth.uid ||
+          request.auth.uid in room.memberIds
+        );
+    }
+
     match /users/{userId} {
       allow read: if signedIn();
       allow create, update: if signedIn() && request.auth.uid == userId;
@@ -133,19 +142,29 @@ service cloud.firestore {
     }
 
     match /chatRooms/{roomId} {
-      allow read: if isFamilyMember(resource.data.familyId);
+      allow read: if canAccessChatRoom(resource.data);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update: if isFamilyMember(resource.data.familyId);
-      allow delete: if isFamilyMember(resource.data.familyId) &&
+        request.resource.data.createdBy == request.auth.uid &&
+        (
+          request.resource.data.type == "FAMILY" ||
+          request.auth.uid in request.resource.data.memberIds
+        );
+      allow update: if canAccessChatRoom(resource.data);
+      allow delete: if canAccessChatRoom(resource.data) &&
         resource.data.createdBy == request.auth.uid;
     }
 
     match /messages/{messageId} {
-      allow read: if isFamilyMember(resource.data.familyId);
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)) &&
+        canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)).data);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update: if isFamilyMember(resource.data.familyId) &&
+        request.resource.data.createdBy == request.auth.uid &&
+        exists(/databases/$(database)/documents/chatRooms/$(request.resource.data.roomId)) &&
+        canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(request.resource.data.roomId)).data);
+      allow update: if signedIn() &&
+        exists(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)) &&
+        canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)).data) &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
       allow delete: if false;
     }

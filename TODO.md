@@ -18,7 +18,7 @@
 - [ ] Phase 09: Memo
 - [x] Phase 10: Poll
 - [ ] Phase 11: Notification
-- [ ] Phase 12: Chat
+- [x] Phase 12: Chat
 - [ ] Phase 13: Security 강화
 
 ## Git / Hosting
@@ -147,8 +147,8 @@
 ## Chat
 
 - [x] Family Room
-- [ ] DM
-- [ ] Private Group
+- [x] DM
+- [x] Private Group
 - [x] Secret Room
 - [x] Family Invite Entry
 - [x] Chat Poll Create
