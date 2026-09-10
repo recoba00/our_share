@@ -15,6 +15,7 @@ Date: 2026-09-10
 - [x] Firebase subscription errors surface in page status messages
 - [x] Runtime render errors show a recoverable fallback screen
 - [x] Diagnostics route exposes hosting, Firebase, browser, and location status
+- [x] Diagnostics route shows deployed build commit and build time
 
 ## Manual Web Smoke Test
 
@@ -30,6 +31,7 @@ Test account:
 Checklist:
 
 - [ ] Diagnostics route loads and shows expected Firebase project
+- [ ] Diagnostics route build commit matches latest GitHub commit
 - [ ] Google login succeeds
 - [ ] Logout succeeds
 - [ ] Create a family

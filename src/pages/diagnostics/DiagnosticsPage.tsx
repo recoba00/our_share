@@ -11,6 +11,7 @@ import { useMemo, type ReactNode } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useAuth } from "../../features/auth/useAuth";
+import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
 import { firebaseApp, realtimeDb } from "../../lib/firebase/app";
 
 type DiagnosticStatus = "ok" | "warning";
@@ -206,6 +207,16 @@ function createDiagnostics(authStatus: string, userId?: string) {
         label: "Build Mode",
         status: "ok",
       },
+      {
+        detail: getShortCommit(buildInfo.commit),
+        label: "Build Commit",
+        status: buildInfo.commit === "local" ? "warning" : "ok",
+      },
+      {
+        detail: formatBuildTime(buildInfo.time),
+        label: "Build Time",
+        status: buildInfo.time === "local" ? "warning" : "ok",
+      },
     ] satisfies DiagnosticItem[],
     location: [
       {
@@ -226,4 +237,15 @@ function createDiagnostics(authStatus: string, userId?: string) {
       },
     ] satisfies DiagnosticItem[],
   };
+}
+
+function formatBuildTime(value: string) {
+  if (value === "local") {
+    return "local";
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
 }
