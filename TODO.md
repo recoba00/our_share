@@ -19,7 +19,7 @@
 - [x] Phase 10: Poll
 - [x] Phase 11: Notification
 - [x] Phase 12: Chat
-- [ ] Phase 13: Security 강화
+- [x] Phase 13: Security 강화
 
 ## Git / Hosting
 
@@ -182,6 +182,9 @@
 - [x] Firestore Rules Update Bypass Guard
 - [x] Firestore Rules Field Size Guard
 - [x] Firestore Rules Test Harness
-- [ ] Java Runtime for Firebase Emulator
+- [x] Java Runtime for Firebase Emulator
+- [x] Firestore Rules Test
+
+## Post-MVP / Later
+
 - [ ] Admin SDK Membership Mirror Sync
-- [ ] Firestore Rules Test

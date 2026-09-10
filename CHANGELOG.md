@@ -144,3 +144,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firestore Security Rules 자동 테스트를 위해 `@firebase/rules-unit-testing`, `vitest` devDependency와 `npm run test:rules` 스크립트를 추가했다.
 - 가족 가입, 가족 문서 읽기, 채팅 메시지, 채팅방 멤버 변조, 투표 대리 작성 방지 시나리오를 검증하는 `tests/firestore.rules.test.ts`를 추가했다.
 - Firebase emulator 실행에 Java Runtime이 필요하며 현재 환경에서는 `java -version` 실행 실패로 rules 테스트 실행이 보류됨을 문서화했다.
+- Android Studio에 포함된 JBR을 자동 감지하는 `scripts/run-firestore-rules-tests.mjs`를 추가해 전역 Java 없이도 rules 테스트를 실행할 수 있게 했다.
+- `npm run test:rules`로 Firestore emulator 기반 Security Rules 테스트 8개가 모두 통과함을 확인했다.
+- Firestore Rules Test 완료에 맞춰 Phase 13 Security 강화를 완료로 갱신하고, Admin SDK membership mirror 동기화는 Post-MVP 항목으로 분리했다.

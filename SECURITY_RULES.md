@@ -74,7 +74,7 @@ npm run test:rules
 
 주의:
 
-Firestore emulator는 Java Runtime이 필요하다. Java가 설치되어 있지 않거나 PATH에 없으면 `Could not spawn java -version` 오류로 테스트가 실행되지 않는다.
+Firestore emulator는 Java Runtime이 필요하다. 이 프로젝트의 `npm run test:rules`는 전역 Java가 없을 때 Android Studio에 포함된 JBR을 자동으로 감지해 사용한다.
 
 ## 현재 MVP 정책
 

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test:rules": "npx -y firebase-tools@latest emulators:exec --only firestore \"vitest run tests/firestore.rules.test.ts\""
+    "test:rules": "node scripts/run-firestore-rules-tests.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
