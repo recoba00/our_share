@@ -12,6 +12,7 @@ Date: 2026-09-10
 - [x] Dothome root URL returns built Vite HTML
 - [x] Dothome SPA route fallback returns 200
 - [x] Dothome manifest returns explicit `Content-Type`
+- [x] Firebase subscription errors surface in page status messages
 
 ## Manual Web Smoke Test
 

@@ -54,6 +54,7 @@ export function PollPage() {
         setRooms(nextRooms);
         setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");
       },
+      onError: setFeedback,
       userId: user.uid,
     });
   }, [family, user]);

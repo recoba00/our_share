@@ -13,6 +13,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
+import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { ChatMessage, ChatRoom } from "../types/chatTypes";
 
 type CreateSecretRoomInput = {
@@ -183,10 +184,12 @@ export async function createPrivateGroupRoom({
 export function subscribeChatRooms({
   familyId,
   onChange,
+  onError,
   userId,
 }: {
   familyId: string;
   onChange: (rooms: ChatRoom[]) => void;
+  onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
   const roomsQuery = query(
@@ -194,26 +197,34 @@ export function subscribeChatRooms({
     where("familyId", "==", familyId)
   );
 
-  return onSnapshot(roomsQuery, (snapshot) => {
-    const rooms = snapshot.docs
-      .map((roomDoc) => roomDoc.data() as ChatRoom)
-      .filter(
-        (room) =>
-          room.type === "FAMILY" ||
-          room.createdBy === userId ||
-          (room.memberIds ?? []).includes(userId)
-      )
-      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+  return onSnapshot(
+    roomsQuery,
+    (snapshot) => {
+      const rooms = snapshot.docs
+        .map((roomDoc) => roomDoc.data() as ChatRoom)
+        .filter(
+          (room) =>
+            room.type === "FAMILY" ||
+            room.createdBy === userId ||
+            (room.memberIds ?? []).includes(userId)
+        )
+        .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
 
-    onChange(rooms);
-  });
+      onChange(rooms);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 export function subscribeMessages({
   onChange,
+  onError,
   roomId,
 }: {
   onChange: (messages: ChatMessage[]) => void;
+  onError?: (message: string) => void;
   roomId: string;
 }): Unsubscribe {
   const messagesQuery = query(
@@ -221,13 +232,19 @@ export function subscribeMessages({
     where("roomId", "==", roomId)
   );
 
-  return onSnapshot(messagesQuery, (snapshot) => {
-    const messages = snapshot.docs
-      .map((messageDoc) => messageDoc.data() as ChatMessage)
-      .sort((a, b) => getTime(a.createdAt) - getTime(b.createdAt));
+  return onSnapshot(
+    messagesQuery,
+    (snapshot) => {
+      const messages = snapshot.docs
+        .map((messageDoc) => messageDoc.data() as ChatMessage)
+        .sort((a, b) => getTime(a.createdAt) - getTime(b.createdAt));
 
-    onChange(messages);
-  });
+      onChange(messages);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 export async function sendTextMessage({

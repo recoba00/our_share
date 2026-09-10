@@ -114,23 +114,27 @@ export function HomePage() {
       subscribeCalendarEvents({
         familyId: activeFamily.id,
         onChange: setCalendarEvents,
+        onError: setFeedback,
         userId: user.uid,
       }),
       subscribeChatRooms({
         familyId: activeFamily.id,
         onChange: setChatRooms,
+        onError: setFeedback,
         userId: user.uid,
       }),
       subscribeMemos({
         familyId: activeFamily.id,
         onChange: setMemos,
+        onError: setFeedback,
         userId: user.uid,
       }),
       subscribePolls({
         familyId: activeFamily.id,
         onChange: setPolls,
+        onError: setFeedback,
       }),
-      subscribeFamilyLocations(activeFamily.id, setLiveLocations),
+      subscribeFamilyLocations(activeFamily.id, setLiveLocations, setFeedback),
     ];
 
     return () => {

@@ -172,6 +172,7 @@ export function ChatPage() {
     return subscribeChatRooms({
       familyId: activeFamily.id,
       onChange: setRooms,
+      onError: setStatusMessage,
       userId: user.uid,
     });
   }, [activeFamily, user]);
@@ -184,6 +185,7 @@ export function ChatPage() {
     return subscribePolls({
       familyId: activeFamily.id,
       onChange: setPolls,
+      onError: setStatusMessage,
     });
   }, [activeFamily]);
 
@@ -194,6 +196,7 @@ export function ChatPage() {
 
     return subscribeMessages({
       onChange: setMessages,
+      onError: setStatusMessage,
       roomId: selectedRoom.id,
     });
   }, [selectedRoom]);

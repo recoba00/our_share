@@ -11,6 +11,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
+import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type {
   CalendarEvent,
   CalendarEventCategory,
@@ -84,10 +85,12 @@ export async function deleteCalendarEvent(eventId: string) {
 export function subscribeCalendarEvents({
   familyId,
   onChange,
+  onError,
   userId,
 }: {
   familyId: string;
   onChange: (events: CalendarEvent[]) => void;
+  onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
   const eventsQuery = query(
@@ -95,19 +98,25 @@ export function subscribeCalendarEvents({
     where("familyId", "==", familyId)
   );
 
-  return onSnapshot(eventsQuery, (snapshot) => {
-    const events = snapshot.docs
-      .map((eventDoc) => eventDoc.data() as CalendarEvent)
-      .filter(
-        (event) =>
-          event.visibleTo.length === 0 ||
-          event.createdBy === userId ||
-          event.visibleTo.includes(userId)
-      )
-      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+  return onSnapshot(
+    eventsQuery,
+    (snapshot) => {
+      const events = snapshot.docs
+        .map((eventDoc) => eventDoc.data() as CalendarEvent)
+        .filter(
+          (event) =>
+            event.visibleTo.length === 0 ||
+            event.createdBy === userId ||
+            event.visibleTo.includes(userId)
+        )
+        .sort((a, b) => a.startDate.localeCompare(b.startDate));
 
-    onChange(events);
-  });
+      onChange(events);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 function validateCalendarEvent(input: SaveCalendarEventInput) {

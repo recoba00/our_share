@@ -66,6 +66,7 @@ export function MemoPage() {
     return subscribeMemos({
       familyId: activeFamily.id,
       onChange: setMemos,
+      onError: setStatusMessage,
       userId: user.uid,
     });
   }, [activeFamily, user]);

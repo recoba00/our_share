@@ -36,7 +36,7 @@
 - [x] GitHub Actions `dist` 배포 workflow 구성
 - [x] GitHub Repository Secrets 등록
 - [x] Dothome 서버에 `dist` 폴더 내용만 업로드
-- [ ] Dothome manifest MIME type 확인
+- [x] Dothome manifest MIME type 확인
 - [ ] MVP 100% 완료 후 Firebase Hosting 이전
 - [ ] Firebase Hosting SPA rewrite 구성
 - [ ] GitHub Actions 배포 대상을 Firebase Hosting으로 교체

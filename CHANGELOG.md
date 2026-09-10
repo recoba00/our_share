@@ -150,3 +150,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - MVP 자동/수동 검증 항목을 추적하기 위해 `MVP_RELEASE_CHECKLIST.md`를 추가했다.
 - Dothome 배포 URL, GitHub Actions FTP 배포, `dist` 업로드가 실제 동작 확인된 상태에 맞춰 `TODO.md` 체크 상태를 정리했다.
 - Dothome Apache 환경에서 PWA manifest와 정적 자산 MIME 타입이 명확히 내려오도록 `public/.htaccess`에 `AddType` 설정을 추가했다.
+- Firebase 구독 오류 메시지를 공통으로 처리하는 `getFirebaseErrorMessage` 유틸을 추가했다.
+- 캘린더, 채팅, 메모, 투표, 위치 구독 함수에 오류 콜백을 추가해 권한/연결 오류가 화면 상태 메시지로 드러나도록 보완했다.
+- Dothome manifest MIME type 확인 상태를 `TODO.md`와 `MVP_RELEASE_CHECKLIST.md`에 맞춰 완료로 정리했다.

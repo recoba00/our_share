@@ -11,6 +11,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
+import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { Poll, PollType, PollVote } from "../types/pollTypes";
 
 type CreatePollInput = {
@@ -69,19 +70,27 @@ export async function getPolls(familyId: string): Promise<Poll[]> {
 export function subscribePolls({
   familyId,
   onChange,
+  onError,
 }: {
   familyId: string;
   onChange: (polls: Poll[]) => void;
+  onError?: (message: string) => void;
 }): Unsubscribe {
   const pollsQuery = query(collection(db, "polls"), where("familyId", "==", familyId));
 
-  return onSnapshot(pollsQuery, (snapshot) => {
-    const polls = snapshot.docs
-      .map((pollDoc) => pollDoc.data() as Poll)
-      .sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+  return onSnapshot(
+    pollsQuery,
+    (snapshot) => {
+      const polls = snapshot.docs
+        .map((pollDoc) => pollDoc.data() as Poll)
+        .sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
 
-    onChange(polls);
-  });
+      onChange(polls);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 export async function votePoll({

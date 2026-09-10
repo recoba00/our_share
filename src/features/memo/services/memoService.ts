@@ -9,6 +9,7 @@ import {
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
+import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { Memo, MemoType } from "../types/memoTypes";
 
 type CreateMemoInput = {
@@ -64,27 +65,35 @@ export async function createMemo(input: CreateMemoInput) {
 export function subscribeMemos({
   familyId,
   onChange,
+  onError,
   userId,
 }: {
   familyId: string;
   onChange: (memos: Memo[]) => void;
+  onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
   const memosQuery = query(collection(db, "memos"), where("familyId", "==", familyId));
 
-  return onSnapshot(memosQuery, (snapshot) => {
-    const memos = snapshot.docs
-      .map((memoDoc) => memoDoc.data() as Memo)
-      .filter(
-        (memo) =>
-          memo.type === "PUBLIC" ||
-          memo.createdBy === userId ||
-          memo.visibleTo.includes(userId)
-      )
-      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+  return onSnapshot(
+    memosQuery,
+    (snapshot) => {
+      const memos = snapshot.docs
+        .map((memoDoc) => memoDoc.data() as Memo)
+        .filter(
+          (memo) =>
+            memo.type === "PUBLIC" ||
+            memo.createdBy === userId ||
+            memo.visibleTo.includes(userId)
+        )
+        .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
 
-    onChange(memos);
-  });
+      onChange(memos);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 export async function revealSensitiveMemo({

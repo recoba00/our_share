@@ -107,6 +107,7 @@ export function CalendarPage() {
     return subscribeCalendarEvents({
       familyId: activeFamily.id,
       onChange: setEvents,
+      onError: setStatusMessage,
       userId: user.uid,
     });
   }, [activeFamily, user]);

@@ -1,16 +1,24 @@
 import { onValue, ref, set } from "firebase/database";
 import { realtimeDb } from "../../../lib/firebase/app";
+import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { LiveLocation } from "../types/locationTypes";
 
 export function subscribeFamilyLocations(
   familyId: string,
-  callback: (locations: Record<string, LiveLocation>) => void
+  callback: (locations: Record<string, LiveLocation>) => void,
+  onError?: (message: string) => void
 ) {
   const locationsRef = ref(realtimeDb, `liveLocations/${familyId}`);
 
-  return onValue(locationsRef, (snapshot) => {
-    callback((snapshot.val() ?? {}) as Record<string, LiveLocation>);
-  });
+  return onValue(
+    locationsRef,
+    (snapshot) => {
+      callback((snapshot.val() ?? {}) as Record<string, LiveLocation>);
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
 }
 
 export async function updateMyLiveLocation({
