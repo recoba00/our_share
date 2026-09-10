@@ -29,13 +29,14 @@
 - [x] 초기 커밋 생성
 - [x] GitHub 원격 저장소 push
 - [x] 서버 호스팅 제공자 결정: Dothome
-- [ ] Dothome 호스팅 경로 연결: `http://recoba00.dothome.co.kr/our_share`
+- [x] Dothome 호스팅 경로 연결: `http://recoba00.dothome.co.kr/our_share`
 - [x] 배포 환경 변수 구성
 - [x] 빌드/배포 명령 확인
 - [x] 배포 URL 문서화
 - [x] GitHub Actions `dist` 배포 workflow 구성
-- [ ] GitHub Repository Secrets 등록
-- [ ] Dothome 서버에 `dist` 폴더 내용만 업로드
+- [x] GitHub Repository Secrets 등록
+- [x] Dothome 서버에 `dist` 폴더 내용만 업로드
+- [ ] Dothome manifest MIME type 확인
 - [ ] MVP 100% 완료 후 Firebase Hosting 이전
 - [ ] Firebase Hosting SPA rewrite 구성
 - [ ] GitHub Actions 배포 대상을 Firebase Hosting으로 교체

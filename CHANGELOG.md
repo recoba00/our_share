@@ -147,3 +147,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Android Studio에 포함된 JBR을 자동 감지하는 `scripts/run-firestore-rules-tests.mjs`를 추가해 전역 Java 없이도 rules 테스트를 실행할 수 있게 했다.
 - `npm run test:rules`로 Firestore emulator 기반 Security Rules 테스트 8개가 모두 통과함을 확인했다.
 - Firestore Rules Test 완료에 맞춰 Phase 13 Security 강화를 완료로 갱신하고, Admin SDK membership mirror 동기화는 Post-MVP 항목으로 분리했다.
+- MVP 자동/수동 검증 항목을 추적하기 위해 `MVP_RELEASE_CHECKLIST.md`를 추가했다.
+- Dothome 배포 URL, GitHub Actions FTP 배포, `dist` 업로드가 실제 동작 확인된 상태에 맞춰 `TODO.md` 체크 상태를 정리했다.
+- Dothome Apache 환경에서 PWA manifest와 정적 자산 MIME 타입이 명확히 내려오도록 `public/.htaccess`에 `AddType` 설정을 추가했다.

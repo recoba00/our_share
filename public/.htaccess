@@ -1,3 +1,8 @@
+AddType application/manifest+json .webmanifest
+AddType image/svg+xml .svg
+AddType text/css .css
+AddType application/javascript .js
+
 <IfModule mod_rewrite.c>
   RewriteEngine On
   RewriteBase /our_share/

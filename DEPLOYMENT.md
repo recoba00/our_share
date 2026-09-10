@@ -63,6 +63,17 @@ http://recoba00.dothome.co.kr/our_share/
 
 만약 `/src/main.tsx`가 보이면 빌드 결과물이 아니라 개발용 루트 파일이 업로드된 상태다.
 
+## Apache MIME 타입
+
+Dothome Apache 환경에서 PWA manifest가 명확한 MIME 타입으로 내려오도록 `public/.htaccess`에 아래 타입을 명시한다.
+
+```apache
+AddType application/manifest+json .webmanifest
+AddType image/svg+xml .svg
+AddType text/css .css
+AddType application/javascript .js
+```
+
 ## GitHub Actions
 
 `.github/workflows/deploy.yml`은 `master` 브랜치 push 시 아래 순서로 동작한다.
