@@ -128,3 +128,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 알림 권한이 이미 허용된 경우 홈 데이터 갱신 시 대시보드 알림을 자동 평가하도록 연결했다.
 - Memo 상위 Phase 체크 상태를 세부 완료 항목과 맞춰 완료로 정리했다.
 - Notification MVP 하위 작업 완료에 맞춰 Phase 11 Notification 체크 상태를 완료로 갱신했다.
+- MVP 100% 완료 후 Dothome에서 Firebase Hosting으로 이전하는 호스팅 전략을 `PROJECT_CONTEXT.md`에 추가했다.
+- Firebase Hosting 이전 시 필요한 SPA rewrite, Vite base 검토, GitHub Actions 배포 대상 교체 작업을 `TODO.md`에 추가했다.
