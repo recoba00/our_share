@@ -11,7 +11,7 @@ Date: 2026-09-10
 - [x] Firebase Realtime Database Rules published
 - [x] Dothome root URL returns built Vite HTML
 - [x] Dothome SPA route fallback returns 200
-- [ ] Dothome manifest returns explicit `Content-Type`
+- [x] Dothome manifest returns explicit `Content-Type`
 
 ## Manual Web Smoke Test
 
