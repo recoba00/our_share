@@ -13,6 +13,7 @@ Date: 2026-09-10
 - [x] Dothome SPA route fallback returns 200
 - [x] Dothome manifest returns explicit `Content-Type`
 - [x] Firebase subscription errors surface in page status messages
+- [x] Runtime render errors show a recoverable fallback screen
 
 ## Manual Web Smoke Test
 

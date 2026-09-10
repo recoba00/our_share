@@ -153,3 +153,9 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase 구독 오류 메시지를 공통으로 처리하는 `getFirebaseErrorMessage` 유틸을 추가했다.
 - 캘린더, 채팅, 메모, 투표, 위치 구독 함수에 오류 콜백을 추가해 권한/연결 오류가 화면 상태 메시지로 드러나도록 보완했다.
 - Dothome manifest MIME type 확인 상태를 `TODO.md`와 `MVP_RELEASE_CHECKLIST.md`에 맞춰 완료로 정리했다.
+
+## 2026-09-11
+
+- React 렌더링 오류가 발생해도 빈 화면으로 멈추지 않도록 공통 `ErrorBoundary` 컴포넌트를 추가했다.
+- 앱 루트의 `AppLayout`과 라우트 전체를 `ErrorBoundary`로 감싸고, 새로고침/홈 이동 복구 버튼을 제공하도록 연결했다.
+- MVP 릴리즈 체크리스트에 런타임 화면 오류 fallback 검증 항목을 추가했다.
