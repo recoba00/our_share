@@ -47,6 +47,35 @@ CLI 없이 Firebase Console에서 적용할 수도 있다.
 4. `database.rules.json`의 `rules` 객체 내용을 기준으로 붙여넣기
 5. Publish
 
+## Firestore Rules 테스트
+
+자동 테스트 파일:
+
+- `tests/firestore.rules.test.ts`
+
+실행 명령:
+
+```bash
+npm run test:rules
+```
+
+테스트 범위:
+
+- OWNER 가족 생성 bootstrapping 허용
+- 초대코드 기반 MEMBER 가입 허용
+- 초대코드 없는 임의 가족 가입 차단
+- 비구성원의 가족 문서 읽기 차단
+- 채팅방 구성원의 메시지 생성 허용
+- 비구성원의 메시지 생성 차단
+- 메시지 `readBy` 업데이트 허용
+- 메시지 본문 변조 차단
+- 채팅방 `memberIds` 변조 차단
+- 투표값 대리 작성 차단
+
+주의:
+
+Firestore emulator는 Java Runtime이 필요하다. Java가 설치되어 있지 않거나 PATH에 없으면 `Could not spawn java -version` 오류로 테스트가 실행되지 않는다.
+
 ## 현재 MVP 정책
 
 - `users`: 로그인 사용자는 읽기 가능, 본인 문서만 생성/수정 가능

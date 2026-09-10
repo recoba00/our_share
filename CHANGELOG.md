@@ -141,3 +141,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase CLI `15.30.0`으로 `our-share-6baf5` 프로젝트에 Firestore Rules와 Realtime Database Rules를 실제 게시했다.
 - Firebase CLI 기본 프로젝트를 명시하기 위해 `.firebaserc`를 추가했다.
 - Rules 게시 완료에 맞춰 `TODO.md`의 Firebase Console Rules Publish 항목을 완료로 갱신했다.
+- Firestore Security Rules 자동 테스트를 위해 `@firebase/rules-unit-testing`, `vitest` devDependency와 `npm run test:rules` 스크립트를 추가했다.
+- 가족 가입, 가족 문서 읽기, 채팅 메시지, 채팅방 멤버 변조, 투표 대리 작성 방지 시나리오를 검증하는 `tests/firestore.rules.test.ts`를 추가했다.
+- Firebase emulator 실행에 Java Runtime이 필요하며 현재 환경에서는 `java -version` 실행 실패로 rules 테스트 실행이 보류됨을 문서화했다.

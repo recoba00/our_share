@@ -181,5 +181,7 @@
 - [x] Firebase Rules Security Audit
 - [x] Firestore Rules Update Bypass Guard
 - [x] Firestore Rules Field Size Guard
+- [x] Firestore Rules Test Harness
+- [ ] Java Runtime for Firebase Emulator
 - [ ] Admin SDK Membership Mirror Sync
 - [ ] Firestore Rules Test
