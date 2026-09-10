@@ -15,9 +15,9 @@
 - [x] Phase 06: Home Dashboard
 - [x] Phase 07: Map / Location
 - [x] Phase 08: Calendar
-- [ ] Phase 09: Memo
+- [x] Phase 09: Memo
 - [x] Phase 10: Poll
-- [ ] Phase 11: Notification
+- [x] Phase 11: Notification
 - [x] Phase 12: Chat
 - [ ] Phase 13: Security 강화
 
@@ -156,6 +156,14 @@
 - [x] Read Status
 - [x] Text Message Only MVP
 - [ ] Image/File Upload Later
+
+## Notification
+
+- [x] Browser Notification Permission
+- [x] Today Calendar Reminder
+- [x] Poll Closing Soon Reminder
+- [x] Duplicate Reminder Guard
+- [ ] Push Notification with Cloud Functions Later
 
 ## Security
 

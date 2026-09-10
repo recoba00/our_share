@@ -1,5 +1,6 @@
 import {
   BatteryHigh,
+  BellRinging,
   CalendarDots,
   ChatCircleDots,
   GoogleLogo,
@@ -43,6 +44,12 @@ import { subscribeFamilyLocations } from "../../features/location/services/locat
 import type { LiveLocation } from "../../features/location/types/locationTypes";
 import { subscribeMemos } from "../../features/memo/services/memoService";
 import type { Memo } from "../../features/memo/types/memoTypes";
+import {
+  getNotificationAvailability,
+  getNotificationPermission,
+  notifyDashboardReminders,
+  requestNotificationPermission,
+} from "../../features/notification/services/notificationService";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
@@ -130,6 +137,19 @@ export function HomePage() {
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
   }, [activeFamily, user]);
+
+  useEffect(() => {
+    if (!activeFamily || !user || getNotificationPermission() !== "granted") {
+      return;
+    }
+
+    notifyDashboardReminders({
+      events: calendarEvents,
+      familyId: activeFamily.id,
+      polls,
+      userId: user.uid,
+    });
+  }, [activeFamily, calendarEvents, polls, user]);
 
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
@@ -312,6 +332,45 @@ export function HomePage() {
     }
   }
 
+  async function handleEnableNotifications() {
+    if (!activeFamily || !user) {
+      setFeedback("가족 정보를 먼저 불러와주세요.");
+      return;
+    }
+
+    const availability = getNotificationAvailability();
+
+    if (availability === "UNSUPPORTED") {
+      setFeedback("이 브라우저는 알림을 지원하지 않습니다.");
+      return;
+    }
+
+    if (availability === "INSECURE_CONTEXT") {
+      setFeedback("브라우저 알림은 HTTPS 또는 localhost 환경에서 사용할 수 있습니다.");
+      return;
+    }
+
+    const permission = await requestNotificationPermission();
+
+    if (permission !== "granted") {
+      setFeedback("브라우저 알림 권한이 허용되지 않았습니다.");
+      return;
+    }
+
+    const sentCount = notifyDashboardReminders({
+      events: calendarEvents,
+      familyId: activeFamily.id,
+      polls,
+      userId: user.uid,
+    });
+
+    setFeedback(
+      sentCount > 0
+        ? `오늘 확인할 알림 ${sentCount}개를 보냈습니다.`
+        : "알림을 켰습니다. 오늘 일정이나 24시간 내 마감 투표가 생기면 알려드릴게요."
+    );
+  }
+
   const isFamilyOwner = members.some(
     (member) => member.userId === user?.uid && member.role === "OWNER"
   );
@@ -409,6 +468,10 @@ export function HomePage() {
           <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
             <MapPin size={18} weight="bold" />
             현재 위치 공유
+          </Button>
+          <Button onClick={() => void handleEnableNotifications()} variant="secondary">
+            <BellRinging size={18} weight="bold" />
+            오늘 알림 켜기
           </Button>
           {feedback && (
             <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
