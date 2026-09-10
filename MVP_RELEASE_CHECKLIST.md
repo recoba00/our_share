@@ -17,6 +17,7 @@ Date: 2026-09-10
 - [x] Diagnostics route exposes hosting, Firebase, browser, and location status
 - [x] Diagnostics route shows deployed build commit and build time
 - [x] Diagnostics route includes local MVP smoke checklist tracking
+- [x] Diagnostics route includes live MVP write-permission probe
 
 ## Manual Web Smoke Test
 
@@ -33,6 +34,7 @@ Checklist:
 
 - [ ] Diagnostics route loads and shows expected Firebase project
 - [ ] Diagnostics route build commit matches latest GitHub commit
+- [ ] Diagnostics write-permission probe passes after login and family membership
 - [ ] Google login succeeds
 - [ ] Logout succeeds
 - [ ] Create a family

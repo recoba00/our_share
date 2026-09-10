@@ -8,6 +8,7 @@ import { readFileSync } from "node:fs";
 import {
   doc,
   getDoc,
+  serverTimestamp,
   setDoc,
   updateDoc,
 } from "firebase/firestore";
@@ -232,6 +233,89 @@ describe("poll vote rules", () => {
         selectedOptions: ["반대"],
         createdAt: new Date(),
         updatedAt: new Date(),
+      })
+    );
+  });
+});
+
+describe("MVP create flows", () => {
+  it("allows family members to create calendar events, memos, polls, and chat rooms", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "calendarEvents", "eventA"), {
+        id: "eventA",
+        familyId: "familyA",
+        title: "가족 일정",
+        description: "",
+        startDate: "2026-09-11",
+        endDate: "2026-09-11",
+        allDay: true,
+        category: "FAMILY",
+        repeat: "NONE",
+        isDayOff: false,
+        createdBy: "alice",
+        visibleTo: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "memos", "memoA"), {
+        id: "memoA",
+        familyId: "familyA",
+        title: "가족 메모",
+        content: "메모 내용",
+        type: "PUBLIC",
+        createdBy: "alice",
+        visibleTo: [],
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        encryptedContent: null,
+        encryptionIv: null,
+        encryptionSalt: null,
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "polls", "pollA"), {
+        id: "pollA",
+        familyId: "familyA",
+        chatRoomId: null,
+        title: "가족 투표",
+        description: "",
+        type: "GENERAL",
+        options: ["찬성", "반대"],
+        multipleChoice: false,
+        anonymous: false,
+        closesAt: null,
+        resultVisibility: "ALWAYS",
+        createdBy: "alice",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "chatRooms", "familyA_family"), {
+        id: "familyA_family",
+        familyId: "familyA",
+        type: "FAMILY",
+        name: "가족 전체방",
+        memberIds: [],
+        createdBy: "alice",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        lastMessageText: null,
+        lastMessageAt: null,
       })
     );
   });

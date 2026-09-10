@@ -4,6 +4,7 @@ import {
   CheckCircle,
   ClipboardText,
   Database,
+  FloppyDisk,
   MapPin,
   ShieldCheck,
   WarningCircle,
@@ -12,6 +13,10 @@ import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useAuth } from "../../features/auth/useAuth";
+import {
+  runMvpWriteProbe,
+  type WriteProbeResult,
+} from "../../features/diagnostics/services/writeProbeService";
 import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
 import { firebaseApp, realtimeDb } from "../../lib/firebase/app";
 
@@ -56,6 +61,8 @@ export function DiagnosticsPage() {
   const [checkedItems, setCheckedItems] = useState<Set<string>>(() =>
     readStoredChecklist()
   );
+  const [probeResults, setProbeResults] = useState<WriteProbeResult[]>([]);
+  const [isRunningProbe, setIsRunningProbe] = useState(false);
   const diagnostics = useMemo(() => createDiagnostics(status, user?.uid), [
     status,
     user?.uid,
@@ -85,6 +92,36 @@ export function DiagnosticsPage() {
 
   function resetChecklist() {
     setCheckedItems(new Set());
+  }
+
+  async function handleRunWriteProbe() {
+    if (!user) {
+      setProbeResults([
+        {
+          detail: "저장 권한 검사는 Google 로그인 후 실행할 수 있습니다.",
+          label: "로그인 상태",
+          ok: false,
+        },
+      ]);
+      return;
+    }
+
+    setIsRunningProbe(true);
+    setProbeResults([]);
+
+    try {
+      setProbeResults(await runMvpWriteProbe(user.uid));
+    } catch (error) {
+      setProbeResults([
+        {
+          detail: error instanceof Error ? error.message : "저장 권한 검사에 실패했습니다.",
+          label: "저장 권한 검사",
+          ok: false,
+        },
+      ]);
+    } finally {
+      setIsRunningProbe(false);
+    }
   }
 
   return (
@@ -132,6 +169,47 @@ export function DiagnosticsPage() {
           title="위치"
         />
       </section>
+
+      <Card className="lg:col-span-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="rounded-2xl bg-brand-soft p-3 text-brand">
+              <FloppyDisk size={24} weight="bold" />
+            </span>
+            <div>
+              <h3 className="text-base font-bold">저장 권한 검사</h3>
+              <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
+                현재 로그인 계정으로 캘린더, 메모, 투표, 채팅방 저장을 실제로
+                시도하고 자동 삭제합니다.
+              </p>
+            </div>
+          </div>
+          <Button disabled={isRunningProbe} onClick={handleRunWriteProbe}>
+            {isRunningProbe ? "검사 중" : "검사 실행"}
+          </Button>
+        </div>
+
+        {probeResults.length > 0 && (
+          <ul className="mt-5 grid gap-3 md:grid-cols-2">
+            {probeResults.map((result) => (
+              <li
+                className="rounded-2xl bg-[var(--color-surface-muted)] p-4"
+                key={result.label}
+              >
+                <div className="flex items-start gap-3">
+                  <StatusIcon status={result.ok ? "ok" : "warning"} />
+                  <div className="min-w-0">
+                    <strong className="block text-sm">{result.label}</strong>
+                    <p className="mt-1 break-words text-xs font-semibold leading-5 text-[var(--color-text-secondary)]">
+                      {result.detail}
+                    </p>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Card>
 
       <Card className="lg:col-span-2">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
