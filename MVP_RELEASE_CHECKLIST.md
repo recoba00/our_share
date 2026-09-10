@@ -14,12 +14,14 @@ Date: 2026-09-10
 - [x] Dothome manifest returns explicit `Content-Type`
 - [x] Firebase subscription errors surface in page status messages
 - [x] Runtime render errors show a recoverable fallback screen
+- [x] Diagnostics route exposes hosting, Firebase, browser, and location status
 
 ## Manual Web Smoke Test
 
 Run from:
 
 - `http://recoba00.dothome.co.kr/our_share/`
+- `http://recoba00.dothome.co.kr/our_share/diagnostics`
 
 Test account:
 
@@ -27,6 +29,7 @@ Test account:
 
 Checklist:
 
+- [ ] Diagnostics route loads and shows expected Firebase project
 - [ ] Google login succeeds
 - [ ] Logout succeeds
 - [ ] Create a family

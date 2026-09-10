@@ -6,6 +6,7 @@ import { AppLayout } from "../components/layout/AppLayout";
 import { AuthProvider } from "../features/auth/AuthProvider";
 import { CalendarPage } from "../pages/calendar/CalendarPage";
 import { ChatPage } from "../pages/chat/ChatPage";
+import { DiagnosticsPage } from "../pages/diagnostics/DiagnosticsPage";
 import { HomePage } from "../pages/home/HomePage";
 import { MemoPage } from "../pages/memo/MemoPage";
 import { PollPage } from "../pages/poll/PollPage";
@@ -22,6 +23,7 @@ export function App() {
               <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
               <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
               <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
+              <Route path="/diagnostics" element={<DiagnosticsPage />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </AppLayout>
