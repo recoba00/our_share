@@ -163,3 +163,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - MVP 릴리즈 체크리스트에 진단 화면 수동 확인 항목을 추가했다.
 - GitHub Actions 배포 빌드에 `VITE_BUILD_COMMIT`, `VITE_BUILD_TIME`을 주입하도록 설정했다.
 - `/diagnostics` 화면의 호스팅 섹션에 배포 커밋과 빌드 시각을 표시하도록 추가했다.
+- `/diagnostics` 화면에 브라우저 `localStorage` 기반 MVP 수동 테스트 체크 패널과 진행률 표시를 추가했다.

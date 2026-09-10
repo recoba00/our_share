@@ -16,6 +16,7 @@ Date: 2026-09-10
 - [x] Runtime render errors show a recoverable fallback screen
 - [x] Diagnostics route exposes hosting, Firebase, browser, and location status
 - [x] Diagnostics route shows deployed build commit and build time
+- [x] Diagnostics route includes local MVP smoke checklist tracking
 
 ## Manual Web Smoke Test
 

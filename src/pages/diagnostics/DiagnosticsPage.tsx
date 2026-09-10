@@ -2,12 +2,13 @@ import {
   Bell,
   Browser,
   CheckCircle,
+  ClipboardText,
   Database,
   MapPin,
   ShieldCheck,
   WarningCircle,
 } from "@phosphor-icons/react";
-import { useMemo, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useAuth } from "../../features/auth/useAuth";
@@ -22,12 +23,69 @@ type DiagnosticItem = {
   status: DiagnosticStatus;
 };
 
+const smokeChecklistItems = [
+  "진단 화면에서 Firebase 프로젝트가 our-share-6baf5로 보인다",
+  "진단 화면의 Build Commit이 최신 GitHub 커밋과 일치한다",
+  "Google 로그인에 성공한다",
+  "로그아웃에 성공한다",
+  "가족을 생성하고 초대 코드가 표시된다",
+  "다른 계정이 초대 코드로 가족에 참여한다",
+  "가족 구성원 목록이 표시된다",
+  "OWNER가 구성원 역할을 변경할 수 있다",
+  "현재 위치 공유가 권한 허용 후 성공한다",
+  "가족 위치 카드가 표시된다",
+  "빠른 메시지가 가족 채팅방으로 전송된다",
+  "일반 메모를 생성할 수 있다",
+  "민감 메모를 생성하고 올바른 비밀번호로 열 수 있다",
+  "민감 메모가 잘못된 비밀번호를 거부한다",
+  "일정을 등록할 수 있다",
+  "매년 반복 일정과 휴무일 일정을 등록할 수 있다",
+  "캘린더 날짜 투표를 생성할 수 있다",
+  "일반 투표를 생성하고 투표할 수 있다",
+  "투표를 채팅방으로 전송할 수 있다",
+  "가족방 텍스트 메시지를 전송할 수 있다",
+  "1:1 채팅방과 그룹방을 열 수 있다",
+  "채팅 읽음 상태가 갱신된다",
+  "브라우저 알림 권한 흐름을 확인한다",
+];
+
+const smokeChecklistStorageKey = "our-share:mvp-smoke-checklist";
+
 export function DiagnosticsPage() {
   const { status, user } = useAuth();
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(() =>
+    readStoredChecklist()
+  );
   const diagnostics = useMemo(() => createDiagnostics(status, user?.uid), [
     status,
     user?.uid,
   ]);
+  const completedCount = checkedItems.size;
+
+  useEffect(() => {
+    window.localStorage.setItem(
+      smokeChecklistStorageKey,
+      JSON.stringify([...checkedItems])
+    );
+  }, [checkedItems]);
+
+  function toggleChecklistItem(item: string) {
+    setCheckedItems((current) => {
+      const next = new Set(current);
+
+      if (next.has(item)) {
+        next.delete(item);
+      } else {
+        next.add(item);
+      }
+
+      return next;
+    });
+  }
+
+  function resetChecklist() {
+    setCheckedItems(new Set());
+  }
 
   return (
     <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
@@ -74,6 +132,52 @@ export function DiagnosticsPage() {
           title="위치"
         />
       </section>
+
+      <Card className="lg:col-span-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex items-start gap-3">
+            <span className="rounded-2xl bg-brand-soft p-3 text-brand">
+              <ClipboardText size={24} weight="bold" />
+            </span>
+            <div>
+              <h3 className="text-base font-bold">MVP 수동 테스트</h3>
+              <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
+                {completedCount}/{smokeChecklistItems.length}개 확인됨
+              </p>
+            </div>
+          </div>
+          <Button onClick={resetChecklist} variant="secondary">
+            초기화
+          </Button>
+        </div>
+
+        <div className="mt-5 h-2 overflow-hidden rounded-full bg-[var(--color-surface-muted)]">
+          <div
+            className="h-full rounded-full bg-brand transition-all"
+            style={{
+              width: `${Math.round(
+                (completedCount / smokeChecklistItems.length) * 100
+              )}%`,
+            }}
+          />
+        </div>
+
+        <ul className="mt-5 grid gap-3 md:grid-cols-2">
+          {smokeChecklistItems.map((item) => (
+            <li key={item}>
+              <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold leading-5 transition hover:bg-slate-200">
+                <input
+                  checked={checkedItems.has(item)}
+                  className="mt-0.5 size-4 shrink-0 accent-emerald-500"
+                  onChange={() => toggleChecklistItem(item)}
+                  type="checkbox"
+                />
+                <span className="text-[var(--color-text-primary)]">{item}</span>
+              </label>
+            </li>
+          ))}
+        </ul>
+      </Card>
     </div>
   );
 }
@@ -248,4 +352,25 @@ function formatBuildTime(value: string) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function readStoredChecklist() {
+  try {
+    const storedItems = JSON.parse(
+      window.localStorage.getItem(smokeChecklistStorageKey) ?? "[]"
+    );
+
+    if (!Array.isArray(storedItems)) {
+      return new Set<string>();
+    }
+
+    return new Set(
+      storedItems.filter(
+        (item): item is string =>
+          typeof item === "string" && smokeChecklistItems.includes(item)
+      )
+    );
+  } catch {
+    return new Set<string>();
+  }
 }
