@@ -6,7 +6,7 @@
       "$familyId": {
         "$userId": {
           ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
-          ".write": "auth != null && (auth.uid == $userId || root.child('familyMembers').child($familyId).child(auth.uid).child('role').val() == 'OWNER')",
+          ".write": "auth != null && ((auth.uid == $userId && (newData.child('role').val() == 'MEMBER' || (!root.child('familyMembers').child($familyId).exists() && newData.child('role').val() == 'OWNER'))) || root.child('familyMembers').child($familyId).child(auth.uid).child('role').val() == 'OWNER')",
           ".validate": "newData.hasChildren(['role', 'userId', 'updatedAt']) && newData.child('userId').val() == $userId && (newData.child('role').val() == 'OWNER' || newData.child('role').val() == 'PARENT' || newData.child('role').val() == 'MEMBER' || newData.child('role').val() == 'CHILD') && newData.child('updatedAt').isNumber()"
         }
       }
@@ -16,7 +16,7 @@
         ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
         "$userId": {
           ".write": "auth != null && auth.uid == $userId && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
-          ".validate": "newData.hasChildren(['latitude', 'longitude', 'accuracy', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('longitude').isNumber() && (newData.child('accuracy').isNumber() || newData.child('accuracy').val() == null) && newData.child('updatedAt').isNumber()"
+          ".validate": "newData.hasChildren(['latitude', 'longitude', 'accuracy', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('latitude').val() >= -90 && newData.child('latitude').val() <= 90 && newData.child('longitude').isNumber() && newData.child('longitude').val() >= -180 && newData.child('longitude').val() <= 180 && (newData.child('accuracy').isNumber() || newData.child('accuracy').val() == null) && newData.child('updatedAt').isNumber()"
         }
       }
     },

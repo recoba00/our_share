@@ -28,12 +28,191 @@ service cloud.firestore {
         (visibleTo.size() == 0 || request.auth.uid in visibleTo);
     }
 
+    function isValidFamilyRole(role) {
+      return role == "OWNER" ||
+        role == "PARENT" ||
+        role == "MEMBER" ||
+        role == "CHILD";
+    }
+
+    function isValidInviteCode(inviteCode) {
+      return inviteCode is string &&
+        inviteCode.size() == 6 &&
+        exists(/databases/$(database)/documents/familyInvites/$(inviteCode));
+    }
+
+    function isCreatingOwnerMembership() {
+      return request.resource.data.role == "OWNER" &&
+        exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)) &&
+        get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.ownerId == request.auth.uid;
+    }
+
+    function isCreatingInviteMembership() {
+      return request.resource.data.role == "MEMBER" &&
+        isValidInviteCode(request.resource.data.inviteCode) &&
+        get(/databases/$(database)/documents/familyInvites/$(request.resource.data.inviteCode)).data.familyId == request.resource.data.familyId;
+    }
+
+    function isValidCalendarEvent(data) {
+      return data.keys().hasOnly([
+          "id",
+          "familyId",
+          "title",
+          "description",
+          "startDate",
+          "endDate",
+          "allDay",
+          "category",
+          "repeat",
+          "isDayOff",
+          "createdBy",
+          "visibleTo",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.title is string &&
+        data.title.size() > 0 &&
+        data.title.size() <= 80 &&
+        data.description is string &&
+        data.description.size() <= 1000 &&
+        data.startDate is string &&
+        data.endDate is string &&
+        data.endDate >= data.startDate &&
+        data.allDay is bool &&
+        (
+          data.category == "FAMILY" ||
+          data.category == "PERSONAL" ||
+          data.category == "ANNIVERSARY" ||
+          data.category == "BIRTHDAY" ||
+          data.category == "ETC"
+        ) &&
+        (
+          data.repeat == "NONE" ||
+          data.repeat == "YEARLY"
+        ) &&
+        data.isDayOff is bool &&
+        data.visibleTo is list &&
+        data.visibleTo.size() <= 50;
+    }
+
+    function isValidMemo(data) {
+      return data.keys().hasOnly([
+          "id",
+          "familyId",
+          "title",
+          "content",
+          "type",
+          "createdBy",
+          "visibleTo",
+          "createdAt",
+          "updatedAt",
+          "encryptedContent",
+          "encryptionIv",
+          "encryptionSalt"
+        ]) &&
+        data.title is string &&
+        data.title.size() > 0 &&
+        data.title.size() <= 80 &&
+        (
+          data.type == "PUBLIC" ||
+          data.type == "SENSITIVE"
+        ) &&
+        data.visibleTo is list &&
+        data.visibleTo.size() <= 50;
+    }
+
+    function isValidPoll(data) {
+      return data.keys().hasOnly([
+          "id",
+          "familyId",
+          "chatRoomId",
+          "title",
+          "description",
+          "type",
+          "options",
+          "multipleChoice",
+          "anonymous",
+          "closesAt",
+          "resultVisibility",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.title is string &&
+        data.title.size() > 0 &&
+        data.title.size() <= 80 &&
+        data.description is string &&
+        data.description.size() <= 1000 &&
+        (
+          data.type == "GENERAL" ||
+          data.type == "DATE"
+        ) &&
+        data.options is list &&
+        data.options.size() >= 2 &&
+        data.options.size() <= 20 &&
+        data.multipleChoice is bool &&
+        data.anonymous is bool &&
+        (
+          data.resultVisibility == "ALWAYS" ||
+          data.resultVisibility == "AFTER_VOTE" ||
+          data.resultVisibility == "AFTER_CLOSE"
+        );
+    }
+
+    function isValidChatRoom(data) {
+      return data.keys().hasOnly([
+          "id",
+          "familyId",
+          "type",
+          "name",
+          "memberIds",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "lastMessageText",
+          "lastMessageAt"
+        ]) &&
+        data.name is string &&
+        data.name.size() > 0 &&
+        data.name.size() <= 80 &&
+        (
+          data.type == "FAMILY" ||
+          data.type == "DIRECT" ||
+          data.type == "PRIVATE_GROUP"
+        ) &&
+        data.memberIds is list &&
+        data.memberIds.size() <= 50;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasOnly([
+          "id",
+          "familyId",
+          "roomId",
+          "type",
+          "text",
+          "pollId",
+          "createdBy",
+          "createdAt",
+          "readBy"
+        ]) &&
+        (
+          data.type == "TEXT" ||
+          data.type == "POLL"
+        ) &&
+        data.text is string &&
+        data.text.size() > 0 &&
+        data.text.size() <= 2000 &&
+        data.readBy is list &&
+        data.readBy.size() <= 50;
+    }
+
     function canAccessChatRoom(room) {
       return isFamilyMember(room.familyId) &&
         (
           room.type == "FAMILY" ||
           room.createdBy == request.auth.uid ||
-          request.auth.uid in room.memberIds
+          (room.memberIds is list && request.auth.uid in room.memberIds)
         );
     }
 
@@ -44,10 +223,59 @@ service cloud.firestore {
     }
 
     match /families/{familyId} {
-      allow read: if signedIn();
+      allow read: if isFamilyMember(familyId);
       allow create: if signedIn() &&
+        request.resource.data.keys().hasOnly([
+          "id",
+          "name",
+          "ownerId",
+          "inviteCode",
+          "createdAt"
+        ]) &&
+        request.resource.data.id == familyId &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 50 &&
+        request.resource.data.inviteCode is string &&
+        request.resource.data.inviteCode.size() == 6 &&
         request.resource.data.ownerId == request.auth.uid;
-      allow update, delete: if isFamilyOwner(familyId);
+      allow update: if isFamilyOwner(familyId) &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.ownerId == resource.data.ownerId &&
+        request.resource.data.inviteCode == resource.data.inviteCode &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "name",
+          "updatedAt"
+        ]) &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 50;
+      allow delete: if isFamilyOwner(familyId);
+    }
+
+    match /familyInvites/{inviteCode} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() &&
+        request.resource.data.keys().hasOnly([
+          "familyId",
+          "inviteCode",
+          "name",
+          "ownerId",
+          "createdAt"
+        ]) &&
+        request.resource.data.inviteCode == inviteCode &&
+        request.resource.data.inviteCode is string &&
+        request.resource.data.inviteCode.size() == 6 &&
+        request.resource.data.familyId is string &&
+        request.resource.data.name is string &&
+        request.resource.data.name.size() > 0 &&
+        request.resource.data.name.size() <= 50 &&
+        request.resource.data.ownerId == request.auth.uid &&
+        exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)) &&
+        get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.ownerId == request.auth.uid;
+      allow update, delete: if false;
     }
 
     match /familyMembers/{memberId} {
@@ -55,15 +283,31 @@ service cloud.firestore {
         (resource.data.userId == request.auth.uid ||
           isFamilyMember(resource.data.familyId));
       allow create: if signedIn() &&
+        memberId == request.resource.data.familyId + "_" + request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          "familyId",
+          "userId",
+          "role",
+          "nickname",
+          "relation",
+          "permissions",
+          "inviteCode",
+          "createdAt",
+          "updatedAt"
+        ]) &&
         request.resource.data.userId == request.auth.uid &&
         request.resource.data.familyId is string &&
+        isValidFamilyRole(request.resource.data.role) &&
+        request.resource.data.nickname is string &&
+        request.resource.data.nickname.size() > 0 &&
+        request.resource.data.nickname.size() <= 50 &&
+        request.resource.data.relation is string &&
+        request.resource.data.relation.size() <= 30 &&
+        request.resource.data.permissions is list &&
+        request.resource.data.permissions.size() <= 20 &&
         (
-          request.resource.data.role == "MEMBER" ||
-          (
-            request.resource.data.role == "OWNER" &&
-            exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)) &&
-            get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.ownerId == request.auth.uid
-          )
+          isCreatingInviteMembership() ||
+          isCreatingOwnerMembership()
         );
       allow update: if signedIn() &&
         (
@@ -102,8 +346,17 @@ service cloud.firestore {
         resource.data.visibleTo
       );
       allow create: if isFamilyMember(request.resource.data.familyId) &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isFamilyMember(resource.data.familyId) &&
+        request.resource.data.id == eventId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidCalendarEvent(request.resource.data);
+      allow update: if isFamilyMember(resource.data.familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidCalendarEvent(request.resource.data);
+      allow delete: if isFamilyMember(resource.data.familyId) &&
         resource.data.createdBy == request.auth.uid;
     }
 
@@ -113,16 +366,34 @@ service cloud.firestore {
         resource.data.visibleTo
       );
       allow create: if isFamilyMember(request.resource.data.familyId) &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isFamilyMember(resource.data.familyId) &&
+        request.resource.data.id == memoId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidMemo(request.resource.data);
+      allow update: if isFamilyMember(resource.data.familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidMemo(request.resource.data);
+      allow delete: if isFamilyMember(resource.data.familyId) &&
         resource.data.createdBy == request.auth.uid;
     }
 
     match /polls/{pollId} {
       allow read: if isFamilyMember(resource.data.familyId);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
-        request.resource.data.createdBy == request.auth.uid;
-      allow update, delete: if isFamilyMember(resource.data.familyId) &&
+        request.resource.data.id == pollId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidPoll(request.resource.data);
+      allow update: if isFamilyMember(resource.data.familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidPoll(request.resource.data);
+      allow delete: if isFamilyMember(resource.data.familyId) &&
         resource.data.createdBy == request.auth.uid;
     }
 
@@ -133,7 +404,18 @@ service cloud.firestore {
           get(/databases/$(database)/documents/polls/$(resource.data.pollId)).data.familyId
         );
       allow create, update: if signedIn() &&
+        voteId == request.resource.data.pollId + "_" + request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          "pollId",
+          "userId",
+          "selectedOptions",
+          "createdAt",
+          "updatedAt"
+        ]) &&
         request.resource.data.userId == request.auth.uid &&
+        request.resource.data.selectedOptions is list &&
+        request.resource.data.selectedOptions.size() > 0 &&
+        request.resource.data.selectedOptions.size() <= 20 &&
         exists(/databases/$(database)/documents/polls/$(request.resource.data.pollId)) &&
         isFamilyMember(
           get(/databases/$(database)/documents/polls/$(request.resource.data.pollId)).data.familyId
@@ -144,12 +426,23 @@ service cloud.firestore {
     match /chatRooms/{roomId} {
       allow read: if canAccessChatRoom(resource.data);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
+        request.resource.data.id == roomId &&
         request.resource.data.createdBy == request.auth.uid &&
+        isValidChatRoom(request.resource.data) &&
         (
           request.resource.data.type == "FAMILY" ||
           request.auth.uid in request.resource.data.memberIds
         );
-      allow update: if canAccessChatRoom(resource.data);
+      allow update: if canAccessChatRoom(resource.data) &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.memberIds == resource.data.memberIds &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "lastMessageText",
+          "lastMessageAt",
+          "updatedAt"
+        ]);
       allow delete: if canAccessChatRoom(resource.data) &&
         resource.data.createdBy == request.auth.uid;
     }
@@ -159,12 +452,25 @@ service cloud.firestore {
         exists(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)) &&
         canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)).data);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
+        request.resource.data.id == messageId &&
         request.resource.data.createdBy == request.auth.uid &&
+        isValidMessage(request.resource.data) &&
         exists(/databases/$(database)/documents/chatRooms/$(request.resource.data.roomId)) &&
+        request.resource.data.familyId == get(/databases/$(database)/documents/chatRooms/$(request.resource.data.roomId)).data.familyId &&
         canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(request.resource.data.roomId)).data);
       allow update: if signedIn() &&
         exists(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)) &&
         canAccessChatRoom(get(/databases/$(database)/documents/chatRooms/$(resource.data.roomId)).data) &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.roomId == resource.data.roomId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.text == resource.data.text &&
+        request.resource.data.pollId == resource.data.pollId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.readBy is list &&
+        request.resource.data.readBy.hasAll(resource.data.readBy) &&
+        request.auth.uid in request.resource.data.readBy &&
         request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
       allow delete: if false;
     }

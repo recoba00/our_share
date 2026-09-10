@@ -130,3 +130,11 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Notification MVP 하위 작업 완료에 맞춰 Phase 11 Notification 체크 상태를 완료로 갱신했다.
 - MVP 100% 완료 후 Dothome에서 Firebase Hosting으로 이전하는 호스팅 전략을 `PROJECT_CONTEXT.md`에 추가했다.
 - Firebase Hosting 이전 시 필요한 SPA rewrite, Vite base 검토, GitHub Actions 배포 대상 교체 작업을 `TODO.md`에 추가했다.
+- 초대 코드 단건 조회용 `familyInvites` 컬렉션을 추가하고, 가족 생성 시 초대 인덱스를 함께 생성하도록 연결했다.
+- 초대 코드 참여 흐름을 `families` 전체 조회에서 `familyInvites/{inviteCode}` 단건 조회 방식으로 변경했다.
+- 기존 가족 OWNER가 가족 정보를 불러올 때 누락된 초대 인덱스를 자동 보강하도록 추가했다.
+- 가족 정보를 불러올 때 로그인 사용자의 RTDB membership mirror를 보강해 기존 사용자 위치 공유 호환성을 개선했다.
+- Firestore Rules에서 `families` 전체 read를 차단하고 가족 구성원만 가족 문서를 읽도록 강화했다.
+- Firestore Rules에서 family member 생성, 일정/메모/투표/채팅/메시지/투표값의 필드 크기와 update bypass 방어 조건을 보강했다.
+- Realtime Database Rules에서 membership mirror 역할 쓰기와 위치 좌표 validate 조건을 강화했다.
+- `SECURITY_RULES.md`에 `familyInvites` 기반 초대 정책과 RTDB mirror backfill MVP 방식을 문서화했다.

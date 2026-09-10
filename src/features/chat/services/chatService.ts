@@ -1,6 +1,7 @@
 import {
   collection,
   doc,
+  getDoc,
   onSnapshot,
   query,
   serverTimestamp,
@@ -58,23 +59,24 @@ export async function getOrCreateFamilyRoom({
 }) {
   const roomId = `${familyId}_family`;
   const roomRef = doc(db, "chatRooms", roomId);
+  const roomSnapshot = await getDoc(roomRef);
 
-  await setDoc(
-    roomRef,
-    {
-      id: roomId,
-      familyId,
-      type: "FAMILY",
-      name: "가족 전체방",
-      memberIds: [],
-      createdBy,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      lastMessageText: null,
-      lastMessageAt: null,
-    },
-    { merge: true }
-  );
+  if (roomSnapshot.exists()) {
+    return roomId;
+  }
+
+  await setDoc(roomRef, {
+    id: roomId,
+    familyId,
+    type: "FAMILY",
+    name: "가족 전체방",
+    memberIds: [],
+    createdBy,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    lastMessageText: null,
+    lastMessageAt: null,
+  });
 
   return roomId;
 }
@@ -121,23 +123,24 @@ export async function getOrCreateDirectRoom({
   const memberIds = [createdBy, targetUserId].sort();
   const roomId = `${familyId}_direct_${memberIds.join("_")}`;
   const roomRef = doc(db, "chatRooms", roomId);
+  const roomSnapshot = await getDoc(roomRef);
 
-  await setDoc(
-    roomRef,
-    {
-      id: roomId,
-      familyId,
-      type: "DIRECT",
-      name: `${targetUserName}님과의 대화`,
-      memberIds,
-      createdBy,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
-      lastMessageText: null,
-      lastMessageAt: null,
-    },
-    { merge: true }
-  );
+  if (roomSnapshot.exists()) {
+    return roomId;
+  }
+
+  await setDoc(roomRef, {
+    id: roomId,
+    familyId,
+    type: "DIRECT",
+    name: `${targetUserName}님과의 대화`,
+    memberIds,
+    createdBy,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp(),
+    lastMessageText: null,
+    lastMessageAt: null,
+  });
 
   return roomId;
 }

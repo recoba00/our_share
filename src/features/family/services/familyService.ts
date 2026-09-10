@@ -44,6 +44,14 @@ export async function createFamily({ name, owner }: CreateFamilyInput) {
     createdAt: serverTimestamp(),
   });
 
+  await setDoc(doc(db, "familyInvites", inviteCode), {
+    familyId: familyRef.id,
+    inviteCode,
+    name,
+    ownerId: owner.uid,
+    createdAt: serverTimestamp(),
+  });
+
   await upsertFamilyMember({
     familyId: familyRef.id,
     user: owner,
@@ -61,28 +69,31 @@ export async function joinFamilyByInviteCode({
   inviteCode,
   user,
 }: JoinFamilyInput) {
-  const familiesQuery = query(
-    collection(db, "families"),
-    where("inviteCode", "==", inviteCode.trim().toUpperCase()),
-    limit(1)
-  );
-  const snapshot = await getDocs(familiesQuery);
-  const familyDoc = snapshot.docs[0];
+  const normalizedInviteCode = inviteCode.trim().toUpperCase();
+  const inviteSnapshot = await getDoc(doc(db, "familyInvites", normalizedInviteCode));
 
-  if (!familyDoc) {
+  if (!inviteSnapshot.exists()) {
     throw new Error("초대 코드를 찾을 수 없습니다.");
   }
 
+  const invite = inviteSnapshot.data();
+  const familyId = invite.familyId as string;
+
   await upsertFamilyMember({
-    familyId: familyDoc.id,
+    familyId,
+    inviteCode: normalizedInviteCode,
     user,
     role: "MEMBER",
     relation: "member",
   });
 
+  const familySnapshot = await getDoc(doc(db, "families", familyId));
+
   return {
-    id: familyDoc.id,
-    name: familyDoc.data().name as string,
+    id: familyId,
+    name: familySnapshot.exists()
+      ? (familySnapshot.data().name as string)
+      : (invite.name as string),
   };
 }
 
@@ -100,16 +111,39 @@ export async function getFirstFamilyForUser(userId: string) {
   }
 
   const familyId = memberDoc.data().familyId as string;
+  const role = memberDoc.data().role as FamilyRole;
   const familySnapshot = await getDoc(doc(db, "families", familyId));
 
   if (!familySnapshot.exists()) {
     return null;
   }
 
+  mirrorFamilyMemberRole({
+    familyId,
+    role,
+    userId,
+  }).catch(() => {
+    // RTDB mirror backfill is best-effort during MVP.
+  });
+
+  const family = familySnapshot.data();
+  const inviteCode = family.inviteCode as string;
+
+  if (family.ownerId === userId && inviteCode) {
+    ensureFamilyInviteIndex({
+      familyId,
+      inviteCode,
+      name: family.name as string,
+      ownerId: userId,
+    }).catch(() => {
+      // Invite index backfill is best-effort for older family documents.
+    });
+  }
+
   return {
     id: familySnapshot.id,
-    name: familySnapshot.data().name as string,
-    inviteCode: familySnapshot.data().inviteCode as string,
+    name: family.name as string,
+    inviteCode,
   };
 }
 
@@ -181,11 +215,13 @@ export async function updateFamilyMemberRole({
 
 async function upsertFamilyMember({
   familyId,
+  inviteCode,
   relation,
   role,
   user,
 }: {
   familyId: string;
+  inviteCode?: string;
   relation: string;
   role: FamilyRole;
   user: User;
@@ -199,6 +235,7 @@ async function upsertFamilyMember({
       nickname: user.displayName ?? "가족",
       relation,
       permissions: [],
+      ...(inviteCode ? { inviteCode } : {}),
       createdAt: serverTimestamp(),
       updatedAt: serverTimestamp(),
     },
@@ -209,6 +246,49 @@ async function upsertFamilyMember({
     role,
     userId: user.uid,
     updatedAt: Date.now(),
+  });
+}
+
+async function mirrorFamilyMemberRole({
+  familyId,
+  role,
+  userId,
+}: {
+  familyId: string;
+  role: FamilyRole;
+  userId: string;
+}) {
+  await set(ref(realtimeDb, `familyMembers/${familyId}/${userId}`), {
+    role,
+    userId,
+    updatedAt: Date.now(),
+  });
+}
+
+async function ensureFamilyInviteIndex({
+  familyId,
+  inviteCode,
+  name,
+  ownerId,
+}: {
+  familyId: string;
+  inviteCode: string;
+  name: string;
+  ownerId: string;
+}) {
+  const inviteRef = doc(db, "familyInvites", inviteCode);
+  const inviteSnapshot = await getDoc(inviteRef);
+
+  if (inviteSnapshot.exists()) {
+    return;
+  }
+
+  await setDoc(inviteRef, {
+    familyId,
+    inviteCode,
+    name,
+    ownerId,
+    createdAt: serverTimestamp(),
   });
 }
 

@@ -45,8 +45,9 @@ CLI 없이 Firebase Console에서 적용할 수도 있다.
 ## 현재 MVP 정책
 
 - `users`: 로그인 사용자는 읽기 가능, 본인 문서만 생성/수정 가능
-- `families`: 로그인 사용자는 초대 코드 조회를 위해 읽기 가능, 가족 수정/삭제는 OWNER만 가능
-- `familyMembers`: 가족 구성원은 같은 가족 멤버 목록을 읽을 수 있음
+- `families`: 가족 구성원만 읽기 가능, 가족 수정/삭제는 OWNER만 가능
+- `familyInvites`: 로그인 사용자는 초대 코드 단건 조회만 가능, 목록 조회는 차단
+- `familyMembers`: 가족 구성원은 같은 가족 멤버 목록을 읽을 수 있고, 신규 MEMBER 가입은 `familyInvites`의 초대코드와 `familyId` 일치 여부를 기준으로 제한
 - `calendarEvents`, `memos`, `polls`, `chatRooms`, `messages`: 해당 `familyId`의 가족 구성원만 접근 가능
 - `pollVotes`: 투표가 속한 가족 구성원만 읽기 가능, 본인 투표만 생성/수정 가능
 - `messages.readBy`: 가족 구성원은 읽음 상태만 업데이트 가능
@@ -61,8 +62,8 @@ Realtime Database Rules는 Firestore의 `familyMembers` 컬렉션을 직접 참�
 
 후속 작업:
 
-- 기존 Firestore `familyMembers` 문서를 가진 사용자에 대한 RTDB mirror backfill
+- 기존 Firestore `familyMembers` 문서를 가진 사용자에 대한 RTDB mirror backfill: MVP에서는 로그인 사용자가 자신의 가족을 불러올 때 본인 mirror를 보강한다.
 - Cloud Functions 또는 Admin SDK 기반 membership mirror 동기화
 - 클라이언트의 RTDB `familyMembers` 직접 쓰기 차단
-- 초대 코드 조회용 공개 인덱스 컬렉션을 분리해 `families` 전체 read 범위 축소
+- 초대 코드 조회용 `familyInvites` 인덱스를 유지하고, `families` 전체 read는 차단한다.
 - Firestore Rules 테스트 추가

@@ -307,6 +307,7 @@ Chat Room 타입:
 
 - users
 - families
+- familyInvites
 - familyMembers
 - calendarEvents
 - anniversaries
@@ -323,6 +324,16 @@ families 필드:
 - ownerId
 - inviteCode
 - createdAt
+
+familyInvites 필드:
+
+- inviteCode
+- familyId
+- name
+- ownerId
+- createdAt
+
+초대 참여는 `familyInvites/{inviteCode}` 단건 조회를 통해 가족을 찾는다. `families` 컬렉션 전체 조회는 보안 규칙에서 허용하지 않는다.
 
 familyMembers 필드:
 

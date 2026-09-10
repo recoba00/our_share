@@ -10,6 +10,7 @@ export type Family = {
 
 export type FamilyMember = {
   familyId: string;
+  inviteCode?: string;
   userId: string;
   role: FamilyRole;
   nickname: string;

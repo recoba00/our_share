@@ -176,6 +176,10 @@
 - [x] Firebase Rules Deployment Guide
 - [ ] Firebase Console Rules Publish
 - [x] Realtime Database Membership Mirror
-- [ ] Realtime Database Membership Backfill
+- [x] Realtime Database Membership Backfill
+- [x] Family Invite Index
+- [x] Firebase Rules Security Audit
+- [x] Firestore Rules Update Bypass Guard
+- [x] Firestore Rules Field Size Guard
 - [ ] Admin SDK Membership Mirror Sync
 - [ ] Firestore Rules Test
