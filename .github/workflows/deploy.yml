@@ -43,3 +43,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           local-dir: ./dist/
           server-dir: html/our_share/
+
+      - name: Verify Dothome deployment
+        run: npm run test:hosting
+        env:
+          EXPECTED_COMMIT: ${{ github.sha }}
+          SMOKE_BASE_URL: http://recoba00.dothome.co.kr/our_share
+          SMOKE_RETRIES: 6
+          SMOKE_RETRY_DELAY_MS: 10000

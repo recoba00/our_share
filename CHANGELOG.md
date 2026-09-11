@@ -175,3 +175,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - `/diagnostics` 저장 권한 검사에 가족 전체방 자동 준비와 1:1 채팅방 준비 검사를 추가해 채팅방 초기화 권한 문제를 사전에 확인할 수 있게 했다.
 - Firestore Rules 배포 로그의 미사용 함수 경고를 줄이기 위해 사용하지 않는 읽기 헬퍼 함수를 제거했다.
 - Dothome 배포 상태를 자동 확인할 수 있도록 주요 SPA 라우트와 JS/CSS 자산, 배포 커밋 포함 여부를 검사하는 `npm run test:hosting` 스모크 스크립트를 추가했다.
+- GitHub Actions Dothome 배포 workflow에 배포 후 `npm run test:hosting` 검증 단계를 추가하고, FTP 반영 지연에 대비한 재시도 옵션을 스모크 스크립트에 추가했다.
