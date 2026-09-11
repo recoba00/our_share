@@ -31,7 +31,7 @@ type DiagnosticItem = {
 const smokeChecklistItems = [
   "진단 화면에서 Firebase 프로젝트가 our-share-6baf5로 보인다",
   "진단 화면의 Build Commit이 최신 GitHub 커밋과 일치한다",
-  "진단 저장 권한 검사에서 가족방과 1:1 채팅방 준비가 통과한다",
+  "진단 저장 권한 검사에서 위치 공유, 가족방, 1:1 채팅방 준비가 통과한다",
   "Google 로그인에 성공한다",
   "로그아웃에 성공한다",
   "가족을 생성하고 초대 코드가 표시된다",
@@ -180,8 +180,8 @@ export function DiagnosticsPage() {
             <div>
               <h3 className="text-base font-bold">저장 권한 검사</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
-                현재 로그인 계정으로 캘린더, 메모, 투표, 채팅방 저장과 가족방
-                준비 흐름을 실제로 확인합니다.
+                현재 로그인 계정으로 캘린더, 메모, 투표, 위치 공유, 채팅방
+                저장과 가족방 준비 흐름을 실제로 확인합니다.
               </p>
             </div>
           </div>

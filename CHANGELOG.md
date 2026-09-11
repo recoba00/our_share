@@ -78,6 +78,8 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Dothome HTTP 접속에서는 서비스 워커/PWA 설치가 제한될 수 있음을 `DEPLOYMENT.md`에 문서화했다.
 - 투표 화면에 채팅방 선택 UI를 추가하고 기존 투표를 선택한 채팅방으로 전송하는 흐름을 연결했다.
 - 채팅 메시지에 `POLL` 타입 전송 서비스를 추가했다.
+- 진단 저장 권한 검사에 Realtime Database `liveLocations/{familyId}/{userId}` 위치 공유 쓰기 및 자동 삭제 검사를 추가했다.
+- MVP 릴리즈 체크리스트에 RTDB 위치 쓰기 진단 항목을 추가했다.
 - 채팅 화면에서 투표 메시지를 카드 형태로 표시하고 투표 화면으로 이동할 수 있게 연결했다.
 - 채팅 화면에 투표 생성 진입 버튼을 추가했다.
 - `npm run lint`, `npm run build`, 로컬 `/our_share/poll`, `/our_share/chat` 응답 검증을 통과했다.

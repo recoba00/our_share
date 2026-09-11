@@ -1,4 +1,5 @@
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
+import { ref, remove, set } from "firebase/database";
 import { createCalendarEvent } from "../../calendar/services/calendarService";
 import {
   createSecretRoom,
@@ -11,7 +12,7 @@ import {
 } from "../../family/services/familyService";
 import { createMemo } from "../../memo/services/memoService";
 import { createPoll } from "../../poll/services/pollService";
-import { db } from "../../../lib/firebase/app";
+import { db, realtimeDb } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 
 export type WriteProbeResult = {
@@ -86,6 +87,22 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
 
     await deleteDoc(doc(db, "families", family.id, "polls", pollId));
     return "저장 및 자동 삭제 성공";
+  });
+
+  await runProbeStep(results, "위치 공유 저장", async () => {
+    const locationRef = ref(realtimeDb, `liveLocations/${family.id}/${userId}`);
+
+    await set(locationRef, {
+      accuracy: null,
+      battery: null,
+      charging: null,
+      latitude: 37.5665,
+      longitude: 126.978,
+      updatedAt: Date.now(),
+    });
+    await remove(locationRef);
+
+    return "Realtime Database 저장 및 자동 삭제 성공";
   });
 
   await runProbeStep(results, "가족 전체방 준비", async () => {
