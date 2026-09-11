@@ -35,6 +35,7 @@ Checklist:
 - [ ] Diagnostics route loads and shows expected Firebase project
 - [ ] Diagnostics route build commit matches latest GitHub commit
 - [ ] Diagnostics write-permission probe passes after login and family membership
+- [ ] Diagnostics write-permission probe passes family room and direct room preparation
 - [ ] Google login succeeds
 - [ ] Logout succeeds
 - [ ] Create a family
