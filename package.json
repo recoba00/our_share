@@ -9,6 +9,8 @@
     "build:firebase": "tsc -b && vite build --base=/",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test:dist": "node scripts/run-dist-smoke.mjs --base=/our_share/",
+    "test:dist:firebase": "node scripts/run-dist-smoke.mjs --base=/",
     "test:hosting": "node scripts/run-hosting-smoke.mjs",
     "test:rules": "node scripts/run-firestore-rules-tests.mjs"
   },

@@ -17,6 +17,7 @@ React + Vite 앱은 개발용 소스(`src`, `index.html`, `package.json`)를 서
 
 ```bash
 npm run build
+npm run test:dist
 ```
 
 2. 생성된 `dist` 폴더 안의 내용만 업로드한다.
@@ -132,9 +133,12 @@ Firebase Hosting은 루트 경로 배포를 기준으로 아래 명령을 사용
 
 ```bash
 npm run build:firebase
+npm run test:dist:firebase
 ```
 
 앱 라우터, 서비스 워커, PWA manifest는 Vite `base` 값을 기준으로 동작하도록 구성되어 있다.
+
+`npm run test:dist`와 `npm run test:dist:firebase`는 `dist/index.html`의 asset 경로, PWA 파일, manifest/service worker의 하드코딩 경로를 검사한다.
 
 실제 Firebase Hosting 이전 시에는 아직 아래 작업이 남아 있다.
 

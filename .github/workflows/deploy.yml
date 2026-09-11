@@ -47,6 +47,9 @@ jobs:
           VITE_BUILD_COMMIT: ${{ github.sha }}
           VITE_BUILD_TIME: ${{ github.event.head_commit.timestamp }}
 
+      - name: Verify dist output
+        run: npm run test:dist
+
       - name: Deploy dist via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:

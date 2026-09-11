@@ -195,3 +195,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - PWA manifest와 service worker cache 경로를 상대/동적 경로로 변경해 `/our_share/` 하위 배포와 Firebase Hosting 루트 배포를 모두 지원하도록 개선했다.
 - Firebase Hosting 루트 경로 빌드용 `npm run build:firebase` 스크립트를 추가했다.
 - 호스팅 스모크 스크립트가 base URL 경로를 기준으로 asset 경로를 검사하도록 일반화했다.
+- Dothome/Firebase Hosting 빌드 산출물의 asset 경로, PWA 파일, manifest/service worker 하드코딩 경로를 검증하는 `scripts/run-dist-smoke.mjs`를 추가했다.
+- `npm run test:dist`, `npm run test:dist:firebase` 스크립트를 추가하고 Dothome 배포 workflow가 FTP 업로드 전 `dist` 산출물을 검사하도록 연결했다.

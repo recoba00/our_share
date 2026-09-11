@@ -32,6 +32,7 @@
 - [x] Dothome 호스팅 경로 연결: `http://recoba00.dothome.co.kr/our_share`
 - [x] 배포 환경 변수 구성
 - [x] 빌드/배포 명령 확인
+- [x] 배포 산출물 경로 검증 스크립트 구성
 - [x] 배포 URL 문서화
 - [x] GitHub Actions `dist` 배포 workflow 구성
 - [x] GitHub Repository Secrets 등록

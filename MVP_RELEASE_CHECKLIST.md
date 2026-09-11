@@ -6,6 +6,8 @@ Date: 2026-09-10
 
 - [x] `npm run lint`
 - [x] `npm run build`
+- [x] `npm run test:dist`
+- [x] `npm run test:dist:firebase`
 - [x] `npm run test:rules`
 - [x] `npm run test:hosting`
 - [x] GitHub Actions runs hosting smoke check after Dothome FTP deploy
