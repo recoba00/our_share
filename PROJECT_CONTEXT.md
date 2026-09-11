@@ -79,9 +79,9 @@ MVP 100% 완료 후에는 Firebase Hosting으로 이전한다.
 
 이전 시점에 필요한 작업:
 
-- `firebase.json`에 Hosting 설정 추가
-- Vite `base` 경로를 Firebase Hosting 배포 경로에 맞게 재검토
-- Firebase Hosting SPA rewrite 설정
+- `firebase.json` Hosting 설정은 추가 완료
+- Vite `base` 경로는 Dothome 기본 `/our_share/`, Firebase Hosting 빌드 `/`로 전환 가능
+- Firebase Hosting SPA rewrite 설정 완료
 - Firebase Auth 승인 도메인 확인
 - GitHub Actions 배포 대상을 Dothome FTP에서 Firebase Hosting으로 교체
 - Dothome 배포 workflow 비활성화 또는 제거

@@ -142,7 +142,7 @@ export function DiagnosticsPage() {
 
         <div className="mt-5 grid gap-2">
           <Button onClick={() => window.location.reload()}>다시 확인</Button>
-          <Button onClick={() => window.location.assign("/our_share/")} variant="secondary">
+          <Button onClick={() => window.location.assign(import.meta.env.BASE_URL)} variant="secondary">
             홈으로 이동
           </Button>
         </div>
@@ -311,7 +311,9 @@ function StatusIcon({ status }: { status: DiagnosticStatus }) {
 
 function createDiagnostics(authStatus: string, userId?: string) {
   const appOptions = firebaseApp.options;
-  const isExpectedBasePath = window.location.pathname.startsWith("/our_share");
+  const basePath = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const isExpectedBasePath =
+    basePath === "" || window.location.pathname.startsWith(basePath);
   const isSecure = window.isSecureContext;
   const notificationPermission =
     "Notification" in window ? Notification.permission : "unsupported";
@@ -380,8 +382,8 @@ function createDiagnostics(authStatus: string, userId?: string) {
       },
       {
         detail: isExpectedBasePath
-          ? "SPA base path가 /our_share 경로와 일치합니다."
-          : "현재 경로가 /our_share 아래가 아닙니다.",
+          ? `SPA base path가 ${import.meta.env.BASE_URL} 경로와 일치합니다.`
+          : `현재 경로가 ${import.meta.env.BASE_URL} 아래가 아닙니다.`,
         label: "Base Path",
         status: isExpectedBasePath ? "ok" : "warning",
       },

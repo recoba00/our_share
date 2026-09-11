@@ -1,9 +1,10 @@
 const CACHE_NAME = "our-share-v1";
+const SCOPE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [
-  "/our_share/",
-  "/our_share/index.html",
-  "/our_share/manifest.webmanifest",
-  "/our_share/pwa-icon.svg"
+  SCOPE_PATH,
+  `${SCOPE_PATH}index.html`,
+  `${SCOPE_PATH}manifest.webmanifest`,
+  `${SCOPE_PATH}pwa-icon.svg`
 ];
 
 self.addEventListener("install", (event) => {
@@ -33,7 +34,7 @@ self.addEventListener("fetch", (event) => {
 
   if (request.mode === "navigate") {
     event.respondWith(
-      fetch(request).catch(() => caches.match("/our_share/index.html"))
+      fetch(request).catch(() => caches.match(`${SCOPE_PATH}index.html`))
     );
     return;
   }

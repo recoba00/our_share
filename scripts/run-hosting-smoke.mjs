@@ -5,6 +5,8 @@ const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 5000);
 const routes = ["/", "/chat", "/poll", "/memo", "/calendar", "/diagnostics"];
 
 const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
+const basePath = new URL(normalizedBaseUrl).pathname.replace(/\/$/, "");
+const assetPathPrefix = basePath === "" ? "" : basePath;
 
 let failures = [];
 let assetPaths = [];
@@ -55,7 +57,7 @@ async function runSmokeCheck() {
       nextFailures.push(`${url} did not return the Vite app shell`);
     }
 
-    if (!body.includes("/our_share/assets/")) {
+    if (!body.includes(`${assetPathPrefix}/assets/`)) {
       nextFailures.push(`${url} did not include built asset links`);
     }
   }
@@ -63,7 +65,7 @@ async function runSmokeCheck() {
   const shellResponse = await fetch(`${normalizedBaseUrl}/diagnostics`);
   const shellHtml = await shellResponse.text();
   assetPaths = Array.from(
-    shellHtml.matchAll(/(?:src|href)="([^"]*\/our_share\/assets\/[^"]+)"/g),
+    shellHtml.matchAll(/(?:src|href)="([^"]*\/assets\/[^"]+)"/g),
     (match) => match[1]
   );
 
@@ -146,20 +148,20 @@ function delay(ms) {
 
 function findReferencedJsAssets(body) {
   const matches = body.matchAll(
-    /["'`]((?:\/our_share\/)?assets\/[^"'`]+\.js|\.\/[^"'`]+\.js)["'`]/g
+    /["'`]((?:\/[^"'`]+\/)?assets\/[^"'`]+\.js|\.\/[^"'`]+\.js)["'`]/g
   );
 
   return Array.from(matches, (match) => {
     const assetPath = match[1];
 
-    if (assetPath.startsWith("/our_share/")) {
+    if (assetPath.startsWith("/")) {
       return assetPath;
     }
 
     if (assetPath.startsWith("./")) {
-      return `/our_share/assets/${assetPath.slice(2)}`;
+      return `${assetPathPrefix}/assets/${assetPath.slice(2)}`;
     }
 
-    return `/our_share/${assetPath}`;
+    return `${assetPathPrefix}/${assetPath}`;
   });
 }

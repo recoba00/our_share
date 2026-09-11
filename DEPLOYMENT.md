@@ -106,6 +106,43 @@ Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드�
 
 `public/.htaccess`는 Vite 빌드 시 자동으로 `dist/.htaccess`로 복사된다.
 
+## Firebase Hosting 이전 준비
+
+Firebase Hosting 설정은 `firebase.json`에 미리 추가되어 있다.
+
+```json
+"hosting": {
+  "public": "dist",
+  "rewrites": [
+    {
+      "source": "**",
+      "destination": "/index.html"
+    }
+  ]
+}
+```
+
+Dothome 배포는 `/our_share/` 하위 경로를 사용하므로 기본 빌드는 아래 명령을 사용한다.
+
+```bash
+npm run build
+```
+
+Firebase Hosting은 루트 경로 배포를 기준으로 아래 명령을 사용한다.
+
+```bash
+npm run build:firebase
+```
+
+앱 라우터, 서비스 워커, PWA manifest는 Vite `base` 값을 기준으로 동작하도록 구성되어 있다.
+
+실제 Firebase Hosting 이전 시에는 아직 아래 작업이 남아 있다.
+
+- Firebase Hosting 배포 실행
+- Firebase Auth 승인 도메인에 Firebase Hosting 도메인 추가
+- GitHub Actions 배포 대상을 Dothome FTP에서 Firebase Hosting으로 교체
+- Dothome workflow 비활성화 또는 제거
+
 ## PWA
 
 `public/manifest.webmanifest`, `public/sw.js`, `public/pwa-icon.svg`는 Vite 빌드 시 `dist`에 복사된다.

@@ -3,6 +3,8 @@ import { Component, type ErrorInfo, type PropsWithChildren, type ReactNode } fro
 import { Button } from "./Button";
 import { Card } from "./Card";
 
+const appHomePath = import.meta.env.BASE_URL;
+
 type ErrorBoundaryState = {
   error: Error | null;
 };
@@ -28,7 +30,7 @@ export class ErrorBoundary extends Component<
   };
 
   handleGoHome = () => {
-    window.location.assign("/our_share/");
+    window.location.assign(appHomePath);
   };
 
   render(): ReactNode {

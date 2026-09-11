@@ -2,8 +2,8 @@
   "name": "우리 가족 스마트 홈",
   "short_name": "우리집",
   "description": "가족 위치, 일정, 메모, 투표, 채팅을 함께 관리하는 가족 전용 PWA",
-  "start_url": "/our_share/",
-  "scope": "/our_share/",
+  "start_url": ".",
+  "scope": ".",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
@@ -12,7 +12,7 @@
   "categories": ["productivity", "lifestyle"],
   "icons": [
     {
-      "src": "/our_share/pwa-icon.svg",
+      "src": "pwa-icon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
       "purpose": "any maskable"
@@ -22,12 +22,12 @@
     {
       "name": "채팅",
       "short_name": "채팅",
-      "url": "/our_share/chat"
+      "url": "chat"
     },
     {
       "name": "캘린더",
       "short_name": "일정",
-      "url": "/our_share/calendar"
+      "url": "calendar"
     }
   ]
 }

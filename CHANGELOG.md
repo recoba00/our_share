@@ -187,3 +187,11 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - React 라우트 페이지를 `lazy`/`Suspense` 기반으로 분리해 홈, 채팅, 투표, 메모, 캘린더, 진단 화면을 필요 시점에 로드하도록 개선했다.
 - Vite `manualChunks` 설정을 추가해 React, Firebase, Phosphor Icons vendor 코드를 별도 청크로 분리했다.
 - 코드 스플리팅 후 커밋 정보가 동적 페이지 청크로 이동하는 구조에 맞춰 호스팅 스모크 스크립트가 참조된 JS 청크 전체에서 배포 커밋을 확인하도록 보완했다.
+
+## 2026-09-12
+
+- Firebase Hosting 이전 준비를 위해 `firebase.json`에 `dist` public directory와 SPA rewrite 설정을 추가했다.
+- Dothome과 Firebase Hosting을 모두 지원하도록 Vite base path, React Router basename, 서비스 워커 등록, ErrorBoundary 홈 이동, 진단 화면 base path 검사를 Vite `BASE_URL` 기준으로 변경했다.
+- PWA manifest와 service worker cache 경로를 상대/동적 경로로 변경해 `/our_share/` 하위 배포와 Firebase Hosting 루트 배포를 모두 지원하도록 개선했다.
+- Firebase Hosting 루트 경로 빌드용 `npm run build:firebase` 스크립트를 추가했다.
+- 호스팅 스모크 스크립트가 base URL 경로를 기준으로 asset 경로를 검사하도록 일반화했다.
