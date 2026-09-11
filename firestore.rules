@@ -487,7 +487,12 @@ service cloud.firestore {
     }
 
     match /families/{familyId}/chatRooms/{roomId} {
-      allow read: if isFamilyMember(familyId) &&
+      allow get: if canAccessNestedChatRoom(familyId, resource.data) ||
+        (
+          isFamilyMember(familyId) &&
+          !exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId))
+        );
+      allow list: if isFamilyMember(familyId) &&
         (
           resource.data.type == "FAMILY" ||
           resource.data.createdBy == request.auth.uid ||

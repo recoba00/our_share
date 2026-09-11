@@ -169,3 +169,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 저장 실패 원인 확인을 위해 Firestore/Realtime Database Rules를 `our-share-6baf5` 프로젝트에 재배포했다.
 - 캘린더, 메모, 투표, 투표값, 채팅방, 메시지 저장 경로를 `families/{familyId}` 하위 컬렉션으로 변경해 Firestore Rules가 가족 단위 목록 조회를 안정적으로 허용할 수 있게 정리했다.
 - 채팅/투표/메모/캘린더 저장 후 목록 갱신이 막히는 문제를 재현하는 Security Rules 테스트를 앱 query 형태로 보강했다.
+- 가족 전체방과 1:1 채팅방을 생성하기 전에 클라이언트가 deterministic room id로 존재 여부를 확인할 수 있도록, 존재하지 않는 가족 하위 `chatRooms` 문서의 `get` 권한만 허용하는 Firestore Rules 테스트를 추가했다.

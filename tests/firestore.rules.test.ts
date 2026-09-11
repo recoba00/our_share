@@ -329,6 +329,28 @@ describe("MVP create flows", () => {
 });
 
 describe("MVP family list queries", () => {
+  it("allows family members to check deterministic chat room documents before creating them", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
+
+    await assertSucceeds(
+      getDoc(doc(aliceDb, "families", "familyA", "chatRooms", "familyA_family"))
+    );
+    await assertSucceeds(
+      getDoc(doc(aliceDb, "families", "familyA", "chatRooms", "familyA_direct_alice_bob"))
+    );
+    await assertFails(
+      getDoc(doc(outsiderDb, "families", "familyA", "chatRooms", "familyA_family"))
+    );
+  });
+
   it("allows the app's familyId list queries after writes", async () => {
     await seedFamilyWithMembers({
       familyId: "familyA",
