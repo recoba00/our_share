@@ -70,7 +70,7 @@ export function ChatPage() {
       setActiveFamily(family);
 
       if (family) {
-        const [familyRoomId, nextMembers] = await Promise.all([
+        const [familyRoomResult, membersResult] = await Promise.allSettled([
           getOrCreateFamilyRoom({
             createdBy: userId,
             familyId: family.id,
@@ -78,14 +78,29 @@ export function ChatPage() {
           getFamilyMembers(family.id),
         ]);
 
-        if (active) {
-          setMembers(nextMembers);
-          setSelectedRoomId(familyRoomId);
+        if (!active) {
+          return;
+        }
+
+        if (membersResult.status === "fulfilled") {
+          setMembers(membersResult.value);
+        } else {
+          setMembers([]);
+          setStatusMessage(getErrorMessage(membersResult.reason));
+        }
+
+        if (familyRoomResult.status === "fulfilled") {
+          setSelectedRoomId(familyRoomResult.value);
+        } else {
+          setSelectedRoomId("");
+          setStatusMessage(
+            `가족 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
+          );
         }
       }
     }
 
-    loadFamily().catch((error: Error) => setStatusMessage(error.message));
+    loadFamily().catch((error: Error) => setStatusMessage(getErrorMessage(error)));
 
     return () => {
       active = false;
@@ -530,4 +545,12 @@ function PollMessageCard({
       </Link>
     </div>
   );
+}
+
+function getErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return "처리 중 오류가 발생했습니다.";
 }

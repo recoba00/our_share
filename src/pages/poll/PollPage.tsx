@@ -69,19 +69,30 @@ export function PollPage() {
       if (!nextFamily) {
         setFamily(null);
         setPolls([]);
+        setRooms([]);
+        setSelectedRoomId("");
         setFeedback("투표를 만들려면 먼저 홈에서 가족을 만들거나 초대 코드로 참여해주세요.");
         return;
       }
 
-      const nextPolls = await getPolls(nextFamily.id);
-      const familyRoomId = await getOrCreateFamilyRoom({
-        createdBy: userId,
-        familyId: nextFamily.id,
-      });
       setFamily({ id: nextFamily.id, name: nextFamily.name });
-      setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
+
+      const nextPolls = await getPolls(nextFamily.id);
       setPolls(nextPolls);
       setVotes(await getPollVotes(nextFamily.id, nextPolls.map((poll) => poll.id)));
+
+      try {
+        const familyRoomId = await getOrCreateFamilyRoom({
+          createdBy: userId,
+          familyId: nextFamily.id,
+        });
+        setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
+      } catch (roomError) {
+        setSelectedRoomId("");
+        setFeedback(
+          `투표는 만들 수 있지만 채팅방 연결 확인에 실패했습니다. ${getErrorMessage(roomError)}`
+        );
+      }
     } catch (error) {
       setFeedback(getErrorMessage(error));
     } finally {
