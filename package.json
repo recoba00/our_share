@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "lint": "eslint .",
+    "test:hosting": "node scripts/run-hosting-smoke.mjs",
     "test:rules": "node scripts/run-firestore-rules-tests.mjs"
   },
   "dependencies": {

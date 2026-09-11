@@ -7,6 +7,7 @@ Date: 2026-09-10
 - [x] `npm run lint`
 - [x] `npm run build`
 - [x] `npm run test:rules`
+- [x] `npm run test:hosting`
 - [x] Firebase Firestore Rules published
 - [x] Firebase Realtime Database Rules published
 - [x] Dothome root URL returns built Vite HTML
