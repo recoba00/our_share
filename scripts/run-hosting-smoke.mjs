@@ -8,6 +8,7 @@ const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
 
 let failures = [];
 let assetPaths = [];
+let checkedJsAssets = [];
 
 for (let attempt = 0; attempt <= retryCount; attempt += 1) {
   failures = await runSmokeCheck();
@@ -34,6 +35,7 @@ console.log("Hosting smoke check passed.");
 console.log(`Base URL: ${normalizedBaseUrl}`);
 console.log(`Routes: ${routes.join(", ")}`);
 console.log(`Assets: ${assetPaths.length}`);
+console.log(`JS assets checked: ${checkedJsAssets.length}`);
 console.log(`Expected commit: ${expectedCommit}`);
 
 async function runSmokeCheck() {
@@ -69,6 +71,11 @@ async function runSmokeCheck() {
     nextFailures.push("No built JS/CSS assets found in diagnostics shell");
   }
 
+  const jsAssetPaths = new Set(
+    assetPaths.filter((assetPath) => assetPath.endsWith(".js"))
+  );
+  const fetchedJsBodies = new Map();
+
   for (const assetPath of assetPaths) {
     const assetUrl = new URL(assetPath, normalizedBaseUrl).toString();
     const response = await fetch(assetUrl);
@@ -79,13 +86,42 @@ async function runSmokeCheck() {
       continue;
     }
 
-    if (
-      assetPath.endsWith(".js") &&
-      expectedCommit !== "unknown" &&
-      !body.includes(expectedCommit)
-    ) {
-      nextFailures.push(`${assetUrl} does not include expected commit ${expectedCommit}`);
+    if (assetPath.endsWith(".js")) {
+      fetchedJsBodies.set(assetPath, body);
+
+      for (const referencedAssetPath of findReferencedJsAssets(body)) {
+        jsAssetPaths.add(referencedAssetPath);
+      }
     }
+  }
+
+  for (const assetPath of jsAssetPaths) {
+    if (fetchedJsBodies.has(assetPath)) {
+      continue;
+    }
+
+    const assetUrl = new URL(assetPath, normalizedBaseUrl).toString();
+    const response = await fetch(assetUrl);
+    const body = await response.text();
+
+    if (!response.ok) {
+      nextFailures.push(`${assetUrl} returned ${response.status}`);
+      continue;
+    }
+
+    fetchedJsBodies.set(assetPath, body);
+  }
+
+  checkedJsAssets = [...jsAssetPaths];
+
+  if (
+    expectedCommit !== "unknown" &&
+    checkedJsAssets.length > 0 &&
+    ![...fetchedJsBodies.values()].some((body) => body.includes(expectedCommit))
+  ) {
+    nextFailures.push(
+      `No deployed JS asset includes expected commit ${expectedCommit}`
+    );
   }
 
   return nextFailures;
@@ -105,5 +141,25 @@ async function getGitCommit() {
 function delay(ms) {
   return new Promise((resolve) => {
     setTimeout(resolve, ms);
+  });
+}
+
+function findReferencedJsAssets(body) {
+  const matches = body.matchAll(
+    /["'`]((?:\/our_share\/)?assets\/[^"'`]+\.js|\.\/[^"'`]+\.js)["'`]/g
+  );
+
+  return Array.from(matches, (match) => {
+    const assetPath = match[1];
+
+    if (assetPath.startsWith("/our_share/")) {
+      return assetPath;
+    }
+
+    if (assetPath.startsWith("./")) {
+      return `/our_share/assets/${assetPath.slice(2)}`;
+    }
+
+    return `/our_share/${assetPath}`;
   });
 }

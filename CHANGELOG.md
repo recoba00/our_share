@@ -186,3 +186,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Security TODO와 MVP 릴리즈 체크리스트에 Realtime Database Rules 자동 테스트 항목을 반영했다.
 - React 라우트 페이지를 `lazy`/`Suspense` 기반으로 분리해 홈, 채팅, 투표, 메모, 캘린더, 진단 화면을 필요 시점에 로드하도록 개선했다.
 - Vite `manualChunks` 설정을 추가해 React, Firebase, Phosphor Icons vendor 코드를 별도 청크로 분리했다.
+- 코드 스플리팅 후 커밋 정보가 동적 페이지 청크로 이동하는 구조에 맞춰 호스팅 스모크 스크립트가 참조된 JS 청크 전체에서 배포 커밋을 확인하도록 보완했다.
