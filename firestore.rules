@@ -23,26 +23,6 @@ service cloud.firestore {
         get(membershipPath(familyId)).data.role == "OWNER";
     }
 
-    function canReadPrivateFamilyData(familyId, visibleTo) {
-      return familyId is string &&
-        visibleTo is list &&
-        isFamilyMember(familyId) &&
-        (visibleTo.size() == 0 || request.auth.uid in visibleTo);
-    }
-
-    function canReadScopedFamilyData(data) {
-      return data.familyId is string &&
-        isFamilyMember(data.familyId) &&
-        (
-          data.visibility == "FAMILY" ||
-          (
-            data.visibility == "PRIVATE" &&
-            data.visibleTo is list &&
-            request.auth.uid in data.visibleTo
-          )
-        );
-    }
-
     function isValidFamilyRole(role) {
       return role == "OWNER" ||
         role == "PARENT" ||
