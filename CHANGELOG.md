@@ -184,3 +184,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Realtime Database `familyMembers` mirror와 `liveLocations` 읽기/쓰기 권한을 검증하는 `tests/database.rules.test.ts`를 추가했다.
 - Realtime Database는 null 필드를 저장하지 않는 특성을 반영해 `liveLocations` validate 규칙에서 `accuracy`를 필수 child 목록에서 제외하고 optional null/number로 검증하도록 수정했다.
 - Security TODO와 MVP 릴리즈 체크리스트에 Realtime Database Rules 자동 테스트 항목을 반영했다.
+- React 라우트 페이지를 `lazy`/`Suspense` 기반으로 분리해 홈, 채팅, 투표, 메모, 캘린더, 진단 화면을 필요 시점에 로드하도록 개선했다.
+- Vite `manualChunks` 설정을 추가해 React, Firebase, Phosphor Icons vendor 코드를 별도 청크로 분리했다.
