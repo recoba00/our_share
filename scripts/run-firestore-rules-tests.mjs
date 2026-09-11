@@ -55,8 +55,8 @@ const result = spawnSync(
     "firebase-tools@latest",
     "emulators:exec",
     "--only",
-    "firestore",
-    "vitest run tests/firestore.rules.test.ts",
+    "firestore,database",
+    "vitest run tests/firestore.rules.test.ts tests/database.rules.test.ts",
   ],
   {
     env,

@@ -185,6 +185,7 @@
 - [x] Firestore Rules Test Harness
 - [x] Java Runtime for Firebase Emulator
 - [x] Firestore Rules Test
+- [x] Realtime Database Rules Test
 
 ## Post-MVP / Later
 

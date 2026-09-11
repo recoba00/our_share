@@ -16,7 +16,7 @@
         ".read": "auth != null && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
         "$userId": {
           ".write": "auth != null && auth.uid == $userId && root.child('familyMembers').child($familyId).child(auth.uid).exists()",
-          ".validate": "newData.hasChildren(['latitude', 'longitude', 'accuracy', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('latitude').val() >= -90 && newData.child('latitude').val() <= 90 && newData.child('longitude').isNumber() && newData.child('longitude').val() >= -180 && newData.child('longitude').val() <= 180 && (newData.child('accuracy').isNumber() || newData.child('accuracy').val() == null) && newData.child('updatedAt').isNumber()"
+          ".validate": "newData.hasChildren(['latitude', 'longitude', 'updatedAt']) && newData.child('latitude').isNumber() && newData.child('latitude').val() >= -90 && newData.child('latitude').val() <= 90 && newData.child('longitude').isNumber() && newData.child('longitude').val() >= -180 && newData.child('longitude').val() <= 180 && (newData.child('accuracy').isNumber() || newData.child('accuracy').val() == null) && newData.child('updatedAt').isNumber()"
         }
       }
     },

@@ -180,3 +180,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - GitHub Actions Dothome 배포 workflow에 배포 후 `npm run test:hosting` 검증 단계를 추가하고, FTP 반영 지연에 대비한 재시도 옵션을 스모크 스크립트에 추가했다.
 - GitHub Actions Dothome 배포 workflow에 배포 전 `npm run lint`와 `npm run test:rules` 검증 단계를 추가하고, Firebase emulator 실행을 위한 Java 설정을 추가했다.
 - Firestore Rules 테스트 실행 스크립트가 Windows와 Linux 모두에서 PATH를 올바르게 구성하도록 OS별 경로 구분자를 사용하게 수정했다.
+- `npm run test:rules`가 Firestore와 Realtime Database 에뮬레이터를 함께 실행하도록 확장했다.
+- Realtime Database `familyMembers` mirror와 `liveLocations` 읽기/쓰기 권한을 검증하는 `tests/database.rules.test.ts`를 추가했다.
+- Realtime Database는 null 필드를 저장하지 않는 특성을 반영해 `liveLocations` validate 규칙에서 `accuracy`를 필수 child 목록에서 제외하고 optional null/number로 검증하도록 수정했다.
+- Security TODO와 MVP 릴리즈 체크리스트에 Realtime Database Rules 자동 테스트 항목을 반영했다.

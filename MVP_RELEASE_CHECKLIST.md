@@ -12,6 +12,7 @@ Date: 2026-09-10
 - [x] GitHub Actions runs lint and Firestore Rules tests before Dothome FTP deploy
 - [x] Firebase Firestore Rules published
 - [x] Firebase Realtime Database Rules published
+- [x] Firestore and Realtime Database Rules covered by local emulator tests
 - [x] Dothome root URL returns built Vite HTML
 - [x] Dothome SPA route fallback returns 200
 - [x] Dothome manifest returns explicit `Content-Type`
