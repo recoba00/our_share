@@ -9,6 +9,7 @@ Date: 2026-09-10
 - [x] `npm run test:rules`
 - [x] `npm run test:hosting`
 - [x] GitHub Actions runs hosting smoke check after Dothome FTP deploy
+- [x] GitHub Actions runs lint and Firestore Rules tests before Dothome FTP deploy
 - [x] Firebase Firestore Rules published
 - [x] Firebase Realtime Database Rules published
 - [x] Dothome root URL returns built Vite HTML

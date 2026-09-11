@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
-import { dirname } from "node:path";
+import { delimiter, dirname } from "node:path";
 
 const javaHomeCandidates = [
   "C:\\Program Files\\Android\\Android Studio\\jbr",
@@ -25,14 +25,14 @@ function resolveBundledJavaHome() {
 }
 
 const env = { ...process.env };
-env.PATH = `${dirname(process.execPath)};${env.PATH ?? ""}`;
+env.PATH = `${dirname(process.execPath)}${delimiter}${env.PATH ?? ""}`;
 
 if (!hasJavaOnPath()) {
   const javaHome = resolveBundledJavaHome();
 
   if (javaHome) {
     env.JAVA_HOME = javaHome;
-    env.PATH = `${javaHome}\\bin;${env.PATH ?? ""}`;
+    env.PATH = `${javaHome}\\bin${delimiter}${env.PATH ?? ""}`;
   }
 }
 
