@@ -33,7 +33,7 @@ export async function createMemo(input: CreateMemoInput) {
     throw new Error("메모 내용을 입력해주세요.");
   }
 
-  const memoRef = doc(collection(db, "memos"));
+  const memoRef = doc(collection(db, "families", input.familyId, "memos"));
   const encryptedFields =
     input.type === "SENSITIVE"
       ? await encryptSensitiveContent({
@@ -54,6 +54,7 @@ export async function createMemo(input: CreateMemoInput) {
     type: input.type,
     createdBy: input.createdBy,
     visibleTo: input.type === "PUBLIC" ? [] : [input.createdBy],
+    visibility: input.type === "PUBLIC" ? "FAMILY" : "PRIVATE",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
     ...encryptedFields,
@@ -73,27 +74,60 @@ export function subscribeMemos({
   onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
-  const memosQuery = query(collection(db, "memos"), where("familyId", "==", familyId));
+  const publicMemosQuery = query(
+    collection(db, "families", familyId, "memos"),
+    where("visibility", "==", "FAMILY")
+  );
+  const privateMemosQuery = query(
+    collection(db, "families", familyId, "memos"),
+    where("visibility", "==", "PRIVATE"),
+    where("visibleTo", "array-contains", userId)
+  );
+  const memoBuckets = new Map<string, Memo[]>();
 
-  return onSnapshot(
-    memosQuery,
+  function emitMergedMemos() {
+    const memos = [...memoBuckets.values()]
+      .flat()
+      .filter(
+        (memo, index, allMemos) =>
+          allMemos.findIndex((nextMemo) => nextMemo.id === memo.id) === index
+      )
+      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+
+    onChange(memos);
+  }
+
+  const unsubscribePublicMemos = onSnapshot(
+    publicMemosQuery,
     (snapshot) => {
-      const memos = snapshot.docs
-        .map((memoDoc) => memoDoc.data() as Memo)
-        .filter(
-          (memo) =>
-            memo.type === "PUBLIC" ||
-            memo.createdBy === userId ||
-            memo.visibleTo.includes(userId)
-        )
-        .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
-
-      onChange(memos);
+      memoBuckets.set(
+        "public",
+        snapshot.docs.map((memoDoc) => memoDoc.data() as Memo)
+      );
+      emitMergedMemos();
     },
     (error) => {
       onError?.(getFirebaseErrorMessage(error));
     }
   );
+  const unsubscribePrivateMemos = onSnapshot(
+    privateMemosQuery,
+    (snapshot) => {
+      memoBuckets.set(
+        "private",
+        snapshot.docs.map((memoDoc) => memoDoc.data() as Memo)
+      );
+      emitMergedMemos();
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
+
+  return () => {
+    unsubscribePublicMemos();
+    unsubscribePrivateMemos();
+  };
 }
 
 export async function revealSensitiveMemo({

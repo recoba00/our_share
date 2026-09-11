@@ -25,7 +25,7 @@ type CreatePollInput = {
 };
 
 export async function createPoll(input: CreatePollInput) {
-  const pollRef = doc(collection(db, "polls"));
+  const pollRef = doc(collection(db, "families", input.familyId, "polls"));
   const normalizedOptions = input.options.map((option) => option.trim()).filter(Boolean);
 
   if (!input.title.trim()) {
@@ -58,8 +58,7 @@ export async function createPoll(input: CreatePollInput) {
 
 export async function getPolls(familyId: string): Promise<Poll[]> {
   const pollsQuery = query(
-    collection(db, "polls"),
-    where("familyId", "==", familyId),
+    collection(db, "families", familyId, "polls"),
     orderBy("createdAt", "desc")
   );
   const snapshot = await getDocs(pollsQuery);
@@ -76,7 +75,7 @@ export function subscribePolls({
   onChange: (polls: Poll[]) => void;
   onError?: (message: string) => void;
 }): Unsubscribe {
-  const pollsQuery = query(collection(db, "polls"), where("familyId", "==", familyId));
+  const pollsQuery = query(collection(db, "families", familyId, "polls"));
 
   return onSnapshot(
     pollsQuery,
@@ -111,7 +110,7 @@ export async function votePoll({
   }
 
   await setDoc(
-    doc(db, "pollVotes", `${poll.id}_${userId}`),
+    doc(db, "families", poll.familyId, "pollVotes", `${poll.id}_${userId}`),
     {
       pollId: poll.id,
       userId,
@@ -123,13 +122,16 @@ export async function votePoll({
   );
 }
 
-export async function getPollVotes(pollIds: string[]): Promise<Record<string, PollVote[]>> {
+export async function getPollVotes(
+  familyId: string,
+  pollIds: string[]
+): Promise<Record<string, PollVote[]>> {
   if (pollIds.length === 0) {
     return {};
   }
 
   const votesQuery = query(
-    collection(db, "pollVotes"),
+    collection(db, "families", familyId, "pollVotes"),
     where("pollId", "in", pollIds.slice(0, 10))
   );
   const snapshot = await getDocs(votesQuery);

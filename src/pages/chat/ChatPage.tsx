@@ -190,27 +190,29 @@ export function ChatPage() {
   }, [activeFamily]);
 
   useEffect(() => {
-    if (!selectedRoom) {
+    if (!activeFamily || !selectedRoom) {
       return;
     }
 
     return subscribeMessages({
+      familyId: activeFamily.id,
       onChange: setMessages,
       onError: setStatusMessage,
       roomId: selectedRoom.id,
     });
-  }, [selectedRoom]);
+  }, [activeFamily, selectedRoom]);
 
   useEffect(() => {
-    if (!user || messages.length === 0) {
+    if (!activeFamily || !user || messages.length === 0) {
       return;
     }
 
     void markRoomMessagesAsRead({
+      familyId: activeFamily.id,
       messages,
       userId: user.uid,
     }).catch((error: Error) => setStatusMessage(error.message));
-  }, [messages, user]);
+  }, [activeFamily, messages, user]);
 
   async function handleCreateSecretRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

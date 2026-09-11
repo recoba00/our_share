@@ -34,7 +34,7 @@ type SaveCalendarEventInput = {
 export async function createCalendarEvent(input: SaveCalendarEventInput) {
   validateCalendarEvent(input);
 
-  const eventRef = doc(collection(db, "calendarEvents"));
+  const eventRef = doc(collection(db, "families", input.familyId, "calendarEvents"));
 
   await setDoc(eventRef, {
     id: eventRef.id,
@@ -49,6 +49,7 @@ export async function createCalendarEvent(input: SaveCalendarEventInput) {
     isDayOff: input.isDayOff,
     createdBy: input.createdBy,
     visibleTo: [],
+    visibility: "FAMILY",
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
@@ -65,7 +66,7 @@ export async function updateCalendarEvent({
 }) {
   validateCalendarEvent(input);
 
-  await updateDoc(doc(db, "calendarEvents", eventId), {
+  await updateDoc(doc(db, "families", input.familyId, "calendarEvents", eventId), {
     title: input.title.trim(),
     description: input.description.trim(),
     startDate: input.startDate,
@@ -78,8 +79,14 @@ export async function updateCalendarEvent({
   });
 }
 
-export async function deleteCalendarEvent(eventId: string) {
-  await deleteDoc(doc(db, "calendarEvents", eventId));
+export async function deleteCalendarEvent({
+  eventId,
+  familyId,
+}: {
+  eventId: string;
+  familyId: string;
+}) {
+  await deleteDoc(doc(db, "families", familyId, "calendarEvents", eventId));
 }
 
 export function subscribeCalendarEvents({
@@ -93,30 +100,60 @@ export function subscribeCalendarEvents({
   onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
-  const eventsQuery = query(
-    collection(db, "calendarEvents"),
-    where("familyId", "==", familyId)
+  const publicEventsQuery = query(
+    collection(db, "families", familyId, "calendarEvents"),
+    where("visibility", "==", "FAMILY")
   );
+  const privateEventsQuery = query(
+    collection(db, "families", familyId, "calendarEvents"),
+    where("visibility", "==", "PRIVATE"),
+    where("visibleTo", "array-contains", userId)
+  );
+  const eventBuckets = new Map<string, CalendarEvent[]>();
 
-  return onSnapshot(
-    eventsQuery,
+  function emitMergedEvents() {
+    const events = [...eventBuckets.values()]
+      .flat()
+      .filter(
+        (event, index, allEvents) =>
+          allEvents.findIndex((nextEvent) => nextEvent.id === event.id) === index
+      )
+      .sort((a, b) => a.startDate.localeCompare(b.startDate));
+
+    onChange(events);
+  }
+
+  const unsubscribePublicEvents = onSnapshot(
+    publicEventsQuery,
     (snapshot) => {
-      const events = snapshot.docs
-        .map((eventDoc) => eventDoc.data() as CalendarEvent)
-        .filter(
-          (event) =>
-            event.visibleTo.length === 0 ||
-            event.createdBy === userId ||
-            event.visibleTo.includes(userId)
-        )
-        .sort((a, b) => a.startDate.localeCompare(b.startDate));
-
-      onChange(events);
+      eventBuckets.set(
+        "public",
+        snapshot.docs.map((eventDoc) => eventDoc.data() as CalendarEvent)
+      );
+      emitMergedEvents();
     },
     (error) => {
       onError?.(getFirebaseErrorMessage(error));
     }
   );
+  const unsubscribePrivateEvents = onSnapshot(
+    privateEventsQuery,
+    (snapshot) => {
+      eventBuckets.set(
+        "private",
+        snapshot.docs.map((eventDoc) => eventDoc.data() as CalendarEvent)
+      );
+      emitMergedEvents();
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
+
+  return () => {
+    unsubscribePublicEvents();
+    unsubscribePrivateEvents();
+  };
 }
 
 function validateCalendarEvent(input: SaveCalendarEventInput) {

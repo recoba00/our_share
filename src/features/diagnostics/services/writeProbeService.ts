@@ -48,7 +48,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       title: "[진단] 저장 권한 확인",
     });
 
-    await deleteDoc(doc(db, "calendarEvents", eventId));
+    await deleteDoc(doc(db, "families", family.id, "calendarEvents", eventId));
   });
 
   await runProbeStep(results, "메모 저장", async () => {
@@ -61,7 +61,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       type: "PUBLIC",
     });
 
-    await deleteDoc(doc(db, "memos", memoId));
+    await deleteDoc(doc(db, "families", family.id, "memos", memoId));
   });
 
   await runProbeStep(results, "투표 저장", async () => {
@@ -75,7 +75,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       type: "GENERAL",
     });
 
-    await deleteDoc(doc(db, "polls", pollId));
+    await deleteDoc(doc(db, "families", family.id, "polls", pollId));
   });
 
   await runProbeStep(results, "채팅방 생성", async () => {
@@ -85,7 +85,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       name: "[진단] 저장 권한 확인",
     });
 
-    await deleteDoc(doc(db, "chatRooms", roomId));
+    await deleteDoc(doc(db, "families", family.id, "chatRooms", roomId));
   });
 
   return results;

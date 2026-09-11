@@ -59,7 +59,7 @@ export async function getOrCreateFamilyRoom({
   familyId: string;
 }) {
   const roomId = `${familyId}_family`;
-  const roomRef = doc(db, "chatRooms", roomId);
+  const roomRef = doc(db, "families", familyId, "chatRooms", roomId);
   const roomSnapshot = await getDoc(roomRef);
 
   if (roomSnapshot.exists()) {
@@ -93,7 +93,7 @@ export async function createSecretRoom({
     throw new Error("비밀방 이름을 입력해주세요.");
   }
 
-  const roomRef = doc(collection(db, "chatRooms"));
+  const roomRef = doc(collection(db, "families", familyId, "chatRooms"));
 
   await setDoc(roomRef, {
     id: roomRef.id,
@@ -123,7 +123,7 @@ export async function getOrCreateDirectRoom({
 
   const memberIds = [createdBy, targetUserId].sort();
   const roomId = `${familyId}_direct_${memberIds.join("_")}`;
-  const roomRef = doc(db, "chatRooms", roomId);
+  const roomRef = doc(db, "families", familyId, "chatRooms", roomId);
   const roomSnapshot = await getDoc(roomRef);
 
   if (roomSnapshot.exists()) {
@@ -163,7 +163,7 @@ export async function createPrivateGroupRoom({
     throw new Error("그룹방에는 본인 외 구성원 1명 이상이 필요합니다.");
   }
 
-  const roomRef = doc(collection(db, "chatRooms"));
+  const roomRef = doc(collection(db, "families", familyId, "chatRooms"));
 
   await setDoc(roomRef, {
     id: roomRef.id,
@@ -192,43 +192,92 @@ export function subscribeChatRooms({
   onError?: (message: string) => void;
   userId: string;
 }): Unsubscribe {
-  const roomsQuery = query(
-    collection(db, "chatRooms"),
-    where("familyId", "==", familyId)
+  const familyRoomsQuery = query(
+    collection(db, "families", familyId, "chatRooms"),
+    where("type", "==", "FAMILY")
   );
+  const createdRoomsQuery = query(
+    collection(db, "families", familyId, "chatRooms"),
+    where("createdBy", "==", userId)
+  );
+  const memberRoomsQuery = query(
+    collection(db, "families", familyId, "chatRooms"),
+    where("memberIds", "array-contains", userId)
+  );
+  const roomBuckets = new Map<string, ChatRoom[]>();
 
-  return onSnapshot(
-    roomsQuery,
+  function emitMergedRooms() {
+    const rooms = [...roomBuckets.values()]
+      .flat()
+      .filter(
+        (room, index, allRooms) =>
+          allRooms.findIndex((nextRoom) => nextRoom.id === room.id) === index
+      )
+      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+
+    onChange(rooms);
+  }
+
+  const unsubscribeFamilyRooms = onSnapshot(
+    familyRoomsQuery,
     (snapshot) => {
-      const rooms = snapshot.docs
-        .map((roomDoc) => roomDoc.data() as ChatRoom)
-        .filter(
-          (room) =>
-            room.type === "FAMILY" ||
-            room.createdBy === userId ||
-            (room.memberIds ?? []).includes(userId)
-        )
-        .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
-
-      onChange(rooms);
+      roomBuckets.set(
+        "family",
+        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+      );
+      emitMergedRooms();
     },
     (error) => {
       onError?.(getFirebaseErrorMessage(error));
     }
   );
+  const unsubscribeCreatedRooms = onSnapshot(
+    createdRoomsQuery,
+    (snapshot) => {
+      roomBuckets.set(
+        "created",
+        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+      );
+      emitMergedRooms();
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
+  const unsubscribeMemberRooms = onSnapshot(
+    memberRoomsQuery,
+    (snapshot) => {
+      roomBuckets.set(
+        "member",
+        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+      );
+      emitMergedRooms();
+    },
+    (error) => {
+      onError?.(getFirebaseErrorMessage(error));
+    }
+  );
+
+  return () => {
+    unsubscribeFamilyRooms();
+    unsubscribeCreatedRooms();
+    unsubscribeMemberRooms();
+  };
 }
 
 export function subscribeMessages({
+  familyId,
   onChange,
   onError,
   roomId,
 }: {
+  familyId: string;
   onChange: (messages: ChatMessage[]) => void;
   onError?: (message: string) => void;
   roomId: string;
 }): Unsubscribe {
   const messagesQuery = query(
-    collection(db, "messages"),
+    collection(db, "families", familyId, "messages"),
     where("roomId", "==", roomId)
   );
 
@@ -259,7 +308,7 @@ export async function sendTextMessage({
     throw new Error("메시지를 입력해주세요.");
   }
 
-  const messageRef = doc(collection(db, "messages"));
+  const messageRef = doc(collection(db, "families", familyId, "messages"));
 
   await setDoc(messageRef, {
     id: messageRef.id,
@@ -273,7 +322,7 @@ export async function sendTextMessage({
     readBy: [createdBy],
   });
 
-  await updateDoc(doc(db, "chatRooms", roomId), {
+  await updateDoc(doc(db, "families", familyId, "chatRooms", roomId), {
     lastMessageText: normalizedText,
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -293,7 +342,7 @@ export async function sendPollMessage({
     throw new Error("전송할 투표를 찾을 수 없습니다.");
   }
 
-  const messageRef = doc(collection(db, "messages"));
+  const messageRef = doc(collection(db, "families", familyId, "messages"));
   const messageText = `투표: ${normalizedTitle}`;
 
   await setDoc(messageRef, {
@@ -308,7 +357,7 @@ export async function sendPollMessage({
     readBy: [createdBy],
   });
 
-  await updateDoc(doc(db, "chatRooms", roomId), {
+  await updateDoc(doc(db, "families", familyId, "chatRooms", roomId), {
     lastMessageText: messageText,
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
@@ -316,9 +365,11 @@ export async function sendPollMessage({
 }
 
 export async function markRoomMessagesAsRead({
+  familyId,
   messages,
   userId,
 }: {
+  familyId: string;
   messages: ChatMessage[];
   userId: string;
 }) {
@@ -333,7 +384,7 @@ export async function markRoomMessagesAsRead({
   const batch = writeBatch(db);
 
   unreadMessages.forEach((message) => {
-    batch.update(doc(db, "messages", message.id), {
+    batch.update(doc(db, "families", familyId, "messages", message.id), {
       readBy: arrayUnion(userId),
     });
   });

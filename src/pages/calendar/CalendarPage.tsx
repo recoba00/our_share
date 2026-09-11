@@ -148,12 +148,15 @@ export function CalendarPage() {
   }
 
   async function handleDeleteEvent() {
-    if (!editingEventId) {
+    if (!editingEventId || !activeFamily) {
       return;
     }
 
     try {
-      await deleteCalendarEvent(editingEventId);
+      await deleteCalendarEvent({
+        eventId: editingEventId,
+        familyId: activeFamily.id,
+      });
       resetForm();
       setStatusMessage("일정을 삭제했습니다.");
     } catch (error) {

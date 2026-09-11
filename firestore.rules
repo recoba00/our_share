@@ -24,8 +24,23 @@ service cloud.firestore {
     }
 
     function canReadPrivateFamilyData(familyId, visibleTo) {
-      return isFamilyMember(familyId) &&
+      return familyId is string &&
+        visibleTo is list &&
+        isFamilyMember(familyId) &&
         (visibleTo.size() == 0 || request.auth.uid in visibleTo);
+    }
+
+    function canReadScopedFamilyData(data) {
+      return data.familyId is string &&
+        isFamilyMember(data.familyId) &&
+        (
+          data.visibility == "FAMILY" ||
+          (
+            data.visibility == "PRIVATE" &&
+            data.visibleTo is list &&
+            request.auth.uid in data.visibleTo
+          )
+        );
     }
 
     function isValidFamilyRole(role) {
@@ -67,6 +82,7 @@ service cloud.firestore {
           "isDayOff",
           "createdBy",
           "visibleTo",
+          "visibility",
           "createdAt",
           "updatedAt"
         ]) &&
@@ -92,7 +108,15 @@ service cloud.firestore {
         ) &&
         data.isDayOff is bool &&
         data.visibleTo is list &&
-        data.visibleTo.size() <= 50;
+        data.visibleTo.size() <= 50 &&
+        (
+          data.visibility == "FAMILY" ||
+          data.visibility == "PRIVATE"
+        ) &&
+        (
+          data.visibility == "FAMILY" ||
+          data.createdBy in data.visibleTo
+        );
     }
 
     function isValidMemo(data) {
@@ -104,6 +128,7 @@ service cloud.firestore {
           "type",
           "createdBy",
           "visibleTo",
+          "visibility",
           "createdAt",
           "updatedAt",
           "encryptedContent",
@@ -118,7 +143,15 @@ service cloud.firestore {
           data.type == "SENSITIVE"
         ) &&
         data.visibleTo is list &&
-        data.visibleTo.size() <= 50;
+        data.visibleTo.size() <= 50 &&
+        (
+          data.visibility == "FAMILY" ||
+          data.visibility == "PRIVATE"
+        ) &&
+        (
+          data.visibility == "FAMILY" ||
+          data.createdBy in data.visibleTo
+        );
     }
 
     function isValidPoll(data) {
@@ -208,11 +241,40 @@ service cloud.firestore {
     }
 
     function canAccessChatRoom(room) {
-      return isFamilyMember(room.familyId) &&
+      return room.keys().hasAll([
+          "familyId",
+          "type",
+          "createdBy",
+          "memberIds"
+        ]) &&
+        room.familyId is string &&
+        room.type is string &&
+        room.createdBy is string &&
+        room.memberIds is list &&
+        isFamilyMember(room.familyId) &&
         (
           room.type == "FAMILY" ||
           room.createdBy == request.auth.uid ||
           (room.memberIds is list && request.auth.uid in room.memberIds)
+        );
+    }
+
+    function canAccessNestedChatRoom(familyId, room) {
+      return room.keys().hasAll([
+          "familyId",
+          "type",
+          "createdBy",
+          "memberIds"
+        ]) &&
+        room.familyId == familyId &&
+        room.type is string &&
+        room.createdBy is string &&
+        room.memberIds is list &&
+        isFamilyMember(familyId) &&
+        (
+          room.type == "FAMILY" ||
+          room.createdBy == request.auth.uid ||
+          request.auth.uid in room.memberIds
         );
     }
 
@@ -340,11 +402,164 @@ service cloud.firestore {
           isFamilyOwner(resource.data.familyId));
     }
 
+    match /families/{familyId}/calendarEvents/{eventId} {
+      allow read: if resource.data.visibility == "FAMILY" &&
+        isFamilyMember(familyId);
+      allow read: if resource.data.visibility == "PRIVATE" &&
+        request.auth.uid in resource.data.visibleTo &&
+        isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.id == eventId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidCalendarEvent(request.resource.data);
+      allow update: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidCalendarEvent(request.resource.data);
+      allow delete: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid;
+    }
+
+    match /families/{familyId}/memos/{memoId} {
+      allow read: if resource.data.visibility == "FAMILY" &&
+        isFamilyMember(familyId);
+      allow read: if resource.data.visibility == "PRIVATE" &&
+        request.auth.uid in resource.data.visibleTo &&
+        isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.id == memoId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidMemo(request.resource.data);
+      allow update: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidMemo(request.resource.data);
+      allow delete: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid;
+    }
+
+    match /families/{familyId}/polls/{pollId} {
+      allow read: if isFamilyMember(familyId);
+      allow create: if isFamilyMember(familyId) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.id == pollId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidPoll(request.resource.data);
+      allow update: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidPoll(request.resource.data);
+      allow delete: if isFamilyMember(familyId) &&
+        resource.data.createdBy == request.auth.uid;
+    }
+
+    match /families/{familyId}/pollVotes/{voteId} {
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
+        isFamilyMember(familyId);
+      allow create, update: if signedIn() &&
+        voteId == request.resource.data.pollId + "_" + request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          "pollId",
+          "userId",
+          "selectedOptions",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        request.resource.data.userId == request.auth.uid &&
+        request.resource.data.selectedOptions is list &&
+        request.resource.data.selectedOptions.size() > 0 &&
+        request.resource.data.selectedOptions.size() <= 20 &&
+        exists(/databases/$(database)/documents/families/$(familyId)/polls/$(request.resource.data.pollId)) &&
+        isFamilyMember(familyId);
+      allow delete: if false;
+    }
+
+    match /families/{familyId}/chatRooms/{roomId} {
+      allow read: if isFamilyMember(familyId) &&
+        (
+          resource.data.type == "FAMILY" ||
+          resource.data.createdBy == request.auth.uid ||
+          request.auth.uid in resource.data.memberIds
+        );
+      allow create: if isFamilyMember(familyId) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.id == roomId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidChatRoom(request.resource.data) &&
+        (
+          request.resource.data.type == "FAMILY" ||
+          request.auth.uid in request.resource.data.memberIds
+        );
+      allow update: if canAccessNestedChatRoom(familyId, resource.data) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.memberIds == resource.data.memberIds &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "lastMessageText",
+          "lastMessageAt",
+          "updatedAt"
+        ]);
+      allow delete: if canAccessNestedChatRoom(familyId, resource.data) &&
+        resource.data.createdBy == request.auth.uid;
+    }
+
+    match /families/{familyId}/messages/{messageId} {
+      allow read: if signedIn() &&
+        exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)) &&
+        canAccessNestedChatRoom(
+          familyId,
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)).data
+        );
+      allow create: if isFamilyMember(familyId) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.id == messageId &&
+        request.resource.data.createdBy == request.auth.uid &&
+        isValidMessage(request.resource.data) &&
+        exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)) &&
+        canAccessNestedChatRoom(
+          familyId,
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)).data
+        );
+      allow update: if signedIn() &&
+        exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)) &&
+        canAccessNestedChatRoom(
+          familyId,
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)).data
+        ) &&
+        request.resource.data.familyId == familyId &&
+        request.resource.data.roomId == resource.data.roomId &&
+        request.resource.data.type == resource.data.type &&
+        request.resource.data.text == resource.data.text &&
+        request.resource.data.pollId == resource.data.pollId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.readBy is list &&
+        request.resource.data.readBy.hasAll(resource.data.readBy) &&
+        request.auth.uid in request.resource.data.readBy &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
+      allow delete: if false;
+    }
+
     match /calendarEvents/{eventId} {
-      allow read: if canReadPrivateFamilyData(
-        resource.data.familyId,
-        resource.data.visibleTo
-      );
+      allow read: if resource.data.visibility == "FAMILY" &&
+        isFamilyMember(resource.data.familyId);
+      allow read: if resource.data.visibility == "PRIVATE" &&
+        resource.data.visibleTo is list &&
+        request.auth.uid in resource.data.visibleTo &&
+        isFamilyMember(resource.data.familyId);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
         request.resource.data.id == eventId &&
         request.resource.data.createdBy == request.auth.uid &&
@@ -361,10 +576,12 @@ service cloud.firestore {
     }
 
     match /memos/{memoId} {
-      allow read: if canReadPrivateFamilyData(
-        resource.data.familyId,
-        resource.data.visibleTo
-      );
+      allow read: if resource.data.visibility == "FAMILY" &&
+        isFamilyMember(resource.data.familyId);
+      allow read: if resource.data.visibility == "PRIVATE" &&
+        resource.data.visibleTo is list &&
+        request.auth.uid in resource.data.visibleTo &&
+        isFamilyMember(resource.data.familyId);
       allow create: if isFamilyMember(request.resource.data.familyId) &&
         request.resource.data.id == memoId &&
         request.resource.data.createdBy == request.auth.uid &&

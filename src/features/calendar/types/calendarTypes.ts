@@ -6,6 +6,7 @@ export type CalendarEventCategory =
   | "ETC";
 
 export type CalendarEventRepeat = "NONE" | "YEARLY";
+export type CalendarEventVisibility = "FAMILY" | "PRIVATE";
 
 export type CalendarEvent = {
   id: string;
@@ -20,6 +21,7 @@ export type CalendarEvent = {
   isDayOff: boolean;
   createdBy: string;
   visibleTo: string[];
+  visibility: CalendarEventVisibility;
   createdAt: unknown;
   updatedAt: unknown;
 };

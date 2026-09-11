@@ -1,4 +1,5 @@
 export type MemoType = "PUBLIC" | "SENSITIVE";
+export type MemoVisibility = "FAMILY" | "PRIVATE";
 
 export type Memo = {
   id: string;
@@ -11,6 +12,7 @@ export type Memo = {
   type: MemoType;
   createdBy: string;
   visibleTo: string[];
+  visibility: MemoVisibility;
   createdAt: unknown;
   updatedAt: unknown;
 };

@@ -309,13 +309,20 @@ Chat Room 타입:
 - families
 - familyInvites
 - familyMembers
-- calendarEvents
 - anniversaries
-- memos
-- polls
-- pollVotes
-- chatRooms
-- messages
+
+가족별 MVP 기능 데이터는 가족 문서 하위 컬렉션으로 저장한다.
+
+```text
+families/{familyId}/calendarEvents/{eventId}
+families/{familyId}/memos/{memoId}
+families/{familyId}/polls/{pollId}
+families/{familyId}/pollVotes/{voteId}
+families/{familyId}/chatRooms/{roomId}
+families/{familyId}/messages/{messageId}
+```
+
+이 구조는 Firestore Security Rules에서 `familyId`를 경로 기준으로 검증해 목록 조회와 저장 권한을 안정적으로 처리하기 위한 MVP 기준 구조다.
 
 families 필드:
 

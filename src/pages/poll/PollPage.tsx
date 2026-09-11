@@ -81,7 +81,7 @@ export function PollPage() {
       setFamily({ id: nextFamily.id, name: nextFamily.name });
       setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
       setPolls(nextPolls);
-      setVotes(await getPollVotes(nextPolls.map((poll) => poll.id)));
+      setVotes(await getPollVotes(nextFamily.id, nextPolls.map((poll) => poll.id)));
     } catch (error) {
       setFeedback(getErrorMessage(error));
     } finally {

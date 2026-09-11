@@ -167,3 +167,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 투표, 메모, 캘린더, 채팅방 생성이 Rules에서 허용되는지 확인하는 MVP create-flow Security Rules 테스트를 추가했다.
 - 실제 로그인 계정으로 캘린더, 메모, 투표, 채팅방 저장 및 자동 삭제를 시도하는 `/diagnostics` 저장 권한 검사 패널을 추가했다.
 - 저장 실패 원인 확인을 위해 Firestore/Realtime Database Rules를 `our-share-6baf5` 프로젝트에 재배포했다.
+- 캘린더, 메모, 투표, 투표값, 채팅방, 메시지 저장 경로를 `families/{familyId}` 하위 컬렉션으로 변경해 Firestore Rules가 가족 단위 목록 조회를 안정적으로 허용할 수 있게 정리했다.
+- 채팅/투표/메모/캘린더 저장 후 목록 갱신이 막히는 문제를 재현하는 Security Rules 테스트를 앱 query 형태로 보강했다.
