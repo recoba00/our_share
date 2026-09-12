@@ -82,8 +82,14 @@ AddType application/javascript .js
 1. 저장소 checkout
 2. Node.js 설치
 3. `npm ci`
-4. `npm run build`
-5. `dist` 폴더 내용만 Dothome `html/our_share/`에 FTP 업로드
+4. `npm run lint`
+5. `npm run test:rules`
+6. `npm run build:firebase`
+7. `npm run test:dist:firebase`
+8. `npm run build`
+9. `npm run test:dist`
+10. `dist` 폴더 내용만 Dothome `html/our_share/`에 FTP 업로드
+11. `npm run test:hosting`
 
 GitHub Repository Secrets에 아래 값을 등록해야 한다.
 
@@ -139,6 +145,8 @@ npm run test:dist:firebase
 앱 라우터, 서비스 워커, PWA manifest는 Vite `base` 값을 기준으로 동작하도록 구성되어 있다.
 
 `npm run test:dist`와 `npm run test:dist:firebase`는 `dist/index.html`의 asset 경로, PWA 파일, manifest/service worker의 하드코딩 경로를 검사한다.
+
+현재 Dothome 배포 workflow도 Firebase Hosting 후보 빌드를 먼저 검증한 뒤, Dothome용 `/our_share/` 빌드를 다시 생성해 FTP 업로드한다.
 
 실제 Firebase Hosting 이전 시에는 아직 아래 작업이 남아 있다.
 
