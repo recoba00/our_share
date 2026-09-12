@@ -33,6 +33,7 @@
 - [x] 배포 환경 변수 구성
 - [x] 빌드/배포 명령 확인
 - [x] 배포 산출물 경로 검증 스크립트 구성
+- [x] MVP 최종 점검 통합 명령 구성
 - [x] 배포 URL 문서화
 - [x] GitHub Actions `dist` 배포 workflow 구성
 - [x] GitHub Actions Firebase Hosting 후보 빌드 검증 구성

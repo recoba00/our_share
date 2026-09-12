@@ -10,6 +10,7 @@ Date: 2026-09-10
 - [x] `npm run test:dist:firebase`
 - [x] `npm run test:rules`
 - [x] `npm run test:hosting`
+- [x] `npm run test:mvp`
 - [x] GitHub Actions runs hosting smoke check after Dothome FTP deploy
 - [x] GitHub Actions runs lint and Firestore Rules tests before Dothome FTP deploy
 - [x] GitHub Actions verifies Firebase Hosting candidate build before Dothome FTP deploy

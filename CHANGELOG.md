@@ -198,3 +198,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Dothome/Firebase Hosting 빌드 산출물의 asset 경로, PWA 파일, manifest/service worker 하드코딩 경로를 검증하는 `scripts/run-dist-smoke.mjs`를 추가했다.
 - `npm run test:dist`, `npm run test:dist:firebase` 스크립트를 추가하고 Dothome 배포 workflow가 FTP 업로드 전 `dist` 산출물을 검사하도록 연결했다.
 - GitHub Actions Dothome 배포 workflow가 Firebase Hosting 후보 빌드와 `test:dist:firebase`를 먼저 검증한 뒤 Dothome용 빌드를 다시 생성해 배포하도록 보완했다.
+- MVP 최종 점검을 위해 lint, Firebase Rules 테스트, Dothome/Firebase Hosting 빌드와 산출물 검증을 순서대로 실행하는 `npm run test:mvp` 명령을 추가했다.
