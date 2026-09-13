@@ -78,6 +78,18 @@ GitHub Repository Secrets에 Firebase 배포용 서비스 계정 JSON을 등록�
 FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5
 ```
 
+이 값은 Firebase 계정 비밀번호가 아니라 Google Cloud 서비스 계정 키 파일의 JSON 전체 내용이다.
+
+필수 포함 필드:
+
+```text
+project_id: our-share-6baf5
+client_email
+private_key
+```
+
+GitHub Actions는 배포 전에 이 Secret이 올바른 JSON 형태인지 먼저 검사한다. 값이 비밀번호이거나 일부만 복사된 경우 Firebase Hosting 배포 단계 전에 실패하며, Firebase Hosting URL은 이전 배포 상태 또는 404 상태로 남을 수 있다.
+
 현재 화면에 남아 있는 `FTP_PASSWORD`는 Dothome FTP 배포용 Secret이므로 Firebase Hosting 전환 후에는 사용하지 않는다. 필요 없으면 삭제해도 된다.
 
 Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드에 기본 fallback을 둔다. GitHub Secrets를 등록하면 배포 시 해당 값이 우선 적용되고, 등록하지 않아도 현재 MVP Firebase 프로젝트로 빌드된다.
@@ -174,8 +186,7 @@ npm run test:mvp
 
 - Firebase Hosting 배포 실행
 - Firebase Auth 승인 도메인에 Firebase Hosting 도메인 추가
-- GitHub Actions 배포 대상을 Dothome FTP에서 Firebase Hosting으로 교체
-- Dothome workflow 비활성화 또는 제거
+- GitHub Actions 배포용 서비스 계정 Secret 검증
 
 ## PWA
 

@@ -15,6 +15,7 @@ Date: 2026-09-10
 - [x] GitHub Actions runs lint and Firestore Rules tests before Dothome FTP deploy
 - [x] GitHub Actions verifies Firebase Hosting candidate build before Dothome FTP deploy
 - [x] GitHub Actions deploy target switched from Dothome FTP to Firebase Hosting
+- [x] GitHub Actions validates Firebase service account Secret shape before deploy
 - [x] Firebase Firestore Rules published
 - [x] Firebase Realtime Database Rules published
 - [x] Firestore and Realtime Database Rules covered by local emulator tests
@@ -75,6 +76,7 @@ Checklist:
 - [ ] Today browser notification permission flow works on localhost or HTTPS
 - [ ] Firebase Hosting URL loads at `https://our-share-6baf5.web.app`
 - [ ] Firebase Auth authorized domains include `our-share-6baf5.web.app`
+- [ ] GitHub Actions Firebase deploy succeeds with `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5`
 
 ## Release Decision
 

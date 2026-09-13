@@ -202,3 +202,9 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 기본 배포 대상을 Dothome FTP에서 Firebase Hosting으로 전환하고 GitHub Actions workflow에서 Dothome FTP 업로드 단계를 제거했다.
 - GitHub Actions가 `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5` Secret이 있을 때 Firebase Hosting live 채널로 배포하고, Secret이 없으면 배포 단계만 건너뛰도록 구성했다.
 - Firebase Hosting URL, Dothome legacy 상태, 필요한 GitHub Secret 정보를 배포 문서와 프로젝트 문서에 반영했다.
+
+## 2026-09-14
+
+- Firebase Hosting URL이 응답하지만 배포 JS에 최신 커밋 정보가 포함되지 않은 상태를 확인했다.
+- GitHub Actions 배포 실패 원인을 빠르게 확인할 수 있도록 `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5` Secret JSON 형식 검증 단계를 추가했다.
+- Firebase 배포용 Secret은 계정 비밀번호가 아니라 Google Cloud 서비스 계정 키 JSON 전체 내용이어야 함을 배포 문서에 명확히 추가했다.
