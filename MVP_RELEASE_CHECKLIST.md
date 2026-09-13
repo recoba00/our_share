@@ -74,9 +74,9 @@ Checklist:
 - [ ] Private group room opens
 - [ ] Read status updates
 - [ ] Today browser notification permission flow works on localhost or HTTPS
-- [ ] Firebase Hosting URL loads at `https://our-share-6baf5.web.app`
+- [x] Firebase Hosting URL loads at `https://our-share-6baf5.web.app`
 - [ ] Firebase Auth authorized domains include `our-share-6baf5.web.app`
-- [ ] GitHub Actions Firebase deploy succeeds with `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5`
+- [x] GitHub Actions Firebase deploy succeeds with `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5`
 
 ## Release Decision
 

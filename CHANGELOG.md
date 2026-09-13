@@ -208,3 +208,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firebase Hosting URL이 응답하지만 배포 JS에 최신 커밋 정보가 포함되지 않은 상태를 확인했다.
 - GitHub Actions 배포 실패 원인을 빠르게 확인할 수 있도록 `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5` Secret JSON 형식 검증 단계를 추가했다.
 - Firebase 배포용 Secret은 계정 비밀번호가 아니라 Google Cloud 서비스 계정 키 JSON 전체 내용이어야 함을 배포 문서에 명확히 추가했다.
+- GitHub Repository Secret 교체 후 빈 커밋으로 Firebase Hosting 자동배포를 재검증했다.
+- GitHub Actions에서 Secret 검증, Firebase Hosting 배포, 공개 URL 스모크 테스트가 모두 성공함을 확인했다.
+- `https://our-share-6baf5.web.app`에서 최신 커밋 `79549c6` 기준 주요 SPA 라우트가 정상 응답함을 확인했다.
