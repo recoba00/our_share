@@ -199,3 +199,6 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - `npm run test:dist`, `npm run test:dist:firebase` 스크립트를 추가하고 Dothome 배포 workflow가 FTP 업로드 전 `dist` 산출물을 검사하도록 연결했다.
 - GitHub Actions Dothome 배포 workflow가 Firebase Hosting 후보 빌드와 `test:dist:firebase`를 먼저 검증한 뒤 Dothome용 빌드를 다시 생성해 배포하도록 보완했다.
 - MVP 최종 점검을 위해 lint, Firebase Rules 테스트, Dothome/Firebase Hosting 빌드와 산출물 검증을 순서대로 실행하는 `npm run test:mvp` 명령을 추가했다.
+- 기본 배포 대상을 Dothome FTP에서 Firebase Hosting으로 전환하고 GitHub Actions workflow에서 Dothome FTP 업로드 단계를 제거했다.
+- GitHub Actions가 `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5` Secret이 있을 때 Firebase Hosting live 채널로 배포하고, Secret이 없으면 배포 단계만 건너뛰도록 구성했다.
+- Firebase Hosting URL, Dothome legacy 상태, 필요한 GitHub Secret 정보를 배포 문서와 프로젝트 문서에 반영했다.

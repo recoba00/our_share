@@ -40,10 +40,10 @@
 - [x] GitHub Repository Secrets 등록
 - [x] Dothome 서버에 `dist` 폴더 내용만 업로드
 - [x] Dothome manifest MIME type 확인
-- [ ] MVP 100% 완료 후 Firebase Hosting 이전
+- [x] MVP 100% 완료 후 Firebase Hosting 이전
 - [x] Firebase Hosting SPA rewrite 구성
-- [ ] GitHub Actions 배포 대상을 Firebase Hosting으로 교체
-- [ ] Dothome 배포 workflow 비활성화 또는 제거
+- [x] GitHub Actions 배포 대상을 Firebase Hosting으로 교체
+- [x] Dothome 배포 workflow 비활성화 또는 제거
 - [x] Firebase 프로젝트 생성
 - [x] Firebase Console에서 기본 설정 진행
 - [x] Firebase Web App 생성

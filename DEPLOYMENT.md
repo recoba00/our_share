@@ -1,42 +1,36 @@
 # DEPLOYMENT
 
-## Dothome 배포 원칙
+## Firebase Hosting 배포 원칙
 
-Dothome에는 프로젝트 루트 전체를 그대로 업로드하지 않는다.
+기본 배포 대상은 Firebase Hosting이다.
 
-React + Vite 앱은 개발용 소스(`src`, `index.html`, `package.json`)를 서버가 직접 실행할 수 없다. 반드시 로컬에서 빌드한 뒤 생성되는 `dist` 폴더의 내용만 웹 경로에 업로드한다.
+React + Vite 앱은 개발용 소스(`src`, `index.html`, `package.json`)를 호스팅에 그대로 배포하지 않는다. 반드시 빌드 후 생성되는 `dist` 폴더를 Firebase Hosting에 배포한다.
 
 ## 현재 배포 경로
 
-- URL: `http://recoba00.dothome.co.kr/our_share/`
-- 서버 업로드 대상: Dothome 웹 루트의 `our_share` 폴더
+- Primary URL: `https://our-share-6baf5.web.app`
+- Alternate URL: `https://our-share-6baf5.firebaseapp.com`
+- Legacy Dothome URL: `http://recoba00.dothome.co.kr/our_share/`
 
 ## 배포 절차
 
 1. 로컬에서 빌드한다.
 
 ```bash
-npm run build
-npm run test:dist
+npm run build:firebase
+npm run test:dist:firebase
 ```
 
-2. 생성된 `dist` 폴더 안의 내용만 업로드한다.
+2. Firebase Hosting에 배포한다.
 
-```text
-dist/index.html
-dist/assets/*
-dist/.htaccess
+```bash
+npx -y firebase-tools@latest deploy --only hosting --project our-share-6baf5
 ```
 
-3. Dothome 서버에는 아래처럼 배치되어야 한다.
+3. 배포 후 확인한다.
 
-```text
-our_share/
-  index.html
-  assets/
-    index-*.js
-    index-*.css
-  .htaccess
+```bash
+npm run test:hosting
 ```
 
 ## 잘못된 배포
@@ -56,24 +50,13 @@ tailwind.config.ts
 
 ## 확인 방법
 
-브라우저에서 아래 주소를 열었을 때 HTML 안의 script 경로가 `/our_share/assets/index-*.js` 형태여야 한다.
+브라우저에서 아래 주소를 열었을 때 HTML 안의 script 경로가 `/assets/index-*.js` 형태여야 한다.
 
 ```text
-http://recoba00.dothome.co.kr/our_share/
+https://our-share-6baf5.web.app/
 ```
 
 만약 `/src/main.tsx`가 보이면 빌드 결과물이 아니라 개발용 루트 파일이 업로드된 상태다.
-
-## Apache MIME 타입
-
-Dothome Apache 환경에서 PWA manifest가 명확한 MIME 타입으로 내려오도록 `public/.htaccess`에 아래 타입을 명시한다.
-
-```apache
-AddType application/manifest+json .webmanifest
-AddType image/svg+xml .svg
-AddType text/css .css
-AddType application/javascript .js
-```
 
 ## GitHub Actions
 
@@ -86,15 +69,22 @@ AddType application/javascript .js
 5. `npm run test:rules`
 6. `npm run build:firebase`
 7. `npm run test:dist:firebase`
-8. `npm run build`
-9. `npm run test:dist`
-10. `dist` 폴더 내용만 Dothome `html/our_share/`에 FTP 업로드
-11. `npm run test:hosting`
+8. Firebase Hosting live 채널 배포
+9. `npm run test:hosting`
 
-GitHub Repository Secrets에 아래 값을 등록해야 한다.
+GitHub Repository Secrets에 Firebase 배포용 서비스 계정 JSON을 등록해야 한다.
 
 ```text
-FTP_PASSWORD
+FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5
+```
+
+현재 화면에 남아 있는 `FTP_PASSWORD`는 Dothome FTP 배포용 Secret이므로 Firebase Hosting 전환 후에는 사용하지 않는다. 필요 없으면 삭제해도 된다.
+
+Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드에 기본 fallback을 둔다. GitHub Secrets를 등록하면 배포 시 해당 값이 우선 적용되고, 등록하지 않아도 현재 MVP Firebase 프로젝트로 빌드된다.
+
+GitHub Repository Secrets에 Firebase 설정값을 선택적으로 등록할 수 있다.
+
+```text
 VITE_FIREBASE_API_KEY
 VITE_FIREBASE_AUTH_DOMAIN
 VITE_FIREBASE_PROJECT_ID
@@ -105,7 +95,31 @@ VITE_FIREBASE_APP_ID
 VITE_FIREBASE_MEASUREMENT_ID
 ```
 
-Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드에 기본 fallback을 둔다. GitHub Secrets를 등록하면 배포 시 해당 값이 우선 적용되고, 등록하지 않아도 현재 MVP Firebase 프로젝트로 빌드된다.
+## Legacy Dothome
+
+Dothome을 다시 써야 할 경우에만 아래 명령을 사용한다.
+
+```bash
+npm run build
+npm run test:dist
+```
+
+생성된 `dist` 폴더 안의 내용만 Dothome `html/our_share/`에 업로드한다.
+
+Dothome Apache 환경에서 PWA manifest가 명확한 MIME 타입으로 내려오도록 `public/.htaccess`에 아래 타입을 명시한다.
+
+```apache
+AddType application/manifest+json .webmanifest
+AddType image/svg+xml .svg
+AddType text/css .css
+AddType application/javascript .js
+```
+
+Legacy Dothome FTP 배포를 다시 활성화하려면 아래 Secret이 필요하다.
+
+```text
+FTP_PASSWORD
+```
 
 ## SPA 라우팅
 

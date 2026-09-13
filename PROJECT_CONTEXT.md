@@ -56,8 +56,9 @@ Firebase 사용.
 ## 외부 연동
 
 - GitHub Repository: `https://github.com/recoba00/our_share`
-- Hosting URL: `https://recoba00.dothome.co.kr/our_share`
-- Hosting Migration Plan: MVP 100% 완료 후 Dothome에서 Firebase Hosting으로 이전
+- Hosting URL: `https://our-share-6baf5.web.app`
+- Legacy Dothome URL: `https://recoba00.dothome.co.kr/our_share`
+- Hosting Migration Plan: Dothome에서 Firebase Hosting으로 전환
 - Firebase Project: `our-share-6baf5`
 - Firebase Auth: Google 로그인 사용
 - Cloud Firestore: 서울 리전
@@ -67,9 +68,9 @@ Firebase 사용.
 
 ## 호스팅 전략
 
-MVP 개발 중에는 Dothome 정적 호스팅과 GitHub Actions FTP 배포를 사용한다.
+Firebase Hosting을 기본 배포 대상으로 사용한다.
 
-MVP 100% 완료 후에는 Firebase Hosting으로 이전한다.
+Dothome 정적 호스팅과 GitHub Actions FTP 배포는 이전 배포 방식으로 보관한다.
 
 이전 이유:
 
@@ -77,14 +78,14 @@ MVP 100% 완료 후에는 Firebase Hosting으로 이전한다.
 - Firebase Auth 승인 도메인, Firestore, Realtime Database와 같은 Firebase 생태계 안에서 관리할 수 있다.
 - SPA rewrite와 CDN 배포를 Firebase 설정으로 일관되게 관리할 수 있다.
 
-이전 시점에 필요한 작업:
+전환 상태:
 
 - `firebase.json` Hosting 설정은 추가 완료
 - Vite `base` 경로는 Dothome 기본 `/our_share/`, Firebase Hosting 빌드 `/`로 전환 가능
 - Firebase Hosting SPA rewrite 설정 완료
-- Firebase Auth 승인 도메인 확인
-- GitHub Actions 배포 대상을 Dothome FTP에서 Firebase Hosting으로 교체
-- Dothome 배포 workflow 비활성화 또는 제거
+- GitHub Actions 배포 대상을 Firebase Hosting으로 교체 완료
+- Dothome 배포 workflow 비활성화 완료
+- Firebase Auth 승인 도메인 확인 필요
 
 ## 앱 정보 구조
 
