@@ -447,7 +447,7 @@ export function ChatPage() {
   if (!activeFamily) {
     return (
       <Card>
-        <h2 className="text-xl font-black">채팅</h2>
+        <h2 className="text-xl font-semibold">채팅</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
           홈에서 가족을 만들거나 초대 코드로 참여하면 채팅방을 사용할 수 있어요.
         </p>
@@ -458,11 +458,11 @@ export function ChatPage() {
   const chatCreateTools = (
     <>
       <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-        <div className="flex items-center gap-2 text-sm font-bold">
+        <div className="flex items-center gap-2 text-sm font-semibold">
           <UserPlus size={18} weight="bold" />
           가족 초대 코드
         </div>
-        <p className="mt-2 font-mono text-2xl font-black text-brand">
+        <p className="mt-2 font-mono text-2xl font-semibold text-brand">
           {activeFamily.inviteCode}
         </p>
       </div>
@@ -484,7 +484,7 @@ export function ChatPage() {
         className="mt-6 grid gap-3 border-t border-[var(--color-border)] pt-5"
         onSubmit={handleCreatePrivateGroupRoom}
       >
-        <div className="flex items-center gap-2 text-sm font-bold">
+        <div className="flex items-center gap-2 text-sm font-semibold">
           <Users size={18} weight="bold" />
           그룹방 만들기
         </div>
@@ -561,7 +561,7 @@ export function ChatPage() {
           <label className="grid gap-2 text-sm font-semibold">
             투표 보기
             <textarea
-              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
               onChange={(event) => setPollOptionsText(event.target.value)}
               placeholder="한 줄에 하나씩 입력"
               value={pollOptionsText}
@@ -609,11 +609,11 @@ export function ChatPage() {
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
-        <h2 className="text-xl font-black">채팅</h2>
+        <h2 className="text-xl font-semibold">채팅</h2>
         <div className="hidden lg:block">{chatCreateTools}</div>
 
         <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-          <div className="flex items-center gap-2 text-sm font-bold">
+          <div className="flex items-center gap-2 text-sm font-semibold">
             <User size={18} weight="bold" />
             1:1 대화
           </div>
@@ -632,7 +632,7 @@ export function ChatPage() {
                     onClick={() => void handleCreateDirectRoom(member)}
                     type="button"
                   >
-                    <span className="grid size-9 place-items-center rounded-xl bg-white text-sm font-black text-brand">
+                    <span className="grid size-9 place-items-center rounded-xl bg-white text-sm font-semibold text-brand">
                       {(member.displayName ?? member.nickname).slice(0, 1)}
                     </span>
                     <span className="min-w-0 flex-1">
@@ -694,7 +694,7 @@ export function ChatPage() {
 
       <section className={`${roomId ? "block" : "hidden lg:block"} -mx-4 min-w-0 overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 items-center justify-between gap-3 lg:flex">
-          <h3 className="min-w-0 truncate text-lg font-bold">
+          <h3 className="min-w-0 truncate text-lg font-semibold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
         </div>
@@ -898,13 +898,13 @@ function PollMessageCard({
         isMine ? "bg-brand text-white" : "bg-white"
       }`}
     >
-      <p className="text-xs font-bold opacity-80">채팅방 투표</p>
+      <p className="text-xs font-semibold opacity-80">채팅방 투표</p>
       <strong className="mt-1 block">{poll?.title ?? message.text.replace("투표: ", "")}</strong>
       <p className={`mt-2 text-xs ${isMine ? "text-emerald-50" : "text-[var(--color-text-secondary)]"}`}>
         {poll ? `${poll.options.length}개 보기 · ${poll.multipleChoice ? "복수 선택" : "단일 선택"}` : "투표 메뉴에서 확인"}
       </p>
       <Link
-        className={`mt-3 inline-flex h-9 items-center rounded-xl px-3 text-xs font-bold ${
+        className={`mt-3 inline-flex h-9 items-center rounded-xl px-3 text-xs font-semibold ${
           isMine ? "bg-white text-brand" : "bg-brand text-white"
         }`}
         to="/poll"

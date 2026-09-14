@@ -278,7 +278,7 @@ export function CalendarPage() {
   if (!activeFamily) {
     return (
       <Card>
-        <h2 className="text-xl font-black">캘린더</h2>
+        <h2 className="text-xl font-semibold">캘린더</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
           홈에서 가족을 만들거나 초대 코드로 참여하면 일정을 사용할 수 있어요.
         </p>
@@ -303,7 +303,7 @@ export function CalendarPage() {
         {detailEvent ? (
           <div className="grid gap-4">
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <p className="text-sm font-bold text-[var(--color-text-secondary)]">
+              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
                 {detailEvent.startDate}
                 {detailEvent.endDate !== detailEvent.startDate ? ` - ${detailEvent.endDate}` : ""}
                 {detailEvent.repeat === "YEARLY" ? " · 매년" : ""}
@@ -409,7 +409,7 @@ export function CalendarPage() {
       <Card className="min-w-0">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
-            <h2 className="text-xl font-black">캘린더</h2>
+            <h2 className="text-xl font-semibold">캘린더</h2>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
               {activeFamily.name}
             </p>
@@ -434,7 +434,7 @@ export function CalendarPage() {
             </IconButton>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-bold text-[var(--color-text-secondary)] sm:gap-2">
+        <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[var(--color-text-secondary)] sm:gap-2">
           {weekLabels.map((label) => (
             <span key={label}>{label}</span>
           ))}
@@ -523,10 +523,10 @@ export function CalendarPage() {
                 <div className="flex items-center justify-between gap-3">
                   <strong>{event.title}</strong>
                   <div className="flex shrink-0 items-center gap-2">
-                    <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+                    <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
                       {getDDayLabel(event)}
                     </span>
-                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-bold text-slate-700">
+                    <span className="rounded-full bg-slate-200 px-3 py-1 text-xs font-semibold text-slate-700">
                       {categoryOptions.find((option) => option.value === event.category)?.label}
                     </span>
                   </div>
@@ -647,7 +647,7 @@ function CalendarTools({
             <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
               설명
               <textarea
-                className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="일정 메모를 적어주세요."
                 value={description}
@@ -675,7 +675,7 @@ function CalendarTools({
             <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
               분류
               <select
-                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-medium outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setCategory(event.target.value as CalendarEventCategory)}
                 value={category}
               >
@@ -756,7 +756,7 @@ function CalendarTools({
           <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
             후보 날짜
             <textarea
-              className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
               onChange={(event) => setVoteOptionsText(event.target.value)}
               placeholder="한 줄에 하나씩 입력"
               value={voteOptionsText}

@@ -99,7 +99,7 @@ function ToastViewport({
           >
             <div className="mt-0.5 shrink-0">{style.icon}</div>
             <div className="min-w-0 flex-1">
-              <strong className="block text-sm font-black">
+              <strong className="block text-sm font-semibold">
                 {toast.title ?? style.title}
               </strong>
               <p className="mt-1 text-sm leading-5">{toast.message}</p>

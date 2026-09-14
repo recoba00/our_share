@@ -50,7 +50,7 @@ export function ProfilePage() {
               src={photoURL}
             />
           ) : (
-            <div className="grid size-20 place-items-center rounded-full bg-brand-soft text-2xl font-black text-brand">
+            <div className="grid size-20 place-items-center rounded-full bg-brand-soft text-2xl font-semibold text-brand">
               {(displayName || user?.email || "?").slice(0, 1)}
             </div>
           )}
@@ -58,7 +58,7 @@ export function ProfilePage() {
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
               내 정보
             </p>
-            <h2 className="truncate text-2xl font-black">
+            <h2 className="truncate text-2xl font-semibold">
               {displayName || "가족 구성원"}
             </h2>
             <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">

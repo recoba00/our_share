@@ -228,7 +228,7 @@ export function HomePage() {
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
         <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
           <p className="text-sm font-semibold text-brand">우리 가족 스마트 홈</p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight lg:text-5xl">
+          <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
             가족 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
@@ -236,7 +236,7 @@ export function HomePage() {
           </p>
         </section>
         <Card className="self-start">
-          <h3 className="text-xl font-black">시작하기</h3>
+          <h3 className="text-xl font-semibold">시작하기</h3>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             프로필 이미지는 Google 계정의 photoURL을 사용합니다.
           </p>
@@ -416,7 +416,7 @@ export function HomePage() {
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">오늘의 가족 상황</p>
-        <h2 className="mt-2 text-3xl font-black leading-tight">
+        <h2 className="mt-2 text-3xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
@@ -463,7 +463,7 @@ export function HomePage() {
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
               로그인됨
             </p>
-            <h3 className="text-lg font-black">{user?.displayName ?? "가족 구성원"}</h3>
+            <h3 className="text-lg font-semibold">{user?.displayName ?? "가족 구성원"}</h3>
           </div>
         </div>
         <div className="mt-5 grid gap-4">
@@ -527,7 +527,7 @@ export function HomePage() {
         <Card>
           <div className="flex items-center gap-2">
             <MapPin className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-bold">가족 위치</h3>
+            <h3 className="text-base font-semibold">가족 위치</h3>
           </div>
           {members.length === 0 ? (
             <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
@@ -550,7 +550,7 @@ export function HomePage() {
         <Card>
           <div className="flex items-center gap-2">
             <CalendarDots className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-bold">이달의 일정</h3>
+            <h3 className="text-base font-semibold">이달의 일정</h3>
           </div>
           <DashboardList
             emptyText="이번 달 일정이 없습니다."
@@ -563,7 +563,7 @@ export function HomePage() {
         <Card>
           <div className="flex items-center gap-2">
             <Note className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-bold">최근 메모와 투표</h3>
+            <h3 className="text-base font-semibold">최근 메모와 투표</h3>
           </div>
           <DashboardList
             emptyText="최근 메모나 투표가 없습니다."
@@ -582,7 +582,7 @@ export function HomePage() {
         <Card>
           <div className="flex items-center gap-2">
             <ChatCircleDots className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-bold">최근 채팅</h3>
+            <h3 className="text-base font-semibold">최근 채팅</h3>
           </div>
           <DashboardList
             emptyText="최근 채팅이 없습니다."
@@ -597,7 +597,7 @@ export function HomePage() {
       <Card className="lg:col-span-2">
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
-          <h3 className="text-base font-bold">가족 구성원</h3>
+          <h3 className="text-base font-semibold">가족 구성원</h3>
         </div>
         {members.length > 0 ? (
           <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -708,7 +708,7 @@ function FamilyLocationPin({
         <div className="flex items-center justify-between gap-3">
           <strong className="truncate">{member.displayName ?? member.nickname}</strong>
           <span
-            className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${
+            className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${
               location ? "bg-brand-soft text-brand" : "bg-slate-200 text-slate-500"
             }`}
           >
@@ -731,7 +731,7 @@ function FamilyLocationPin({
 
             return (
               <button
-                className="rounded-full border border-[var(--color-border)] bg-white px-3 py-1 text-xs font-bold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand disabled:opacity-50"
+                className="rounded-full border border-[var(--color-border)] bg-white px-3 py-1 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand disabled:opacity-50"
                 disabled={sendingMessageKey === messageKey}
                 key={message}
                 onClick={() => onQuickMessage(member, message)}

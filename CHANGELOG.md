@@ -254,3 +254,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - Firestore에 IndexedDB 기반 persistent local cache와 multi-tab manager를 적용해 재방문/탭 전환 시 데이터 로딩 체감을 줄이도록 변경했다.
 - 채팅/메모/캘린더 화면에서 가족 정보 로딩 상태와 가족 없음 상태를 분리해 페이지 진입 직후 잘못된 빈 상태 안내가 보이지 않도록 개선했다.
 - 채팅 메시지 수정/삭제와 오너의 가족 구성원 삭제 권한을 검증하는 Firestore Rules 회귀 테스트를 추가했다.
+- MVP 진단 화면의 수동 QA 체크리스트를 최근 삭제/수정/PWA/모바일 2뎁스 흐름까지 포함하도록 보강했다.
+- 앱 전역 Tailwind font weight 사용을 400/600 기준에 맞춰 `font-normal`/`font-semibold` 중심으로 정리했다.

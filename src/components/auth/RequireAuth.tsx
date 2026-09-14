@@ -19,7 +19,7 @@ export function RequireAuth({ children }: PropsWithChildren) {
   if (status === "guest") {
     return (
       <Card className="mx-auto max-w-md">
-        <h2 className="text-xl font-black">로그인이 필요합니다</h2>
+        <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
           가족 정보와 개인 데이터를 보호하기 위해 Google 로그인 후 이용할 수 있습니다.
         </p>

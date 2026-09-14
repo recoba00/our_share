@@ -50,7 +50,7 @@ export function BottomSheet({
       <section className="relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card">
         <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-slate-300" />
         <header className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] p-4">
-          <h2 className="min-w-0 truncate text-lg font-black">{title}</h2>
+          <h2 className="min-w-0 truncate text-lg font-semibold">{title}</h2>
           <IconButton label={closeLabel} onClick={onClose}>
             <X size={18} weight="bold" />
           </IconButton>

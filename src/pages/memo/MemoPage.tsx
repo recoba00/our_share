@@ -168,7 +168,7 @@ export function MemoPage() {
   if (!activeFamily) {
     return (
       <Card>
-        <h2 className="text-xl font-black">메모</h2>
+        <h2 className="text-xl font-semibold">메모</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
           홈에서 가족을 만들거나 초대 코드로 참여하면 메모를 사용할 수 있어요.
         </p>
@@ -178,7 +178,7 @@ export function MemoPage() {
 
   const createMemoForm = (
     <>
-      <h3 className="text-lg font-bold">메모 작성</h3>
+      <h3 className="text-lg font-semibold">메모 작성</h3>
       <form className="mt-4 grid gap-3" onSubmit={handleCreateMemo}>
         <Input
           label="제목"
@@ -189,7 +189,7 @@ export function MemoPage() {
         <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
           내용
           <textarea
-            className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
             onChange={(event) => setContent(event.target.value)}
             placeholder="가족과 공유할 내용을 적어주세요."
             value={content}
@@ -244,8 +244,8 @@ export function MemoPage() {
 
       <Card>
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-black">메모</h2>
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-bold text-brand">
+          <h2 className="text-xl font-semibold">메모</h2>
+          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
             {activeFamily.name}
           </span>
         </div>
@@ -303,7 +303,7 @@ export function MemoPage() {
 
         {selectedMemo ? (
           <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-            <h3 className="text-lg font-bold">{selectedMemo.title}</h3>
+            <h3 className="text-lg font-semibold">{selectedMemo.title}</h3>
             {selectedMemo.type === "PUBLIC" ? (
               <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-6">
                 {selectedMemo.content}

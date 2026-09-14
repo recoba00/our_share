@@ -38,19 +38,27 @@ const smokeChecklistItems = [
   "다른 계정이 초대 코드로 가족에 참여한다",
   "가족 구성원 목록이 표시된다",
   "OWNER가 구성원 역할을 변경할 수 있다",
+  "OWNER가 다른 가족 구성원을 삭제할 수 있다",
   "현재 위치 공유가 권한 허용 후 성공한다",
   "가족 위치 카드가 표시된다",
   "빠른 메시지가 가족 채팅방으로 전송된다",
   "일반 메모를 생성할 수 있다",
+  "메모를 삭제할 수 있다",
   "민감 메모를 생성하고 올바른 비밀번호로 열 수 있다",
   "민감 메모가 잘못된 비밀번호를 거부한다",
   "일정을 등록할 수 있다",
+  "일정을 삭제할 수 있다",
   "매년 반복 일정과 휴무일 일정을 등록할 수 있다",
   "캘린더 날짜 투표를 생성할 수 있다",
   "일반 투표를 생성하고 투표할 수 있다",
+  "투표를 삭제할 수 있다",
   "투표를 채팅방으로 전송할 수 있다",
   "가족방 텍스트 메시지를 전송할 수 있다",
+  "내 채팅 메시지를 수정하고 삭제할 수 있다",
   "1:1 채팅방과 그룹방을 열 수 있다",
+  "채팅방을 삭제할 수 있다",
+  "모바일 채팅방 상세에서 하단 네비게이션이 숨겨진다",
+  "PWA 설치 안내와 업데이트 안내가 노출된다",
   "채팅 읽음 상태가 갱신된다",
   "브라우저 알림 권한 흐름을 확인한다",
 ];
@@ -133,7 +141,7 @@ export function DiagnosticsPage() {
             <ShieldCheck size={28} weight="bold" />
           </span>
           <div>
-            <h2 className="text-xl font-black">진단</h2>
+            <h2 className="text-xl font-semibold">진단</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
               배포, Firebase, 브라우저 기능 상태를 빠르게 확인합니다.
             </p>
@@ -178,7 +186,7 @@ export function DiagnosticsPage() {
               <FloppyDisk size={24} weight="bold" />
             </span>
             <div>
-              <h3 className="text-base font-bold">저장 권한 검사</h3>
+              <h3 className="text-base font-semibold">저장 권한 검사</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
                 현재 로그인 계정으로 캘린더, 메모, 투표, 위치 공유, 채팅방
                 저장과 가족방 준비 흐름을 실제로 확인합니다.
@@ -219,7 +227,7 @@ export function DiagnosticsPage() {
               <ClipboardText size={24} weight="bold" />
             </span>
             <div>
-              <h3 className="text-base font-bold">MVP 수동 테스트</h3>
+              <h3 className="text-base font-semibold">MVP 수동 테스트</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
                 {completedCount}/{smokeChecklistItems.length}개 확인됨
               </p>
@@ -274,7 +282,7 @@ function DiagnosticGroup({
     <Card>
       <div className="flex items-center gap-2">
         <span className="text-brand">{icon}</span>
-        <h3 className="text-base font-bold">{title}</h3>
+        <h3 className="text-base font-semibold">{title}</h3>
       </div>
 
       <ul className="mt-4 grid gap-3">

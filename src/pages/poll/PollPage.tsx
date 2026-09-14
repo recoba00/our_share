@@ -232,7 +232,7 @@ export function PollPage() {
   const createPollForm = (
     <>
         <div>
-          <h2 className="text-xl font-black">투표 만들기</h2>
+          <h2 className="text-xl font-semibold">투표 만들기</h2>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
             {family ? `${family.name} 가족 투표` : "가족 정보가 필요합니다"}
           </p>
@@ -253,7 +253,7 @@ export function PollPage() {
           <label className="grid gap-2 text-sm font-semibold">
             투표 보기
             <textarea
-              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
               onChange={(event) => setOptionsText(event.target.value)}
               placeholder="한 줄에 하나씩 입력"
               value={optionsText}
@@ -284,7 +284,7 @@ export function PollPage() {
             <label className="grid gap-2 text-sm font-semibold">
               전송할 채팅방
               <select
-                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-medium outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setSelectedRoomId(event.target.value)}
                 value={selectedRoomId}
               >
@@ -325,7 +325,7 @@ export function PollPage() {
       <Card>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h2 className="text-xl font-black">진행중 투표</h2>
+            <h2 className="text-xl font-semibold">진행중 투표</h2>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
               투표 메뉴에서 만들고 이후 채팅방으로 보낼 수 있습니다.
             </p>
@@ -398,7 +398,7 @@ function PollCard({
     <Card>
       <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <h3 className="text-lg font-black">{poll.title}</h3>
+          <h3 className="text-lg font-semibold">{poll.title}</h3>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
             {poll.type === "DATE" ? "날짜 투표" : "일반 투표"} ·{" "}
             {poll.multipleChoice ? "복수 선택" : "단일 선택"}
@@ -439,7 +439,7 @@ function PollCard({
               type="button"
             >
               <div className="flex items-center justify-between gap-3">
-                <span className="font-bold">{option}</span>
+                <span className="font-semibold">{option}</span>
                 {isSelected && <CheckCircle className="text-brand" size={20} weight="fill" />}
               </div>
               <div className="mt-3 h-2 rounded-full bg-white">
@@ -471,7 +471,7 @@ function ChoiceButton({
 }) {
   return (
     <button
-      className={`h-11 rounded-xl text-sm font-bold transition ${
+      className={`h-11 rounded-xl text-sm font-semibold transition ${
         active
           ? "bg-brand text-white"
           : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]"

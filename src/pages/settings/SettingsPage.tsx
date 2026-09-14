@@ -4,7 +4,7 @@ export function SettingsPage() {
   return (
     <div className="mx-auto grid max-w-2xl gap-4">
       <Card>
-        <h2 className="text-2xl font-black">설정</h2>
+        <h2 className="text-2xl font-semibold">설정</h2>
         <div className="mt-5 grid gap-3">
           <SettingRow label="프로필 이미지" value="Google photoURL 또는 직접 입력 URL 사용" />
           <SettingRow label="파일 업로드" value="MVP에서는 Firebase Storage 보류" />
