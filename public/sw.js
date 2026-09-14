@@ -1,10 +1,12 @@
-const CACHE_NAME = "our-share-v2";
+const CACHE_NAME = "our-share-v3";
 const SCOPE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [
   SCOPE_PATH,
   `${SCOPE_PATH}index.html`,
   `${SCOPE_PATH}manifest.webmanifest`,
-  `${SCOPE_PATH}pwa-icon.svg`
+  `${SCOPE_PATH}pwa-icon.svg`,
+  `${SCOPE_PATH}pwa-icon-192.png`,
+  `${SCOPE_PATH}pwa-icon-512.png`
 ];
 
 self.addEventListener("install", (event) => {

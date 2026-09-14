@@ -60,6 +60,7 @@
 - [x] Tailwind 설정
 - [x] PWA 설정
 - [x] PWA App Icon
+- [x] PWA PNG App Icons
 - [x] PWA Cache Version Bump for App Icon Refresh
 - [x] PWA Install Prompt Bottom Sheet
 - [x] PWA Update Prompt
@@ -196,6 +197,7 @@
 - [x] Messenger Style Chat Detail Layout
 - [x] Chat Message Edit
 - [x] Chat Message Delete
+- [x] Chat Room Inline Poll Create Layer
 - [x] DM
 - [x] Private Group
 - [x] Secret Room

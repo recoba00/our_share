@@ -24,6 +24,7 @@ import {
   getOrCreateDirectRoom,
   getOrCreateFamilyRoom,
   markRoomMessagesAsRead,
+  sendPollMessage,
   sendTextMessage,
   subscribeChatRooms,
   subscribeMessages,
@@ -36,7 +37,8 @@ import {
 } from "../../features/family/services/familyService";
 import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
 import { subscribePolls } from "../../features/poll/services/pollService";
-import type { Poll } from "../../features/poll/types/pollTypes";
+import { createPoll } from "../../features/poll/services/pollService";
+import type { Poll, PollType } from "../../features/poll/types/pollTypes";
 
 export function ChatPage() {
   const { user } = useAuth();
@@ -58,7 +60,13 @@ export function ChatPage() {
   const [secretRoomName, setSecretRoomName] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isPollCreateOpen, setIsPollCreateOpen] = useState(false);
   const [editingMessageId, setEditingMessageId] = useState("");
+  const [pollTitle, setPollTitle] = useState("");
+  const [pollDescription, setPollDescription] = useState("");
+  const [pollType, setPollType] = useState<PollType>("GENERAL");
+  const [pollMultipleChoice, setPollMultipleChoice] = useState(false);
+  const [pollOptionsText, setPollOptionsText] = useState("치킨\n피자\n삼겹살");
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
@@ -358,6 +366,45 @@ export function ChatPage() {
     }
   }
 
+  async function handleCreatePollInRoom(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!activeFamily || !selectedRoom || !user) {
+      setStatusMessage("채팅방을 먼저 선택해주세요.");
+      return;
+    }
+
+    try {
+      const pollId = await createPoll({
+        createdBy: user.uid,
+        description: pollDescription,
+        familyId: activeFamily.id,
+        multipleChoice: pollMultipleChoice,
+        options: pollOptionsText.split("\n"),
+        title: pollTitle,
+        type: pollType,
+      });
+
+      await sendPollMessage({
+        createdBy: user.uid,
+        familyId: activeFamily.id,
+        pollId,
+        pollTitle,
+        roomId: selectedRoom.id,
+      });
+
+      setPollTitle("");
+      setPollDescription("");
+      setPollType("GENERAL");
+      setPollMultipleChoice(false);
+      setPollOptionsText("치킨\n피자\n삼겹살");
+      setIsPollCreateOpen(false);
+      setStatusMessage("투표를 만들고 채팅방에 전송했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "투표 생성에 실패했습니다.");
+    }
+  }
+
   async function handleDeleteRoom(room: ChatRoom) {
     if (!activeFamily || !user || room.type === "FAMILY") {
       return;
@@ -480,6 +527,72 @@ export function ChatPage() {
         title="채팅방 만들기"
       >
         {chatCreateTools}
+      </ActionLayer>
+      <ActionLayer
+        isOpen={isPollCreateOpen}
+        onClose={() => setIsPollCreateOpen(false)}
+        title="투표 만들기"
+      >
+        <form className="grid gap-4" onSubmit={handleCreatePollInRoom}>
+          <Input
+            label="투표 제목"
+            onChange={(event) => setPollTitle(event.target.value)}
+            placeholder="예: 이번 주말 뭐 먹을까?"
+            value={pollTitle}
+          />
+          <Input
+            label="설명"
+            onChange={(event) => setPollDescription(event.target.value)}
+            placeholder="선택 사항"
+            value={pollDescription}
+          />
+          <label className="grid gap-2 text-sm font-semibold">
+            투표 보기
+            <textarea
+              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              onChange={(event) => setPollOptionsText(event.target.value)}
+              placeholder="한 줄에 하나씩 입력"
+              value={pollOptionsText}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              className={`h-11 rounded-xl text-sm font-semibold transition ${
+                pollType === "GENERAL"
+                  ? "bg-brand text-white"
+                  : "border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]"
+              }`}
+              onClick={() => setPollType("GENERAL")}
+              type="button"
+            >
+              일반
+            </button>
+            <button
+              className={`h-11 rounded-xl text-sm font-semibold transition ${
+                pollType === "DATE"
+                  ? "bg-brand text-white"
+                  : "border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]"
+              }`}
+              onClick={() => setPollType("DATE")}
+              type="button"
+            >
+              날짜
+            </button>
+          </div>
+          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
+            <input
+              checked={pollMultipleChoice}
+              className="size-4 accent-emerald-500"
+              onChange={(event) => setPollMultipleChoice(event.target.checked)}
+              type="checkbox"
+            />
+            복수 선택 허용
+          </label>
+          <Button type="submit">
+            <SealQuestion size={18} />
+            투표 만들고 전송
+          </Button>
+        </form>
       </ActionLayer>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
@@ -616,13 +729,14 @@ export function ChatPage() {
             placeholder="메시지 입력"
             value={messageText}
           />
-          <Link
+          <button
             aria-label="투표 만들기"
             className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-muted)] hover:text-brand"
-            to="/poll"
+            onClick={() => setIsPollCreateOpen(true)}
+            type="button"
           >
             <SealQuestion size={21} />
-          </Link>
+          </button>
           <button
             aria-label="전송"
             className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
