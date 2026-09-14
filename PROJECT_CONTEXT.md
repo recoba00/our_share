@@ -366,6 +366,7 @@ role:
 - liveLocations
 - onlinePresence
 - deviceStatus
+- familyMembers
 
 ### Firebase Storage
 
@@ -397,6 +398,28 @@ MVP 정책:
 - PUBLIC 데이터는 가족 구성원이 접근 가능
 - PRIVATE 데이터는 `visibleTo` 배열에 사용자 UID가 포함된 경우에만 접근 가능
 - ADMIN/OWNER는 가족 관리 가능
+
+### Firestore / Realtime Database 동기화 정책
+
+MVP에서는 가족 구성원 원본 데이터를 Firestore `familyMembers/{familyId}_{userId}`에 저장하고, Realtime Database 위치 권한 검사를 위해 `familyMembers/{familyId}/{userId}` mirror를 함께 유지한다.
+
+MVP 클라이언트 동작:
+
+- 가족 생성 시 Firestore membership과 RTDB mirror를 함께 생성한다.
+- 초대 코드 참여 시 Firestore membership 생성 후 RTDB mirror를 best-effort로 생성한다.
+- 가족 구성원 역할 변경 시 Firestore membership과 RTDB mirror role을 함께 갱신한다.
+- OWNER가 구성원을 삭제할 때 Firestore membership 삭제 후 RTDB mirror도 삭제한다.
+- 기존 membership에 mirror가 없으면 앱 구독 시 best-effort backfill을 수행한다.
+
+Post-MVP 서버 전환 정책:
+
+- Cloud Functions for Firebase와 Admin SDK를 사용해 Firestore membership 변경을 RTDB mirror로 자동 동기화한다.
+- 클라이언트는 Firestore membership만 작성하고, RTDB mirror 직접 쓰기는 제거한다.
+- `onCreate`, `onUpdate`, `onDelete` 트리거로 RTDB `familyMembers/{familyId}/{userId}`를 생성/갱신/삭제한다.
+- 동기화 실패는 Cloud Logging에 기록하고 재시도 가능한 구조로 둔다.
+- 가족 구성원 권한의 최종 원본은 계속 Firestore로 유지한다.
+
+이 전환은 Cloud Functions 사용을 전제로 하므로 Blaze 요금제 검토 후 진행한다.
 
 ## 민감정보 정책
 

@@ -256,3 +256,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 채팅 메시지 수정/삭제와 오너의 가족 구성원 삭제 권한을 검증하는 Firestore Rules 회귀 테스트를 추가했다.
 - MVP 진단 화면의 수동 QA 체크리스트를 최근 삭제/수정/PWA/모바일 2뎁스 흐름까지 포함하도록 보강했다.
 - 앱 전역 Tailwind font weight 사용을 400/600 기준에 맞춰 `font-normal`/`font-semibold` 중심으로 정리했다.
+- Post-MVP Admin SDK membership mirror 동기화 계획을 `PROJECT_CONTEXT.md`와 `TODO.md`에 구체화했다.
