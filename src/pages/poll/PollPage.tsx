@@ -143,7 +143,7 @@ export function PollPage() {
         createdBy: user.uid,
         description,
         familyId: family.id,
-        multipleChoice,
+        multipleChoice: type === "DATE" ? false : multipleChoice,
         options: type === "DATE" ? dateOptions : options,
         title,
         type,
@@ -152,6 +152,7 @@ export function PollPage() {
       setDescription("");
       setOptions(["치킨", "피자", "삼겹살"]);
       setDateOptions([]);
+      setType("GENERAL");
       setMultipleChoice(false);
       setIsCreateOpen(false);
       await loadPollData(user.uid);
@@ -310,7 +311,13 @@ export function PollPage() {
             <ChoiceButton active={type === "GENERAL"} onClick={() => setType("GENERAL")}>
               일반
             </ChoiceButton>
-            <ChoiceButton active={type === "DATE"} onClick={() => setType("DATE")}>
+            <ChoiceButton
+              active={type === "DATE"}
+              onClick={() => {
+                setType("DATE");
+                setMultipleChoice(false);
+              }}
+            >
               날짜
             </ChoiceButton>
           </div>
@@ -329,15 +336,21 @@ export function PollPage() {
               options={options}
             />
           )}
-          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
-            <input
-              checked={multipleChoice}
-              className="size-4 accent-emerald-500"
-              onChange={(event) => setMultipleChoice(event.target.checked)}
-              type="checkbox"
-            />
-            복수 선택 허용
-          </label>
+          {type === "GENERAL" ? (
+            <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
+              <input
+                checked={multipleChoice}
+                className="size-4 accent-emerald-500"
+                onChange={(event) => setMultipleChoice(event.target.checked)}
+                type="checkbox"
+              />
+              복수 선택 허용
+            </label>
+          ) : (
+            <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-5 text-[var(--color-text-secondary)]">
+              날짜 투표는 하나의 날짜만 선택할 수 있게 생성됩니다.
+            </p>
+          )}
           <Button disabled={isLoading || !canCreatePoll} onClick={handleCreatePoll}>
             <Plus size={18} weight="bold" />
             투표 만들기

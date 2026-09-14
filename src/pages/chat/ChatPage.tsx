@@ -419,7 +419,7 @@ export function ChatPage() {
         createdBy: user.uid,
         description: pollDescription,
         familyId: activeFamily.id,
-        multipleChoice: pollMultipleChoice,
+        multipleChoice: pollType === "DATE" ? false : pollMultipleChoice,
         options: pollType === "DATE" ? pollDateOptions : pollOptions,
         title: pollTitle,
         type: pollType,
@@ -643,7 +643,10 @@ export function ChatPage() {
                   ? "bg-brand text-white"
                   : "border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]"
               }`}
-              onClick={() => setPollType("DATE")}
+              onClick={() => {
+                setPollType("DATE");
+                setPollMultipleChoice(false);
+              }}
               type="button"
             >
               날짜
@@ -664,15 +667,21 @@ export function ChatPage() {
               options={pollOptions}
             />
           )}
-          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
-            <input
-              checked={pollMultipleChoice}
-              className="size-4 accent-emerald-500"
-              onChange={(event) => setPollMultipleChoice(event.target.checked)}
-              type="checkbox"
-            />
-            복수 선택 허용
-          </label>
+          {pollType === "GENERAL" ? (
+            <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
+              <input
+                checked={pollMultipleChoice}
+                className="size-4 accent-emerald-500"
+                onChange={(event) => setPollMultipleChoice(event.target.checked)}
+                type="checkbox"
+              />
+              복수 선택 허용
+            </label>
+          ) : (
+            <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-5 text-[var(--color-text-secondary)]">
+              날짜 투표는 하나의 날짜만 선택할 수 있게 생성됩니다.
+            </p>
+          )}
           <Button disabled={!canCreateRoomPoll} type="submit">
             <SealQuestion size={18} />
             투표 만들고 전송
