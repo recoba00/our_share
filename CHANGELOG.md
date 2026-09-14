@@ -263,3 +263,4 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 투표 페이지의 데이터 로딩 함수를 안정화해 React Hooks lint 경고를 제거했다.
 - `npm run test:mvp` 통합 점검에서 lint, Firebase Rules, Dothome/Firebase Hosting 산출물 검증이 모두 통과함을 확인했다.
 - Firebase Hosting 이전 완료 상태에 맞춰 `DEPLOYMENT.md`의 남은 이전 작업 문구를 현재 자동배포 기준으로 정리했다.
+- 브라우저 기본 alert/confirm/prompt 재도입을 막는 `npm run test:ui-feedback` 스모크 검사를 추가하고 MVP 통합 점검에 포함했다.

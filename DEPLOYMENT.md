@@ -66,11 +66,12 @@ https://our-share-6baf5.web.app/
 2. Node.js 설치
 3. `npm ci`
 4. `npm run lint`
-5. `npm run test:rules`
-6. `npm run build:firebase`
-7. `npm run test:dist:firebase`
-8. Firebase Hosting live 채널 배포
-9. `npm run test:hosting`
+5. `npm run test:ui-feedback`
+6. `npm run test:rules`
+7. `npm run build:firebase`
+8. `npm run test:dist:firebase`
+9. Firebase Hosting live 채널 배포
+10. `npm run test:hosting`
 
 GitHub Repository Secrets에 Firebase 배포용 서비스 계정 JSON을 등록해야 한다.
 
@@ -178,7 +179,7 @@ MVP 최종 점검은 아래 명령으로 한 번에 실행할 수 있다.
 npm run test:mvp
 ```
 
-이 명령은 lint, Firebase Rules 테스트, Dothome 빌드/산출물 검증, Firebase Hosting 빌드/산출물 검증을 순서대로 실행한다.
+이 명령은 lint, UI feedback smoke 테스트, Firebase Rules 테스트, Dothome 빌드/산출물 검증, Firebase Hosting 빌드/산출물 검증을 순서대로 실행한다.
 
 Firebase Hosting 이전은 완료된 상태다.
 
