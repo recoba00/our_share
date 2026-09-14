@@ -93,6 +93,7 @@ export function CalendarPage() {
     () => events.find((event) => event.id === detailEventId) ?? null,
     [detailEventId, events]
   );
+  const canCreateDatePoll = voteTitle.trim().length > 0 && voteSelectedDates.length >= 2;
 
   useEffect(() => {
     if (!user) {
@@ -383,6 +384,7 @@ export function CalendarPage() {
       >
         <CalendarTools
           allDay={allDay}
+          canCreateDatePoll={canCreateDatePoll}
           category={category}
           description={description}
           editingEventId={editingEventId}
@@ -419,6 +421,7 @@ export function CalendarPage() {
       <Card className="hidden self-start lg:block">
         <CalendarTools
           allDay={allDay}
+          canCreateDatePoll={canCreateDatePoll}
           category={category}
           description={description}
           editingEventId={editingEventId}
@@ -595,6 +598,7 @@ export function CalendarPage() {
 
 function CalendarTools({
   allDay,
+  canCreateDatePoll,
   category,
   description,
   editingEventId,
@@ -626,6 +630,7 @@ function CalendarTools({
   voteTitle,
 }: {
   allDay: boolean;
+  canCreateDatePoll: boolean;
   category: CalendarEventCategory;
   description: string;
   editingEventId: string;
@@ -807,10 +812,15 @@ function CalendarTools({
             toggleDate={toggleVoteDate}
             viewDate={voteViewDate}
           />
-          <Button type="submit" variant="secondary">
+          <Button disabled={!canCreateDatePoll} type="submit" variant="secondary">
             <SealQuestion size={18} />
             날짜 투표 생성
           </Button>
+          {!canCreateDatePoll ? (
+            <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+              제목과 후보 날짜 2개 이상이 필요합니다.
+            </p>
+          ) : null}
         </form>
         </div>
       )}
