@@ -686,7 +686,7 @@ export function ChatPage() {
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
         </div>
-        <div className="flex min-h-[calc(100dvh-152px)] flex-col justify-end gap-3 overflow-y-auto px-4 py-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4">
+        <div className="flex min-h-[calc(100dvh-152px)] flex-col justify-end gap-3 overflow-y-auto px-4 pb-24 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4">
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
               첫 메시지를 보내 가족 대화를 시작해보세요.
@@ -722,7 +722,7 @@ export function ChatPage() {
             })
           )}
         </div>
-        <form className="sticky bottom-0 flex min-w-0 gap-2 border-t border-white/70 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-6 lg:static lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none" onSubmit={handleSendMessage}>
+        <form className="fixed inset-x-0 bottom-0 z-30 flex min-w-0 gap-2 border-t border-white/70 bg-white/85 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6 lg:static lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none" onSubmit={handleSendMessage}>
           <input
             className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] px-4 outline-none focus:border-brand"
             onChange={(event) => setMessageText(event.target.value)}
