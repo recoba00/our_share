@@ -1,5 +1,5 @@
 import { ChatCircleDots, CheckCircle, Plus, Trash } from "@phosphor-icons/react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
@@ -42,31 +42,15 @@ export function PollPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
+  const notify = useCallback(
+    (message: string, variant: "error" | "info" | "success") => {
+      setFeedback(message);
+      showToast({ message, variant });
+    },
+    [showToast]
+  );
 
-    void loadPollData(user.uid);
-  }, [user]);
-
-  useEffect(() => {
-    if (!family || !user) {
-      return;
-    }
-
-    return subscribeChatRooms({
-      familyId: family.id,
-      onChange: (nextRooms) => {
-        setRooms(nextRooms);
-        setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");
-      },
-      onError: setFeedback,
-      userId: user.uid,
-    });
-  }, [family, user]);
-
-  async function loadPollData(userId: string) {
+  const loadPollData = useCallback(async (userId: string) => {
     setIsLoading(true);
     setFeedback("");
 
@@ -106,7 +90,33 @@ export function PollPage() {
     } finally {
       setIsLoading(false);
     }
-  }
+  }, [notify]);
+
+  useEffect(() => {
+    if (!user) {
+      return;
+    }
+
+    queueMicrotask(() => {
+      void loadPollData(user.uid);
+    });
+  }, [loadPollData, user]);
+
+  useEffect(() => {
+    if (!family || !user) {
+      return;
+    }
+
+    return subscribeChatRooms({
+      familyId: family.id,
+      onChange: (nextRooms) => {
+        setRooms(nextRooms);
+        setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");
+      },
+      onError: setFeedback,
+      userId: user.uid,
+    });
+  }, [family, user]);
 
   async function handleCreatePoll() {
     if (!user || !family) {
@@ -220,11 +230,6 @@ export function PollPage() {
     } finally {
       setIsLoading(false);
     }
-  }
-
-  function notify(message: string, variant: "error" | "info" | "success") {
-    setFeedback(message);
-    showToast({ message, variant });
   }
 
   function toggleOption(poll: Poll, option: string) {
