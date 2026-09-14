@@ -88,6 +88,8 @@
 - [x] Desktop feature pages use a consistent left-side action panel
 - [x] Mobile feature pages separate create forms into full-screen action layers
 - [x] Header title matches active bottom navigation tab outside Home
+- [x] Header profile entry opens My Info
+- [x] Header icon actions support unboxed ghost style
 - [x] Strong gradient surfaces simplified to neutral/brand-soft surfaces
 
 ## Authentication
@@ -97,6 +99,10 @@
 - [x] Google Login Error Feedback
 - [x] Google Login Redirect Fallback
 - [x] Signup via Google Auth
+- [x] My Info Profile Page
+- [x] Nickname Update
+- [x] Profile Image URL Update
+- [x] Settings Page Entry
 - [x] Logout
 - [x] Auth Guard
 
@@ -129,6 +135,10 @@
 
 - [x] Calendar UI
 - [x] Event CRUD
+- [x] Calendar Event Delete
+- [x] Calendar Dot Event Markers
+- [x] Calendar Event Detail Dialog
+- [x] Date Click Opens Event Form
 - [x] Mobile Full-Screen Event Form
 - [x] Anniversary
 - [x] D-Day

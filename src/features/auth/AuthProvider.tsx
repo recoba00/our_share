@@ -13,6 +13,7 @@ import type { AuthContextValue, AuthStatus } from "./types/authTypes";
 
 export function AuthProvider({ children }: PropsWithChildren) {
   const [user, setUser] = useState<User | null>(null);
+  const [profileVersion, setProfileVersion] = useState(0);
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [authError, setAuthError] = useState<string | null>(null);
 
@@ -32,22 +33,27 @@ export function AuthProvider({ children }: PropsWithChildren) {
   }, []);
 
   const value = useMemo<AuthContextValue>(
-    () => ({
-      authError,
-      user,
-      status,
-      signIn: async () => {
-        setAuthError(null);
+    () => {
+      void profileVersion;
 
-        try {
-          await signInWithGoogle();
-        } catch (error) {
-          setAuthError(getAuthErrorMessage(error));
-        }
-      },
-      signOut: logout,
-    }),
-    [authError, user, status]
+      return {
+        authError,
+        user,
+        status,
+        refreshUser: () => setProfileVersion((version) => version + 1),
+        signIn: async () => {
+          setAuthError(null);
+
+          try {
+            await signInWithGoogle();
+          } catch (error) {
+            setAuthError(getAuthErrorMessage(error));
+          }
+        },
+        signOut: logout,
+      };
+    },
+    [authError, user, status, profileVersion]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

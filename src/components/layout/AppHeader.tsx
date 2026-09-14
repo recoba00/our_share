@@ -1,20 +1,28 @@
-import { GearSix, UsersThree } from "@phosphor-icons/react";
-import { useLocation } from "react-router-dom";
+import { CaretLeft, GearSix, UsersThree } from "@phosphor-icons/react";
+import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { Button } from "../common/Button";
-import { IconButton } from "../common/IconButton";
 
 export function AppHeader() {
   const { signOut, status, user } = useAuth();
   const { pathname } = useLocation();
   const title = getPageTitle(pathname);
   const isHome = title === "스마트 홈";
+  const isProfile = pathname.startsWith("/profile");
+  const isSettings = pathname.startsWith("/settings");
 
   return (
     <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:px-6 lg:static lg:px-0">
       <div className="mx-auto flex max-w-screen-2xl items-center justify-between">
         <div className="flex items-center gap-3">
-          {isHome ? (
+          {isSettings ? (
+            <>
+              <Link aria-label="내 정보로 돌아가기" className="grid size-10 place-items-center" to="/profile">
+                <CaretLeft size={24} weight="bold" />
+              </Link>
+              <h1 className="text-lg font-black leading-10">{title}</h1>
+            </>
+          ) : isHome ? (
             <>
               <div className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
                 <UsersThree size={22} weight="fill" />
@@ -36,16 +44,27 @@ export function AppHeader() {
               로그아웃
             </Button>
           )}
-          {user?.photoURL && (
-            <img
-              alt={user.displayName ?? "사용자"}
-              className="size-11 rounded-xl border border-[var(--color-border)]"
-              src={user.photoURL}
-            />
-          )}
-          <IconButton label="설정">
-            <GearSix size={22} />
-          </IconButton>
+          {isProfile ? (
+            <Link aria-label="설정" className="grid size-11 place-items-center" to="/settings">
+              <GearSix size={24} weight="bold" />
+            </Link>
+          ) : status === "authenticated" ? (
+            <Link
+              aria-label="내 정보"
+              className="grid size-11 place-items-center overflow-hidden rounded-full border border-[var(--color-border)] bg-brand-soft text-sm font-black text-brand"
+              to="/profile"
+            >
+              {user?.photoURL ? (
+                <img
+                  alt={user.displayName ?? "사용자"}
+                  className="size-full rounded-full object-cover"
+                  src={user.photoURL}
+                />
+              ) : (
+                (user?.displayName ?? user?.email ?? "?").slice(0, 1)
+              )}
+            </Link>
+          ) : null}
         </div>
       </div>
     </header>
@@ -71,6 +90,14 @@ function getPageTitle(pathname: string) {
 
   if (pathname.startsWith("/diagnostics")) {
     return "진단";
+  }
+
+  if (pathname.startsWith("/profile")) {
+    return "내 정보";
+  }
+
+  if (pathname.startsWith("/settings")) {
+    return "설정";
   }
 
   return "스마트 홈";

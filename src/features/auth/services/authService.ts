@@ -4,6 +4,7 @@ import {
   signInWithPopup,
   signInWithRedirect,
   signOut,
+  updateProfile,
   type User,
 } from "firebase/auth";
 import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
@@ -56,6 +57,40 @@ export async function syncUserProfile(user: User) {
       photoURL: user.photoURL,
       updatedAt: serverTimestamp(),
       ...(!userSnapshot.exists() ? { createdAt: serverTimestamp() } : {}),
+    },
+    { merge: true }
+  );
+}
+
+export async function updateUserProfile({
+  displayName,
+  photoURL,
+  user,
+}: {
+  displayName: string;
+  photoURL: string;
+  user: User;
+}) {
+  const normalizedDisplayName = displayName.trim();
+  const normalizedPhotoURL = photoURL.trim();
+
+  if (!normalizedDisplayName) {
+    throw new Error("닉네임을 입력해주세요.");
+  }
+
+  await updateProfile(user, {
+    displayName: normalizedDisplayName,
+    photoURL: normalizedPhotoURL || null,
+  });
+
+  await setDoc(
+    doc(db, "users", user.uid),
+    {
+      id: user.uid,
+      displayName: normalizedDisplayName,
+      email: user.email,
+      photoURL: normalizedPhotoURL || null,
+      updatedAt: serverTimestamp(),
     },
     { merge: true }
   );

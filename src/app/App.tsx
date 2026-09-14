@@ -37,6 +37,16 @@ const PollPage = lazy(() =>
     default: module.PollPage,
   }))
 );
+const ProfilePage = lazy(() =>
+  import("../pages/profile/ProfilePage").then((module) => ({
+    default: module.ProfilePage,
+  }))
+);
+const SettingsPage = lazy(() =>
+  import("../pages/settings/SettingsPage").then((module) => ({
+    default: module.SettingsPage,
+  }))
+);
 
 export function App() {
   return (
@@ -51,6 +61,8 @@ export function App() {
                 <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
                 <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
                 <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
+                <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+                <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
                 <Route path="/diagnostics" element={<DiagnosticsPage />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>

@@ -14,6 +14,7 @@ import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
+import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createCalendarEvent,
@@ -71,11 +72,16 @@ export function CalendarPage() {
   const [voteOptionsText, setVoteOptionsText] = useState(getDefaultDatePollOptions(today));
   const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [detailEventId, setDetailEventId] = useState("");
 
   const monthDays = useMemo(() => createMonthDays(viewDate), [viewDate]);
   const monthEvents = useMemo(
     () => events.filter((event) => isEventVisibleInMonth(event, viewDate)),
     [events, viewDate]
+  );
+  const detailEvent = useMemo(
+    () => events.find((event) => event.id === detailEventId) ?? null,
+    [detailEventId, events]
   );
 
   useEffect(() => {
@@ -161,6 +167,29 @@ export function CalendarPage() {
         familyId: activeFamily.id,
       });
       resetForm();
+      setDetailEventId("");
+      setIsCreateOpen(false);
+      setStatusMessage("일정을 삭제했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.");
+    }
+  }
+
+  async function handleDeleteSelectedEvent(event: CalendarEvent) {
+    if (!activeFamily) {
+      return;
+    }
+
+    try {
+      await deleteCalendarEvent({
+        eventId: event.id,
+        familyId: activeFamily.id,
+      });
+      if (editingEventId === event.id) {
+        resetForm();
+      }
+      setDetailEventId("");
+      setIsCreateOpen(false);
       setStatusMessage("일정을 삭제했습니다.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.");
@@ -206,7 +235,21 @@ export function CalendarPage() {
     setRepeat(event.repeat);
     setAllDay(event.allDay);
     setIsDayOff(event.isDayOff);
+    setDetailEventId("");
+    setIsCreateOpen(true);
     setStatusMessage("");
+  }
+
+  function openEventDetail(event: CalendarEvent) {
+    setDetailEventId(event.id);
+  }
+
+  function startNewEventOnDate(date: Date) {
+    const nextDate = toDateInputValue(date);
+    resetForm();
+    setStartDate(nextDate);
+    setEndDate(nextDate);
+    setIsCreateOpen(true);
   }
 
   function resetForm() {
@@ -234,7 +277,53 @@ export function CalendarPage() {
 
   return (
     <>
-      <MobileCreateButton label="+ 일정" onClick={() => setIsCreateOpen(true)} />
+      <MobileCreateButton
+        label="+ 일정"
+        onClick={() => {
+          resetForm();
+          setIsCreateOpen(true);
+        }}
+      />
+      <Modal
+        isOpen={Boolean(detailEvent)}
+        onClose={() => setDetailEventId("")}
+        title={detailEvent?.title ?? "일정"}
+      >
+        {detailEvent ? (
+          <div className="grid gap-4">
+            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+              <p className="text-sm font-bold text-[var(--color-text-secondary)]">
+                {detailEvent.startDate}
+                {detailEvent.endDate !== detailEvent.startDate ? ` - ${detailEvent.endDate}` : ""}
+                {detailEvent.repeat === "YEARLY" ? " · 매년" : ""}
+                {detailEvent.isDayOff ? " · 휴무" : ""}
+              </p>
+              {detailEvent.description ? (
+                <p className="mt-3 whitespace-pre-wrap text-sm leading-6">
+                  {detailEvent.description}
+                </p>
+              ) : (
+                <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
+                  등록된 설명이 없습니다.
+                </p>
+              )}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button onClick={() => editEvent(detailEvent)} type="button" variant="secondary">
+                수정
+              </Button>
+              <Button
+                onClick={() => void handleDeleteSelectedEvent(detailEvent)}
+                type="button"
+                variant="secondary"
+              >
+                <Trash size={18} weight="bold" />
+                삭제
+              </Button>
+            </div>
+          </div>
+        ) : null}
+      </Modal>
       <ActionLayer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -345,36 +434,44 @@ export function CalendarPage() {
 
             return (
               <div
-                className={`min-h-24 rounded-2xl p-2 text-sm font-semibold ${
+                className={`min-h-24 rounded-2xl p-2 text-left text-sm font-semibold transition hover:bg-emerald-50 ${
                   day.isCurrentMonth
                     ? "bg-[var(--color-surface-muted)]"
                     : "bg-slate-50 text-slate-300"
                 }`}
                 key={day.key}
+                onClick={() => startNewEventOnDate(day.date)}
+                onKeyDown={(keyboardEvent) => {
+                  if (keyboardEvent.key === "Enter" || keyboardEvent.key === " ") {
+                    startNewEventOnDate(day.date);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
               >
                 <span>{day.date.getDate()}</span>
-                <div className="mt-1 grid gap-1">
-                  {dayEvents.slice(0, 3).map((event) => (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {dayEvents.slice(0, 5).map((event) => (
                     <button
-                      className={`flex items-center gap-1 rounded-full px-2 py-1 text-left text-[10px] font-bold ${
+                      aria-label={event.title}
+                      className={`size-2.5 rounded-full ${
                         event.isDayOff
-                          ? "bg-amber-100 text-amber-800"
-                          : "bg-brand text-white"
+                          ? "bg-amber-400"
+                          : event.repeat === "YEARLY"
+                            ? "bg-teal-500"
+                            : "bg-brand"
                       }`}
                       key={event.id}
-                      onClick={() => editEvent(event)}
+                      onClick={(clickEvent) => {
+                        clickEvent.stopPropagation();
+                        openEventDetail(event);
+                      }}
                       type="button"
-                    >
-                      <span className="min-w-0 truncate">
-                        {event.repeat === "YEARLY" ? "↻ " : ""}
-                        {event.title}
-                      </span>
-                      <span className="shrink-0 opacity-80">{getDDayLabel(event)}</span>
-                    </button>
+                    />
                   ))}
-                  {dayEvents.length > 3 ? (
+                  {dayEvents.length > 5 ? (
                     <span className="text-[10px] text-[var(--color-text-secondary)]">
-                      +{dayEvents.length - 3}
+                      +{dayEvents.length - 5}
                     </span>
                   ) : null}
                 </div>
@@ -392,7 +489,7 @@ export function CalendarPage() {
               <button
                 className="rounded-2xl bg-slate-50 p-4 text-left hover:bg-slate-100"
                 key={event.id}
-                onClick={() => editEvent(event)}
+                onClick={() => openEventDetail(event)}
                 type="button"
               >
                 <div className="flex items-center justify-between gap-3">
