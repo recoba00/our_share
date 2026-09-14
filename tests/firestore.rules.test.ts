@@ -112,6 +112,21 @@ describe("family membership rules", () => {
 
     await assertFails(getDoc(doc(aliceDb, "families", "unknownFamily")));
   });
+
+  it("allows owners to delete another family member and blocks regular members", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob", "chris"],
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertFails(deleteDoc(doc(bobDb, "familyMembers", "familyA_chris")));
+    await assertSucceeds(deleteDoc(doc(aliceDb, "familyMembers", "familyA_chris")));
+  });
 });
 
 describe("chat message rules", () => {
@@ -203,6 +218,56 @@ describe("chat message rules", () => {
       updateDoc(doc(aliceDb, "chatRooms", "roomA"), {
         memberIds: ["alice", "bob", "outsider"],
       })
+    );
+  });
+
+  it("allows creators to edit and delete nested text messages only", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: ["alice", "bob"],
+      roomId: "roomA",
+      type: "PRIVATE_GROUP",
+    });
+    await seedNestedMessage({
+      createdBy: "alice",
+      familyId: "familyA",
+      messageId: "messageA",
+      roomId: "roomA",
+      text: "원본 메시지",
+    });
+    await seedNestedMessage({
+      createdBy: "alice",
+      familyId: "familyA",
+      messageId: "messageB",
+      roomId: "roomA",
+      text: "삭제할 메시지",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertFails(
+      updateDoc(doc(bobDb, "families", "familyA", "messages", "messageA"), {
+        text: "다른 사람이 바꾼 메시지",
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, "families", "familyA", "messages", "messageA"), {
+        text: "수정한 메시지",
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(deleteDoc(doc(bobDb, "families", "familyA", "messages", "messageB")));
+    await assertSucceeds(
+      deleteDoc(doc(aliceDb, "families", "familyA", "messages", "messageB"))
     );
   });
 });
@@ -721,6 +786,27 @@ async function seedNestedChatRoom({
       lastMessageText: null,
       lastMessageAt: null,
     });
+  });
+}
+
+async function seedNestedMessage({
+  createdBy,
+  familyId,
+  messageId,
+  roomId,
+  text,
+}: {
+  createdBy: string;
+  familyId: string;
+  messageId: string;
+  roomId: string;
+  text: string;
+}) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(context.firestore(), "families", familyId, "messages", messageId),
+      createMessage({ createdBy, familyId, messageId, roomId, text })
+    );
   });
 }
 
