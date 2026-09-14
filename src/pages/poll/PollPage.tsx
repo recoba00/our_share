@@ -3,7 +3,9 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
+import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   getOrCreateFamilyRoom,
@@ -23,6 +25,8 @@ import type { Poll, PollType, PollVote } from "../../features/poll/types/pollTyp
 
 export function PollPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirmDialog();
+  const { showToast } = useToast();
   const [family, setFamily] = useState<{ id: string; name: string } | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
@@ -74,7 +78,7 @@ export function PollPage() {
         setPolls([]);
         setRooms([]);
         setSelectedRoomId("");
-        setFeedback("투표를 만들려면 먼저 홈에서 가족을 만들거나 초대 코드로 참여해주세요.");
+        notify("투표를 만들려면 먼저 홈에서 가족을 만들거나 초대 코드로 참여해주세요.", "info");
         return;
       }
 
@@ -92,12 +96,13 @@ export function PollPage() {
         setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
       } catch (roomError) {
         setSelectedRoomId("");
-        setFeedback(
-          `투표는 만들 수 있지만 채팅방 연결 확인에 실패했습니다. ${getErrorMessage(roomError)}`
+        notify(
+          `투표는 만들 수 있지만 채팅방 연결 확인에 실패했습니다. ${getErrorMessage(roomError)}`,
+          "error"
         );
       }
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +110,7 @@ export function PollPage() {
 
   async function handleCreatePoll() {
     if (!user || !family) {
-      setFeedback("가족 정보를 먼저 불러와주세요.");
+      notify("가족 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -128,9 +133,9 @@ export function PollPage() {
       setMultipleChoice(false);
       setIsCreateOpen(false);
       await loadPollData(user.uid);
-      setFeedback("투표를 만들었습니다.");
+      notify("투표를 만들었습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsLoading(false);
     }
@@ -151,9 +156,9 @@ export function PollPage() {
         userId: user.uid,
       });
       await loadPollData(user.uid);
-      setFeedback("투표를 반영했습니다.");
+      notify("투표를 반영했습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsLoading(false);
     }
@@ -161,7 +166,7 @@ export function PollPage() {
 
   async function handleSendPollToChat(poll: Poll) {
     if (!user || !family || !selectedRoomId) {
-      setFeedback("투표를 보낼 채팅방을 선택해주세요.");
+      notify("투표를 보낼 채팅방을 선택해주세요.", "info");
       return;
     }
 
@@ -176,9 +181,9 @@ export function PollPage() {
         pollTitle: poll.title,
         roomId: selectedRoomId,
       });
-      setFeedback("투표를 채팅방으로 전송했습니다.");
+      notify("투표를 채팅방으로 전송했습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsLoading(false);
     }
@@ -189,7 +194,12 @@ export function PollPage() {
       return;
     }
 
-    const confirmed = window.confirm(`'${poll.title}' 투표를 삭제할까요?`);
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: `'${poll.title}' 투표와 참여 내역을 삭제합니다.`,
+      title: "투표를 삭제할까요?",
+      tone: "danger",
+    });
 
     if (!confirmed) {
       return;
@@ -204,12 +214,17 @@ export function PollPage() {
         pollId: poll.id,
       });
       await loadPollData(user?.uid ?? "");
-      setFeedback("투표를 삭제했습니다.");
+      notify("투표를 삭제했습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsLoading(false);
     }
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setFeedback(message);
+    showToast({ message, variant });
   }
 
   function toggleOption(poll: Poll, option: string) {

@@ -1,6 +1,6 @@
 import type { ButtonHTMLAttributes, PropsWithChildren } from "react";
 
-type ButtonVariant = "primary" | "secondary";
+type ButtonVariant = "danger" | "primary" | "secondary";
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: ButtonVariant;
@@ -13,6 +13,7 @@ export function Button({
   ...props
 }: PropsWithChildren<ButtonProps>) {
   const variants: Record<ButtonVariant, string> = {
+    danger: "bg-red-500 text-white hover:bg-red-600",
     primary: "bg-brand text-white hover:bg-brand-hover",
     secondary:
       "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-muted)]",

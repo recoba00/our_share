@@ -12,10 +12,12 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
+import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createCalendarEvent,
@@ -49,6 +51,8 @@ const categoryOptions: { label: string; value: CalendarEventCategory }[] = [
 
 export function CalendarPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirmDialog();
+  const { showToast } = useToast();
   const today = new Date();
   const [activeFamily, setActiveFamily] = useState<{
     id: string;
@@ -150,21 +154,32 @@ export function CalendarPage() {
     try {
       if (editingEventId) {
         await updateCalendarEvent({ eventId: editingEventId, input });
-        setStatusMessage("일정을 수정했습니다.");
+        notify("일정을 수정했습니다.", "success");
       } else {
         await createCalendarEvent(input);
-        setStatusMessage("일정을 등록했습니다.");
+        notify("일정을 등록했습니다.", "success");
       }
 
       resetForm();
       setIsCreateOpen(false);
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "일정 저장에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "일정 저장에 실패했습니다.", "error");
     }
   }
 
   async function handleDeleteEvent() {
     if (!editingEventId || !activeFamily) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: "선택한 일정을 삭제합니다. 삭제한 일정은 되돌릴 수 없습니다.",
+      title: "일정을 삭제할까요?",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -176,14 +191,25 @@ export function CalendarPage() {
       resetForm();
       setDetailEventId("");
       setIsCreateOpen(false);
-      setStatusMessage("일정을 삭제했습니다.");
+      notify("일정을 삭제했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.", "error");
     }
   }
 
   async function handleDeleteSelectedEvent(event: CalendarEvent) {
     if (!activeFamily) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: `'${event.title}' 일정을 삭제합니다. 삭제한 일정은 되돌릴 수 없습니다.`,
+      title: "일정을 삭제할까요?",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
       return;
     }
 
@@ -197,9 +223,9 @@ export function CalendarPage() {
       }
       setDetailEventId("");
       setIsCreateOpen(false);
-      setStatusMessage("일정을 삭제했습니다.");
+      notify("일정을 삭제했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.", "error");
     }
   }
 
@@ -224,12 +250,15 @@ export function CalendarPage() {
       setVoteTitle("");
       setVoteDescription("");
       setVoteOptionsText(getDefaultDatePollOptions(viewDate));
-      setStatusMessage("날짜 투표를 만들었습니다. 투표 메뉴에서 채팅방으로 전송할 수 있어요.");
+      notify("날짜 투표를 만들었습니다. 투표 메뉴에서 채팅방으로 전송할 수 있어요.", "success");
     } catch (error) {
-      setStatusMessage(
-        error instanceof Error ? error.message : "날짜 투표 생성에 실패했습니다."
-      );
+      notify(error instanceof Error ? error.message : "날짜 투표 생성에 실패했습니다.", "error");
     }
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setStatusMessage(message);
+    showToast({ message, variant });
   }
 
   function editEvent(event: CalendarEvent) {

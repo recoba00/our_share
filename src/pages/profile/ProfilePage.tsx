@@ -3,11 +3,13 @@ import { useState } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
+import { useToast } from "../../components/common/toastContext";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
 
 export function ProfilePage() {
   const { refreshUser, signOut, user } = useAuth();
+  const { showToast } = useToast();
   const [displayName, setDisplayName] = useState(() => user?.displayName ?? "");
   const [photoURL, setPhotoURL] = useState(() => user?.photoURL ?? "");
   const [statusMessage, setStatusMessage] = useState("");
@@ -31,12 +33,17 @@ export function ProfilePage() {
       });
       await user.reload();
       refreshUser();
-      setStatusMessage("내 정보를 저장했습니다.");
+      notify("내 정보를 저장했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "내 정보 저장에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "내 정보 저장에 실패했습니다.", "error");
     } finally {
       setIsSaving(false);
     }
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setStatusMessage(message);
+    showToast({ message, variant });
   }
 
   return (

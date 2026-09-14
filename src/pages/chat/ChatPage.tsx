@@ -14,8 +14,11 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
+import { Modal } from "../../components/common/Modal";
+import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createPrivateGroupRoom,
@@ -43,6 +46,8 @@ import type { Poll, PollType } from "../../features/poll/types/pollTypes";
 
 export function ChatPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirmDialog();
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const { roomId } = useParams();
   const [activeFamily, setActiveFamily] = useState<{
@@ -63,7 +68,9 @@ export function ChatPage() {
   const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPollCreateOpen, setIsPollCreateOpen] = useState(false);
+  const [busyMessageId, setBusyMessageId] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
+  const [editingMessageText, setEditingMessageText] = useState("");
   const [pollTitle, setPollTitle] = useState("");
   const [pollDescription, setPollDescription] = useState("");
   const [pollType, setPollType] = useState<PollType>("GENERAL");
@@ -187,9 +194,9 @@ export function ChatPage() {
 
       setSelectedRoomId(roomId);
       openRoom(roomId);
-      setStatusMessage("1:1 채팅방을 열었습니다.");
+      notify("1:1 채팅방을 열었습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "1:1 채팅방 생성에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "1:1 채팅방 생성에 실패했습니다.", "error");
     }
   }
 
@@ -213,9 +220,9 @@ export function ChatPage() {
       setSelectedRoomId(roomId);
       openRoom(roomId);
       setIsCreateOpen(false);
-      setStatusMessage("그룹방을 만들었어요.");
+      notify("그룹방을 만들었어요.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "그룹방 생성에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "그룹방 생성에 실패했습니다.", "error");
     }
   }
 
@@ -294,9 +301,9 @@ export function ChatPage() {
       setSelectedRoomId(roomId);
       openRoom(roomId);
       setIsCreateOpen(false);
-      setStatusMessage("비밀방을 만들었어요.");
+      notify("비밀방을 만들었어요.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "비밀방 생성에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "비밀방 생성에 실패했습니다.", "error");
     }
   }
 
@@ -317,34 +324,44 @@ export function ChatPage() {
       setMessageText("");
       setStatusMessage("");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메시지 전송에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "메시지 전송에 실패했습니다.", "error");
     }
   }
 
-  async function handleEditMessage(message: ChatMessage) {
-    if (!activeFamily || message.type !== "TEXT") {
-      return;
-    }
-
-    const nextText = window.prompt("메시지를 수정합니다.", message.text);
-
-    if (nextText === null || nextText.trim() === message.text) {
+  function handleEditMessage(message: ChatMessage) {
+    if (message.type !== "TEXT") {
       return;
     }
 
     setEditingMessageId(message.id);
+    setEditingMessageText(message.text);
+  }
+
+  async function handleSubmitMessageEdit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!activeFamily || !editingMessageId) {
+      return;
+    }
+
+    const nextText = editingMessageText.trim();
+
+    if (!nextText) {
+      notify("수정할 메시지를 입력해주세요.", "info");
+      return;
+    }
 
     try {
       await updateTextMessage({
         familyId: activeFamily.id,
-        messageId: message.id,
+        messageId: editingMessageId,
         text: nextText,
       });
-      setStatusMessage("메시지를 수정했습니다.");
-    } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메시지 수정에 실패했습니다.");
-    } finally {
       setEditingMessageId("");
+      setEditingMessageText("");
+      notify("메시지를 수정했습니다.", "success");
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "메시지 수정에 실패했습니다.", "error");
     }
   }
 
@@ -353,24 +370,29 @@ export function ChatPage() {
       return;
     }
 
-    const confirmed = window.confirm("이 메시지를 삭제할까요?");
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: "선택한 메시지를 삭제합니다. 삭제한 메시지는 되돌릴 수 없습니다.",
+      title: "메시지를 삭제할까요?",
+      tone: "danger",
+    });
 
     if (!confirmed) {
       return;
     }
 
-    setEditingMessageId(message.id);
+    setBusyMessageId(message.id);
 
     try {
       await deleteMessage({
         familyId: activeFamily.id,
         messageId: message.id,
       });
-      setStatusMessage("메시지를 삭제했습니다.");
+      notify("메시지를 삭제했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메시지 삭제에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "메시지 삭제에 실패했습니다.", "error");
     } finally {
-      setEditingMessageId("");
+      setBusyMessageId("");
     }
   }
 
@@ -378,7 +400,7 @@ export function ChatPage() {
     event.preventDefault();
 
     if (!activeFamily || !selectedRoom || !user) {
-      setStatusMessage("채팅방을 먼저 선택해주세요.");
+      notify("채팅방을 먼저 선택해주세요.", "info");
       return;
     }
 
@@ -407,9 +429,9 @@ export function ChatPage() {
       setPollMultipleChoice(false);
       setPollOptionsText("치킨\n피자\n삼겹살");
       setIsPollCreateOpen(false);
-      setStatusMessage("투표를 만들고 채팅방에 전송했습니다.");
+      notify("투표를 만들고 채팅방에 전송했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "투표 생성에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "투표 생성에 실패했습니다.", "error");
     }
   }
 
@@ -418,7 +440,12 @@ export function ChatPage() {
       return;
     }
 
-    const confirmed = window.confirm(`'${getRoomDisplayName(room, members, user.uid)}' 채팅방을 삭제할까요?`);
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: `'${getRoomDisplayName(room, members, user.uid)}' 채팅방을 삭제합니다.`,
+      title: "채팅방을 삭제할까요?",
+      tone: "danger",
+    });
 
     if (!confirmed) {
       return;
@@ -434,10 +461,15 @@ export function ChatPage() {
         navigate("/chat");
         setMessages([]);
       }
-      setStatusMessage("채팅방을 삭제했습니다.");
+      notify("채팅방을 삭제했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "채팅방 삭제에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "채팅방 삭제에 실패했습니다.", "error");
     }
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setStatusMessage(message);
+    showToast({ message, variant });
   }
 
   if (isFamilyLoading) {
@@ -606,6 +638,39 @@ export function ChatPage() {
           </Button>
         </form>
       </ActionLayer>
+      <Modal
+        isOpen={Boolean(editingMessageId)}
+        onClose={() => {
+          setEditingMessageId("");
+          setEditingMessageText("");
+        }}
+        title="메시지 수정"
+      >
+        <form className="grid gap-4" onSubmit={handleSubmitMessageEdit}>
+          <label className="grid gap-2 text-sm font-semibold">
+            메시지
+            <textarea
+              autoFocus
+              className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-base font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              onChange={(event) => setEditingMessageText(event.target.value)}
+              value={editingMessageText}
+            />
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <Button
+              onClick={() => {
+                setEditingMessageId("");
+                setEditingMessageText("");
+              }}
+              type="button"
+              variant="secondary"
+            >
+              취소
+            </Button>
+            <Button type="submit">수정 완료</Button>
+          </div>
+        </form>
+      </Modal>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
@@ -714,7 +779,7 @@ export function ChatPage() {
                   key={message.id}
                 >
                   <MessageRow
-                    isBusy={editingMessageId === message.id}
+                    isBusy={busyMessageId === message.id || editingMessageId === message.id}
                     isMine={isMine}
                     member={members.find((member) => member.userId === message.createdBy)}
                     message={message}

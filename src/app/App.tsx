@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "../components/auth/RequireAuth";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
+import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ToastProvider } from "../components/common/Toast";
 import { AppLayout } from "../components/layout/AppLayout";
 import { PwaPrompt } from "../components/pwa/PwaPrompt";
@@ -18,23 +19,25 @@ export function App() {
   return (
     <AuthProvider>
       <ToastProvider>
-        <ErrorBoundary>
-          <AppLayout>
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
-              <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
-              <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
-              <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
-              <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
-              <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
-              <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
-              <Route path="/diagnostics" element={<DiagnosticsPage />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-            <PwaPrompt />
-          </AppLayout>
-        </ErrorBoundary>
+        <ConfirmDialogProvider>
+          <ErrorBoundary>
+            <AppLayout>
+              <Routes>
+                <Route path="/" element={<HomePage />} />
+                <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+                <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
+                <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
+                <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
+                <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
+                <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+                <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+                <Route path="/diagnostics" element={<DiagnosticsPage />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+              <PwaPrompt />
+            </AppLayout>
+          </ErrorBoundary>
+        </ConfirmDialogProvider>
       </ToastProvider>
     </AuthProvider>
   );

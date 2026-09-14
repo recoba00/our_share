@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
+import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createMemo,
@@ -18,6 +20,8 @@ import { getFirstFamilyForUser } from "../../features/family/services/familyServ
 
 export function MemoPage() {
   const { user } = useAuth();
+  const { confirm } = useConfirmDialog();
+  const { showToast } = useToast();
   const [activeFamily, setActiveFamily] = useState<{
     id: string;
     inviteCode: string;
@@ -103,9 +107,9 @@ export function MemoPage() {
       setMemoType("PUBLIC");
       setSelectedMemoId(memoId);
       setIsCreateOpen(false);
-      setStatusMessage("메모를 저장했습니다.");
+      notify("메모를 저장했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메모 저장에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "메모 저장에 실패했습니다.", "error");
     }
   }
 
@@ -124,7 +128,7 @@ export function MemoPage() {
       setRevealedContent(sensitiveContent);
       setStatusMessage("");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메모 열람에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "메모 열람에 실패했습니다.", "error");
     }
   }
 
@@ -139,7 +143,12 @@ export function MemoPage() {
       return;
     }
 
-    const confirmed = window.confirm(`'${memo.title}' 메모를 삭제할까요?`);
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: `'${memo.title}' 메모를 삭제합니다. 삭제한 메모는 되돌릴 수 없습니다.`,
+      title: "메모를 삭제할까요?",
+      tone: "danger",
+    });
 
     if (!confirmed) {
       return;
@@ -155,10 +164,15 @@ export function MemoPage() {
         setRevealedContent("");
         setRevealPassword("");
       }
-      setStatusMessage("메모를 삭제했습니다.");
+      notify("메모를 삭제했습니다.", "success");
     } catch (error) {
-      setStatusMessage(error instanceof Error ? error.message : "메모 삭제에 실패했습니다.");
+      notify(error instanceof Error ? error.message : "메모 삭제에 실패했습니다.", "error");
     }
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setStatusMessage(message);
+    showToast({ message, variant });
   }
 
   if (isFamilyLoading) {

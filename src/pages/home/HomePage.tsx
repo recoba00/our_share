@@ -15,7 +15,9 @@ import { useEffect, useState } from "react";
 import { Avatar } from "../../components/common/Avatar";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
+import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createFamily,
@@ -70,6 +72,8 @@ const roleLabels: Record<FamilyRole, string> = {
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
+  const { confirm } = useConfirmDialog();
+  const { showToast } = useToast();
   const [familyName, setFamilyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
   const [activeFamily, setActiveFamily] = useState<{
@@ -160,7 +164,7 @@ export function HomePage() {
 
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
-      setFeedback("가족 이름을 입력해주세요.");
+      notify("가족 이름을 입력해주세요.", "info");
       return;
     }
 
@@ -175,10 +179,10 @@ export function HomePage() {
         name: familyName.trim(),
       });
       setMembers(await getFamilyMembers(result.id));
-      setFeedback(`가족이 생성되었습니다. 초대 코드: ${result.inviteCode}`);
+      notify(`가족이 생성되었습니다. 초대 코드: ${result.inviteCode}`, "success");
       setFamilyName("");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -186,7 +190,7 @@ export function HomePage() {
 
   async function handleJoinFamily() {
     if (!user || !inviteCode.trim()) {
-      setFeedback("초대 코드를 입력해주세요.");
+      notify("초대 코드를 입력해주세요.", "info");
       return;
     }
 
@@ -204,10 +208,10 @@ export function HomePage() {
         name: result.name,
       });
       setMembers(await getFamilyMembers(result.id));
-      setFeedback(`${result.name} 가족에 참여했습니다.`);
+      notify(`${result.name} 가족에 참여했습니다.`, "success");
       setInviteCode("");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -266,15 +270,15 @@ export function HomePage() {
       const result = await getFirstFamilyForUser(user.uid);
 
       if (!result) {
-        setFeedback("아직 참여한 가족이 없습니다.");
+        notify("아직 참여한 가족이 없습니다.", "info");
         return;
       }
 
       setActiveFamily(result);
       setMembers(await getFamilyMembers(result.id));
-      setFeedback(`${result.name} 가족 정보를 불러왔습니다.`);
+      notify(`${result.name} 가족 정보를 불러왔습니다.`, "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -282,7 +286,7 @@ export function HomePage() {
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
     if (!activeFamily || !user) {
-      setFeedback("가족 정보를 먼저 불러와주세요.");
+      notify("가족 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -302,9 +306,9 @@ export function HomePage() {
         text: createQuickMessageText(member, message),
       });
 
-      setFeedback("가족 전체방으로 빠른 메시지를 보냈습니다.");
+      notify("가족 전체방으로 빠른 메시지를 보냈습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setSendingQuickMessageTo("");
     }
@@ -315,7 +319,7 @@ export function HomePage() {
     nextRole: Exclude<FamilyRole, "OWNER">
   ) {
     if (!activeFamily || !user) {
-      setFeedback("가족 정보를 먼저 불러와주세요.");
+      notify("가족 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -331,9 +335,9 @@ export function HomePage() {
       });
 
       setMembers(await getFamilyMembers(activeFamily.id));
-      setFeedback(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`);
+      notify(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`, "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setUpdatingMemberRoleId("");
     }
@@ -341,11 +345,16 @@ export function HomePage() {
 
   async function handleDeleteMember(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
-      setFeedback("가족 정보를 먼저 불러와주세요.");
+      notify("가족 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
-    const confirmed = window.confirm(`${member.displayName ?? member.nickname}님을 가족에서 삭제할까요?`);
+    const confirmed = await confirm({
+      confirmLabel: "삭제",
+      description: `${member.displayName ?? member.nickname}님을 가족에서 삭제합니다. 삭제된 구성원은 초대 코드로 다시 참여해야 합니다.`,
+      title: "가족 구성원을 삭제할까요?",
+      tone: "danger",
+    });
 
     if (!confirmed) {
       return;
@@ -361,9 +370,9 @@ export function HomePage() {
         targetUserId: member.userId,
       });
       setMembers(await getFamilyMembers(activeFamily.id));
-      setFeedback("가족 구성원을 삭제했습니다.");
+      notify("가족 구성원을 삭제했습니다.", "success");
     } catch (error) {
-      setFeedback(getErrorMessage(error));
+      notify(getErrorMessage(error), "error");
     } finally {
       setDeletingMemberId("");
     }
@@ -371,26 +380,26 @@ export function HomePage() {
 
   async function handleEnableNotifications() {
     if (!activeFamily || !user) {
-      setFeedback("가족 정보를 먼저 불러와주세요.");
+      notify("가족 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
     const availability = getNotificationAvailability();
 
     if (availability === "UNSUPPORTED") {
-      setFeedback("이 브라우저는 알림을 지원하지 않습니다.");
+      notify("이 브라우저는 알림을 지원하지 않습니다.", "info");
       return;
     }
 
     if (availability === "INSECURE_CONTEXT") {
-      setFeedback("브라우저 알림은 HTTPS 또는 localhost 환경에서 사용할 수 있습니다.");
+      notify("브라우저 알림은 HTTPS 또는 localhost 환경에서 사용할 수 있습니다.", "info");
       return;
     }
 
     const permission = await requestNotificationPermission();
 
     if (permission !== "granted") {
-      setFeedback("브라우저 알림 권한이 허용되지 않았습니다.");
+      notify("브라우저 알림 권한이 허용되지 않았습니다.", "info");
       return;
     }
 
@@ -401,11 +410,17 @@ export function HomePage() {
       userId: user.uid,
     });
 
-    setFeedback(
+    notify(
       sentCount > 0
         ? `오늘 확인할 알림 ${sentCount}개를 보냈습니다.`
-        : "알림을 켰습니다. 오늘 일정이나 24시간 내 마감 투표가 생기면 알려드릴게요."
+        : "알림을 켰습니다. 오늘 일정이나 24시간 내 마감 투표가 생기면 알려드릴게요.",
+      "success"
     );
+  }
+
+  function notify(message: string, variant: "error" | "info" | "success") {
+    setFeedback(message);
+    showToast({ message, variant });
   }
 
   const isFamilyOwner = members.some(
