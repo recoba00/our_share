@@ -550,6 +550,10 @@ export function HomePage() {
             </p>
           ) : (
             <div className="mt-4 grid gap-3">
+              <FamilyLocationMap
+                locations={liveLocations}
+                members={members}
+              />
               {members.map((member) => (
                 <FamilyLocationPin
                   key={member.userId}
@@ -676,6 +680,85 @@ export function HomePage() {
   );
 }
 
+function FamilyLocationMap({
+  locations,
+  members,
+}: {
+  locations: Record<string, LiveLocation>;
+  members: FamilyMemberProfile[];
+}) {
+  const pins = members
+    .map((member) => {
+      const location = locations[member.userId];
+
+      return location ? { location, member } : null;
+    })
+    .filter((pin): pin is { location: LiveLocation; member: FamilyMemberProfile } =>
+      Boolean(pin)
+    );
+
+  if (pins.length === 0) {
+    return (
+      <div className="grid min-h-[220px] place-items-center rounded-2xl border border-dashed border-[var(--color-border)] bg-[var(--color-surface-muted)] p-5 text-center">
+        <div>
+          <MapPin className="mx-auto text-slate-400" size={28} weight="bold" />
+          <p className="mt-3 text-sm font-semibold text-[var(--color-text-secondary)]">
+            현재 위치 공유를 누르면 지도 위에 가족 핀이 표시됩니다.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const bounds = getLocationBounds(pins.map((pin) => pin.location));
+
+  return (
+    <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
+      <div className="absolute inset-0 opacity-70">
+        <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
+        <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
+        <div className="absolute left-0 top-3/4 h-px w-full bg-white/80" />
+        <div className="absolute left-1/4 top-0 h-full w-px bg-white/80" />
+        <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
+        <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
+      </div>
+      <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
+        <span>{pins.length}명 위치 공유중</span>
+        <span>{formatLocationPreview(getLocationCenter(pins.map((pin) => pin.location)))}</span>
+      </div>
+      {pins.map(({ location, member }) => {
+        const position = getLocationPinPosition(location, bounds);
+
+        return (
+          <div
+            className="absolute -translate-x-1/2 -translate-y-full"
+            key={member.userId}
+            style={{
+              left: `${position.x}%`,
+              top: `${position.y}%`,
+            }}
+          >
+            <div className="relative flex min-w-[120px] flex-col items-center">
+              <div className="rounded-full border border-black/5 bg-white p-1 shadow-lg">
+                <Avatar
+                  alt={member.displayName ?? member.nickname}
+                  src={member.photoURL}
+                />
+              </div>
+              <div className="mt-1 max-w-[136px] rounded-full bg-slate-950/85 px-3 py-1 text-center text-xs font-semibold text-white shadow-sm">
+                <span className="block truncate">
+                  {member.displayName ?? member.nickname}
+                </span>
+              </div>
+              <div className="mt-[-1px] size-3 rotate-45 bg-slate-950/85" />
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 function DashboardList({
   emptyText,
   items,
@@ -775,6 +858,56 @@ function formatEventMeta(event: CalendarEvent) {
 
 function formatLocationPreview(location: LiveLocation) {
   return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+}
+
+function getLocationBounds(locations: LiveLocation[]) {
+  const latitudes = locations.map((location) => location.latitude);
+  const longitudes = locations.map((location) => location.longitude);
+  const minLatitude = Math.min(...latitudes);
+  const maxLatitude = Math.max(...latitudes);
+  const minLongitude = Math.min(...longitudes);
+  const maxLongitude = Math.max(...longitudes);
+
+  return {
+    maxLatitude,
+    maxLongitude,
+    minLatitude,
+    minLongitude,
+  };
+}
+
+function getLocationCenter(locations: LiveLocation[]): LiveLocation {
+  const total = locations.reduce(
+    (sum, location) => ({
+      latitude: sum.latitude + location.latitude,
+      longitude: sum.longitude + location.longitude,
+    }),
+    { latitude: 0, longitude: 0 }
+  );
+
+  return {
+    accuracy: null,
+    battery: null,
+    charging: null,
+    latitude: total.latitude / locations.length,
+    longitude: total.longitude / locations.length,
+    updatedAt: Date.now(),
+  };
+}
+
+function getLocationPinPosition(
+  location: LiveLocation,
+  bounds: ReturnType<typeof getLocationBounds>
+) {
+  const latitudeRange = Math.max(bounds.maxLatitude - bounds.minLatitude, 0.0008);
+  const longitudeRange = Math.max(bounds.maxLongitude - bounds.minLongitude, 0.0008);
+  const x = ((location.longitude - bounds.minLongitude) / longitudeRange) * 72 + 14;
+  const y = (1 - (location.latitude - bounds.minLatitude) / latitudeRange) * 62 + 28;
+
+  return {
+    x: Math.min(86, Math.max(14, x)),
+    y: Math.min(90, Math.max(30, y)),
+  };
 }
 
 function formatUpdatedAt(updatedAt: number) {
