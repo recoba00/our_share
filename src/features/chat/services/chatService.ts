@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   onSnapshot,
@@ -179,6 +180,16 @@ export async function createPrivateGroupRoom({
   });
 
   return roomRef.id;
+}
+
+export async function deleteChatRoom({
+  familyId,
+  roomId,
+}: {
+  familyId: string;
+  roomId: string;
+}) {
+  await deleteDoc(doc(db, "families", familyId, "chatRooms", roomId));
 }
 
 export function subscribeChatRooms({

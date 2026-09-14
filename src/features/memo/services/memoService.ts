@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   onSnapshot,
   query,
@@ -61,6 +62,16 @@ export async function createMemo(input: CreateMemoInput) {
   });
 
   return memoRef.id;
+}
+
+export async function deleteMemo({
+  familyId,
+  memoId,
+}: {
+  familyId: string;
+  memoId: string;
+}) {
+  await deleteDoc(doc(db, "families", familyId, "memos", memoId));
 }
 
 export function subscribeMemos({

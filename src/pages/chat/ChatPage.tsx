@@ -1,7 +1,8 @@
-import { LockKey, PaperPlaneTilt, User, Users, UserPlus } from "@phosphor-icons/react";
+import { LockKey, PaperPlaneTilt, Trash, User, Users, UserPlus } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
@@ -9,6 +10,7 @@ import { useAuth } from "../../features/auth/useAuth";
 import {
   createPrivateGroupRoom,
   createSecretRoom,
+  deleteChatRoom,
   getOrCreateDirectRoom,
   getOrCreateFamilyRoom,
   markRoomMessagesAsRead,
@@ -42,6 +44,7 @@ export function ChatPage() {
   const [privateGroupName, setPrivateGroupName] = useState("");
   const [secretRoomName, setSecretRoomName] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === selectedRoomId) ?? rooms[0],
@@ -165,6 +168,7 @@ export function ChatPage() {
       setPrivateGroupName("");
       setPrivateGroupMemberIds([]);
       setSelectedRoomId(roomId);
+      setIsCreateOpen(false);
       setStatusMessage("그룹방을 만들었어요.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "그룹방 생성에 실패했습니다.");
@@ -244,6 +248,7 @@ export function ChatPage() {
       });
       setSecretRoomName("");
       setSelectedRoomId(roomId);
+      setIsCreateOpen(false);
       setStatusMessage("비밀방을 만들었어요.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "비밀방 생성에 실패했습니다.");
@@ -271,6 +276,32 @@ export function ChatPage() {
     }
   }
 
+  async function handleDeleteRoom(room: ChatRoom) {
+    if (!activeFamily || !user || room.type === "FAMILY") {
+      return;
+    }
+
+    const confirmed = window.confirm(`'${getRoomDisplayName(room, members, user.uid)}' 채팅방을 삭제할까요?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteChatRoom({
+        familyId: activeFamily.id,
+        roomId: room.id,
+      });
+      if (selectedRoomId === room.id) {
+        setSelectedRoomId("");
+        setMessages([]);
+      }
+      setStatusMessage("채팅방을 삭제했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "채팅방 삭제에 실패했습니다.");
+    }
+  }
+
   if (!activeFamily) {
     return (
       <Card>
@@ -282,32 +313,94 @@ export function ChatPage() {
     );
   }
 
+  const chatCreateTools = (
+    <>
+      <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+        <div className="flex items-center gap-2 text-sm font-bold">
+          <UserPlus size={18} weight="bold" />
+          가족 초대 코드
+        </div>
+        <p className="mt-2 font-mono text-2xl font-black text-brand">
+          {activeFamily.inviteCode}
+        </p>
+      </div>
+
+      <form className="mt-4 grid gap-2" onSubmit={handleCreateSecretRoom}>
+        <Input
+          label="비밀방 이름"
+          onChange={(event) => setSecretRoomName(event.target.value)}
+          placeholder="예: 선물 작전방"
+          value={secretRoomName}
+        />
+        <Button type="submit" variant="secondary">
+          <LockKey size={18} weight="bold" />
+          비밀방 만들기
+        </Button>
+      </form>
+
+      <form
+        className="mt-6 grid gap-3 border-t border-[var(--color-border)] pt-5"
+        onSubmit={handleCreatePrivateGroupRoom}
+      >
+        <div className="flex items-center gap-2 text-sm font-bold">
+          <Users size={18} weight="bold" />
+          그룹방 만들기
+        </div>
+        <Input
+          label="그룹방 이름"
+          onChange={(event) => setPrivateGroupName(event.target.value)}
+          placeholder="예: 주말 준비방"
+          value={privateGroupName}
+        />
+        <div className="grid gap-2">
+          {members
+            .filter((member) => member.userId !== user?.uid)
+            .map((member) => (
+              <label
+                className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
+                key={member.userId}
+              >
+                <input
+                  checked={privateGroupMemberIds.includes(member.userId)}
+                  className="size-4 accent-emerald-500"
+                  onChange={() => togglePrivateGroupMember(member.userId)}
+                  type="checkbox"
+                />
+                <span className="min-w-0 truncate">
+                  {member.displayName ?? member.nickname}
+                </span>
+              </label>
+            ))}
+        </div>
+        <Button
+          disabled={
+            members.filter((member) => member.userId !== user?.uid).length === 0
+          }
+          type="submit"
+          variant="secondary"
+        >
+          <LockKey size={18} weight="bold" />
+          그룹방 만들기
+        </Button>
+      </form>
+    </>
+  );
+
   return (
+    <>
+      <MobileCreateButton label="+ 채팅방" onClick={() => setIsCreateOpen(true)} />
+      <ActionLayer
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="채팅방 만들기"
+      >
+        {chatCreateTools}
+      </ActionLayer>
+
     <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
       <Card>
         <h2 className="text-xl font-black">채팅</h2>
-        <div className="mt-4 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-          <div className="flex items-center gap-2 text-sm font-bold">
-            <UserPlus size={18} weight="bold" />
-            가족 초대 코드
-          </div>
-          <p className="mt-2 font-mono text-2xl font-black text-brand">
-            {activeFamily.inviteCode}
-          </p>
-        </div>
-
-        <form className="mt-4 grid gap-2" onSubmit={handleCreateSecretRoom}>
-          <Input
-            label="비밀방 이름"
-            onChange={(event) => setSecretRoomName(event.target.value)}
-            placeholder="예: 선물 작전방"
-            value={secretRoomName}
-          />
-          <Button type="submit" variant="secondary">
-            <LockKey size={18} weight="bold" />
-            비밀방 만들기
-          </Button>
-        </form>
+        <div className="hidden lg:block">{chatCreateTools}</div>
 
         <div className="mt-6 border-t border-[var(--color-border)] pt-5">
           <div className="flex items-center gap-2 text-sm font-bold">
@@ -346,69 +439,39 @@ export function ChatPage() {
           </div>
         </div>
 
-        <form
-          className="mt-6 grid gap-3 border-t border-[var(--color-border)] pt-5"
-          onSubmit={handleCreatePrivateGroupRoom}
-        >
-          <div className="flex items-center gap-2 text-sm font-bold">
-            <Users size={18} weight="bold" />
-            그룹방 만들기
-          </div>
-          <Input
-            label="그룹방 이름"
-            onChange={(event) => setPrivateGroupName(event.target.value)}
-            placeholder="예: 주말 준비방"
-            value={privateGroupName}
-          />
-          <div className="grid gap-2">
-            {members
-              .filter((member) => member.userId !== user?.uid)
-              .map((member) => (
-                <label
-                  className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
-                  key={member.userId}
-                >
-                  <input
-                    checked={privateGroupMemberIds.includes(member.userId)}
-                    className="size-4 accent-emerald-500"
-                    onChange={() => togglePrivateGroupMember(member.userId)}
-                    type="checkbox"
-                  />
-                  <span className="min-w-0 truncate">
-                    {member.displayName ?? member.nickname}
-                  </span>
-                </label>
-              ))}
-          </div>
-          <Button
-            disabled={
-              members.filter((member) => member.userId !== user?.uid).length === 0
-            }
-            type="submit"
-            variant="secondary"
-          >
-            <LockKey size={18} weight="bold" />
-            그룹방 만들기
-          </Button>
-        </form>
-
         <div className="mt-6 space-y-3">
           {rooms.map((room) => (
-            <button
+            <div
               className={`w-full rounded-2xl p-4 text-left transition ${
                 selectedRoom?.id === room.id
                   ? "bg-emerald-50 ring-2 ring-brand"
                   : "bg-[var(--color-surface-muted)] hover:bg-slate-200"
               }`}
               key={room.id}
-              onClick={() => setSelectedRoomId(room.id)}
-              type="button"
             >
-              <strong>{getRoomDisplayName(room, members, user?.uid)}</strong>
-              <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
-                {getRoomTypeLabel(room)} · {room.lastMessageText ?? "아직 대화가 없습니다."}
-              </p>
-            </button>
+              <button
+                className="w-full text-left"
+                onClick={() => setSelectedRoomId(room.id)}
+                type="button"
+              >
+                <strong>{getRoomDisplayName(room, members, user?.uid)}</strong>
+                <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
+                  {getRoomTypeLabel(room)} · {room.lastMessageText ?? "아직 대화가 없습니다."}
+                </p>
+              </button>
+              {room.type !== "FAMILY" && room.createdBy === user?.uid ? (
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    onClick={() => void handleDeleteRoom(room)}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Trash size={18} weight="bold" />
+                    삭제
+                  </Button>
+                </div>
+              ) : null}
+            </div>
           ))}
         </div>
 
@@ -483,6 +546,7 @@ export function ChatPage() {
         </form>
       </Card>
     </div>
+    </>
   );
 }
 

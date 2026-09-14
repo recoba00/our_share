@@ -9,6 +9,7 @@ import {
 } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { IconButton } from "../../components/common/IconButton";
@@ -69,6 +70,7 @@ export function CalendarPage() {
   const [voteDescription, setVoteDescription] = useState("");
   const [voteOptionsText, setVoteOptionsText] = useState(getDefaultDatePollOptions(today));
   const [statusMessage, setStatusMessage] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const monthDays = useMemo(() => createMonthDays(viewDate), [viewDate]);
   const monthEvents = useMemo(
@@ -142,6 +144,7 @@ export function CalendarPage() {
       }
 
       resetForm();
+      setIsCreateOpen(false);
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "일정 저장에 실패했습니다.");
     }
@@ -230,7 +233,79 @@ export function CalendarPage() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
+    <>
+      <MobileCreateButton label="+ 일정" onClick={() => setIsCreateOpen(true)} />
+      <ActionLayer
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title={editingEventId ? "일정 수정" : "일정 등록"}
+      >
+        <CalendarTools
+          allDay={allDay}
+          category={category}
+          description={description}
+          editingEventId={editingEventId}
+          endDate={endDate}
+          handleCreateDatePoll={handleCreateDatePoll}
+          handleDeleteEvent={handleDeleteEvent}
+          handleSaveEvent={handleSaveEvent}
+          isDayOff={isDayOff}
+          resetForm={resetForm}
+          setAllDay={setAllDay}
+          setCategory={setCategory}
+          setDescription={setDescription}
+          setEndDate={setEndDate}
+          setIsDayOff={setIsDayOff}
+          setRepeat={setRepeat}
+          setStartDate={setStartDate}
+          setTitle={setTitle}
+          setVoteDescription={setVoteDescription}
+          setVoteOptionsText={setVoteOptionsText}
+          setVoteTitle={setVoteTitle}
+          startDate={startDate}
+          statusMessage={statusMessage}
+          title={title}
+          repeat={repeat}
+          voteDescription={voteDescription}
+          voteOptionsText={voteOptionsText}
+          voteTitle={voteTitle}
+        />
+      </ActionLayer>
+
+    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+      <Card className="hidden self-start lg:block">
+        <CalendarTools
+          allDay={allDay}
+          category={category}
+          description={description}
+          editingEventId={editingEventId}
+          endDate={endDate}
+          handleCreateDatePoll={handleCreateDatePoll}
+          handleDeleteEvent={handleDeleteEvent}
+          handleSaveEvent={handleSaveEvent}
+          isDayOff={isDayOff}
+          resetForm={resetForm}
+          setAllDay={setAllDay}
+          setCategory={setCategory}
+          setDescription={setDescription}
+          setEndDate={setEndDate}
+          setIsDayOff={setIsDayOff}
+          setRepeat={setRepeat}
+          setStartDate={setStartDate}
+          setTitle={setTitle}
+          setVoteDescription={setVoteDescription}
+          setVoteOptionsText={setVoteOptionsText}
+          setVoteTitle={setVoteTitle}
+          startDate={startDate}
+          statusMessage={statusMessage}
+          title={title}
+          repeat={repeat}
+          voteDescription={voteDescription}
+          voteOptionsText={voteOptionsText}
+          voteTitle={voteTitle}
+        />
+      </Card>
+
       <Card>
         <div className="flex items-center justify-between">
           <div>
@@ -343,147 +418,211 @@ export function CalendarPage() {
         </div>
       </Card>
 
-      <Card>
-        <h3 className="text-lg font-bold">
-          {editingEventId ? "일정 수정" : "일정 등록"}
-        </h3>
-        <form className="mt-4 grid gap-3" onSubmit={handleSaveEvent}>
+    </div>
+    </>
+  );
+}
+
+function CalendarTools({
+  allDay,
+  category,
+  description,
+  editingEventId,
+  endDate,
+  handleCreateDatePoll,
+  handleDeleteEvent,
+  handleSaveEvent,
+  isDayOff,
+  resetForm,
+  setAllDay,
+  setCategory,
+  setDescription,
+  setEndDate,
+  setIsDayOff,
+  setRepeat,
+  setStartDate,
+  setTitle,
+  setVoteDescription,
+  setVoteOptionsText,
+  setVoteTitle,
+  startDate,
+  statusMessage,
+  title,
+  repeat,
+  voteDescription,
+  voteOptionsText,
+  voteTitle,
+}: {
+  allDay: boolean;
+  category: CalendarEventCategory;
+  description: string;
+  editingEventId: string;
+  endDate: string;
+  handleCreateDatePoll: (event: FormEvent<HTMLFormElement>) => void;
+  handleDeleteEvent: () => void;
+  handleSaveEvent: (event: FormEvent<HTMLFormElement>) => void;
+  isDayOff: boolean;
+  resetForm: () => void;
+  setAllDay: (value: boolean) => void;
+  setCategory: (value: CalendarEventCategory) => void;
+  setDescription: (value: string) => void;
+  setEndDate: (value: string | ((currentEndDate: string) => string)) => void;
+  setIsDayOff: (value: boolean) => void;
+  setRepeat: (value: CalendarEventRepeat) => void;
+  setStartDate: (value: string) => void;
+  setTitle: (value: string) => void;
+  setVoteDescription: (value: string) => void;
+  setVoteOptionsText: (value: string) => void;
+  setVoteTitle: (value: string) => void;
+  startDate: string;
+  statusMessage: string;
+  title: string;
+  repeat: CalendarEventRepeat;
+  voteDescription: string;
+  voteOptionsText: string;
+  voteTitle: string;
+}) {
+  return (
+    <>
+      <h3 className="text-lg font-bold">
+        {editingEventId ? "일정 수정" : "일정 등록"}
+      </h3>
+      <form className="mt-4 grid gap-3" onSubmit={handleSaveEvent}>
+        <Input
+          label="일정 제목"
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="예: 가족 외식"
+          value={title}
+        />
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+          설명
+          <textarea
+            className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder="일정 메모를 적어주세요."
+            value={description}
+          />
+        </label>
+        <div className="grid grid-cols-2 gap-3">
           <Input
-            label="일정 제목"
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="예: 가족 외식"
-            value={title}
+            label="시작일"
+            onChange={(event) => {
+              setStartDate(event.target.value);
+              setEndDate((currentEndDate) =>
+                currentEndDate < event.target.value ? event.target.value : currentEndDate
+              );
+            }}
+            type="date"
+            value={startDate}
+          />
+          <Input
+            label="종료일"
+            onChange={(event) => setEndDate(event.target.value)}
+            type="date"
+            value={endDate}
+          />
+        </div>
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+          분류
+          <select
+            className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-medium outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            onChange={(event) => setCategory(event.target.value as CalendarEventCategory)}
+            value={category}
+          >
+            {categoryOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="space-y-3 text-sm">
+          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+            <input
+              checked={repeat === "YEARLY"}
+              className="size-4 accent-emerald-500"
+              onChange={(event) => setRepeat(event.target.checked ? "YEARLY" : "NONE")}
+              type="checkbox"
+            />
+            <Repeat size={18} />
+            매년 보여짐
+          </label>
+          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+            <input
+              checked={isDayOff}
+              className="size-4 accent-emerald-500"
+              onChange={(event) => setIsDayOff(event.target.checked)}
+              type="checkbox"
+            />
+            <Sun size={18} />
+            휴무일 체크
+          </label>
+          <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+            <input
+              checked={allDay}
+              className="size-4 accent-emerald-500"
+              onChange={(event) => setAllDay(event.target.checked)}
+              type="checkbox"
+            />
+            종일 일정
+          </label>
+        </div>
+        <Button type="submit">
+          <CalendarPlus size={18} weight="bold" />
+          {editingEventId ? "수정" : "등록"}
+        </Button>
+        {editingEventId ? (
+          <div className="grid grid-cols-2 gap-2">
+            <Button onClick={resetForm} type="button" variant="secondary">
+              새 일정
+            </Button>
+            <Button onClick={handleDeleteEvent} type="button" variant="secondary">
+              <Trash size={18} weight="bold" />
+              삭제
+            </Button>
+          </div>
+        ) : null}
+      </form>
+      {statusMessage ? (
+        <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
+          {statusMessage}
+        </p>
+      ) : null}
+
+      <div className="mt-6 border-t border-[var(--color-border)] pt-5">
+        <div className="flex items-center gap-2">
+          <SealQuestion className="text-brand" size={20} weight="bold" />
+          <h3 className="text-lg font-bold">날짜 투표 만들기</h3>
+        </div>
+        <form className="mt-4 grid gap-3" onSubmit={handleCreateDatePoll}>
+          <Input
+            label="투표 제목"
+            onChange={(event) => setVoteTitle(event.target.value)}
+            placeholder="예: 가족 모임 날짜 정하기"
+            value={voteTitle}
+          />
+          <Input
+            label="설명"
+            onChange={(event) => setVoteDescription(event.target.value)}
+            placeholder="선택 사항"
+            value={voteDescription}
           />
           <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-            설명
+            후보 날짜
             <textarea
-              className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) => setDescription(event.target.value)}
-              placeholder="일정 메모를 적어주세요."
-              value={description}
+              className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              onChange={(event) => setVoteOptionsText(event.target.value)}
+              placeholder="한 줄에 하나씩 입력"
+              value={voteOptionsText}
             />
           </label>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="시작일"
-              onChange={(event) => {
-                setStartDate(event.target.value);
-                setEndDate((currentEndDate) =>
-                  currentEndDate < event.target.value ? event.target.value : currentEndDate
-                );
-              }}
-              type="date"
-              value={startDate}
-            />
-            <Input
-              label="종료일"
-              onChange={(event) => setEndDate(event.target.value)}
-              type="date"
-              value={endDate}
-            />
-          </div>
-          <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-            분류
-            <select
-              className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-medium outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) => setCategory(event.target.value as CalendarEventCategory)}
-              value={category}
-            >
-              {categoryOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
-          <div className="space-y-3 text-sm">
-            <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <input
-                checked={repeat === "YEARLY"}
-                className="size-4 accent-emerald-500"
-                onChange={(event) => setRepeat(event.target.checked ? "YEARLY" : "NONE")}
-                type="checkbox"
-              />
-              <Repeat size={18} />
-              매년 보여짐
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <input
-                checked={isDayOff}
-                className="size-4 accent-emerald-500"
-                onChange={(event) => setIsDayOff(event.target.checked)}
-                type="checkbox"
-              />
-              <Sun size={18} />
-              휴무일 체크
-            </label>
-            <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <input
-                checked={allDay}
-                className="size-4 accent-emerald-500"
-                onChange={(event) => setAllDay(event.target.checked)}
-                type="checkbox"
-              />
-              종일 일정
-            </label>
-          </div>
-          <Button type="submit">
-            <CalendarPlus size={18} weight="bold" />
-            {editingEventId ? "수정" : "등록"}
+          <Button type="submit" variant="secondary">
+            <SealQuestion size={18} weight="bold" />
+            날짜 투표 생성
           </Button>
-          {editingEventId ? (
-            <div className="grid grid-cols-2 gap-2">
-              <Button onClick={resetForm} type="button" variant="secondary">
-                새 일정
-              </Button>
-              <Button onClick={handleDeleteEvent} type="button" variant="secondary">
-                <Trash size={18} weight="bold" />
-                삭제
-              </Button>
-            </div>
-          ) : null}
         </form>
-        {statusMessage ? (
-          <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-            {statusMessage}
-          </p>
-        ) : null}
-
-        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-          <div className="flex items-center gap-2">
-            <SealQuestion className="text-brand" size={20} weight="bold" />
-            <h3 className="text-lg font-bold">날짜 투표 만들기</h3>
-          </div>
-          <form className="mt-4 grid gap-3" onSubmit={handleCreateDatePoll}>
-            <Input
-              label="투표 제목"
-              onChange={(event) => setVoteTitle(event.target.value)}
-              placeholder="예: 가족 모임 날짜 정하기"
-              value={voteTitle}
-            />
-            <Input
-              label="설명"
-              onChange={(event) => setVoteDescription(event.target.value)}
-              placeholder="선택 사항"
-              value={voteDescription}
-            />
-            <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-              후보 날짜
-              <textarea
-                className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-                onChange={(event) => setVoteOptionsText(event.target.value)}
-                placeholder="한 줄에 하나씩 입력"
-                value={voteOptionsText}
-              />
-            </label>
-            <Button type="submit" variant="secondary">
-              <SealQuestion size={18} weight="bold" />
-              날짜 투표 생성
-            </Button>
-          </form>
-        </div>
-      </Card>
-    </div>
+      </div>
+    </>
   );
 }
 

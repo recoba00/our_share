@@ -1,5 +1,6 @@
-import { ChatCircleDots, CheckCircle, Plus } from "@phosphor-icons/react";
+import { ChatCircleDots, CheckCircle, Plus, Trash } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
+import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
@@ -13,6 +14,7 @@ import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
 import {
   createPoll,
+  deletePoll,
   getPolls,
   getPollVotes,
   votePoll,
@@ -33,6 +35,7 @@ export function PollPage() {
   const [optionsText, setOptionsText] = useState("치킨\n피자\n삼겹살");
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [feedback, setFeedback] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -123,6 +126,7 @@ export function PollPage() {
       setDescription("");
       setOptionsText("");
       setMultipleChoice(false);
+      setIsCreateOpen(false);
       await loadPollData(user.uid);
       setFeedback("투표를 만들었습니다.");
     } catch (error) {
@@ -180,6 +184,34 @@ export function PollPage() {
     }
   }
 
+  async function handleDeletePoll(poll: Poll) {
+    if (!family) {
+      return;
+    }
+
+    const confirmed = window.confirm(`'${poll.title}' 투표를 삭제할까요?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsLoading(true);
+    setFeedback("");
+
+    try {
+      await deletePoll({
+        familyId: family.id,
+        pollId: poll.id,
+      });
+      await loadPollData(user?.uid ?? "");
+      setFeedback("투표를 삭제했습니다.");
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   function toggleOption(poll: Poll, option: string) {
     setSelectedOptions((current) => {
       const selected = current[poll.id] ?? [];
@@ -197,9 +229,8 @@ export function PollPage() {
     });
   }
 
-  return (
-    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-      <Card className="self-start">
+  const createPollForm = (
+    <>
         <div>
           <h2 className="text-xl font-black">투표 만들기</h2>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
@@ -271,6 +302,23 @@ export function PollPage() {
             </p>
           )}
         </div>
+    </>
+  );
+
+  return (
+    <>
+      <MobileCreateButton label="+ 투표" onClick={() => setIsCreateOpen(true)} />
+      <ActionLayer
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="투표 만들기"
+      >
+        {createPollForm}
+      </ActionLayer>
+
+    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      <Card className="hidden self-start lg:block">
+        {createPollForm}
       </Card>
 
       <section className="grid gap-4">
@@ -304,6 +352,7 @@ export function PollPage() {
               key={poll.id}
               onSelect={toggleOption}
               onSendPoll={handleSendPollToChat}
+              onDelete={handleDeletePoll}
               onVote={handleVote}
               poll={poll}
               roomSelected={Boolean(selectedRoomId)}
@@ -314,10 +363,12 @@ export function PollPage() {
         )}
       </section>
     </div>
+    </>
   );
 }
 
 function PollCard({
+  onDelete,
   onSelect,
   onSendPoll,
   onVote,
@@ -326,6 +377,7 @@ function PollCard({
   selected,
   votes,
 }: {
+  onDelete: (poll: Poll) => void;
   onSelect: (poll: Poll, option: string) => void;
   onSendPoll: (poll: Poll) => void;
   onVote: (poll: Poll) => void;
@@ -357,10 +409,16 @@ function PollCard({
             </p>
           )}
         </div>
-        <Button disabled={!roomSelected} onClick={() => onSendPoll(poll)} variant="secondary">
-          <ChatCircleDots size={18} weight="bold" />
-          채팅방 전송
-        </Button>
+        <div className="flex gap-2">
+          <Button disabled={!roomSelected} onClick={() => onSendPoll(poll)} variant="secondary">
+            <ChatCircleDots size={18} weight="bold" />
+            채팅방 전송
+          </Button>
+          <Button onClick={() => onDelete(poll)} variant="secondary">
+            <Trash size={18} weight="bold" />
+            삭제
+          </Button>
+        </div>
       </div>
 
       <div className="mt-5 grid gap-3">

@@ -85,6 +85,10 @@
 - [x] Toast
 - [x] Bottom Navigation
 - [x] Figma Handoff Ready Token Structure
+- [x] Desktop feature pages use a consistent left-side action panel
+- [x] Mobile feature pages separate create forms into full-screen action layers
+- [x] Header title matches active bottom navigation tab outside Home
+- [x] Strong gradient surfaces simplified to neutral/brand-soft surfaces
 
 ## Authentication
 
@@ -125,6 +129,7 @@
 
 - [x] Calendar UI
 - [x] Event CRUD
+- [x] Mobile Full-Screen Event Form
 - [x] Anniversary
 - [x] D-Day
 - [x] Calendar Vote
@@ -136,6 +141,8 @@
 
 - [x] Memo List
 - [x] Memo CRUD
+- [x] Memo Delete
+- [x] Mobile Full-Screen Memo Form
 - [x] Secret Memo
 - [x] visibleTo permission
 - [x] Public Memo
@@ -146,6 +153,7 @@
 ## Poll
 
 - [x] Poll Create
+- [x] Poll Delete
 - [x] Poll Vote
 - [x] Multiple Choice
 - [x] Date Poll
@@ -158,6 +166,8 @@
 - [x] DM
 - [x] Private Group
 - [x] Secret Room
+- [x] Chat Room Delete
+- [x] Mobile Full-Screen Room Form
 - [x] Family Invite Entry
 - [x] Chat Poll Create
 - [x] Send Poll to Chat Room

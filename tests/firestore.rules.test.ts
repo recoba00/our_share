@@ -7,6 +7,7 @@ import {
 import { readFileSync } from "node:fs";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -472,6 +473,62 @@ describe("MVP family list queries", () => {
         )
       )
     );
+  });
+
+  it("allows creators to delete nested MVP content and blocks other family members", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedNestedCalendarEvent({
+      createdBy: "alice",
+      eventId: "eventA",
+      familyId: "familyA",
+      visibility: "FAMILY",
+    });
+    await seedNestedMemo({
+      createdBy: "alice",
+      familyId: "familyA",
+      memoId: "memoA",
+      visibility: "FAMILY",
+    });
+    await seedNestedPoll({
+      createdBy: "alice",
+      familyId: "familyA",
+      pollId: "pollA",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: ["alice", "bob"],
+      roomId: "roomA",
+      type: "PRIVATE_GROUP",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: ["alice", "bob"],
+      roomId: "roomB",
+      type: "PRIVATE_GROUP",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertFails(
+      deleteDoc(doc(bobDb, "families", "familyA", "calendarEvents", "eventA"))
+    );
+    await assertSucceeds(
+      deleteDoc(doc(aliceDb, "families", "familyA", "calendarEvents", "eventA"))
+    );
+    await assertSucceeds(deleteDoc(doc(aliceDb, "families", "familyA", "memos", "memoA")));
+    await assertSucceeds(deleteDoc(doc(aliceDb, "families", "familyA", "polls", "pollA")));
+    await assertSucceeds(
+      deleteDoc(doc(aliceDb, "families", "familyA", "chatRooms", "roomA"))
+    );
+    await assertFails(deleteDoc(doc(bobDb, "families", "familyA", "chatRooms", "roomB")));
   });
 
   it("blocks outsiders from app-shaped list queries", async () => {

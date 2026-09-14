@@ -1,24 +1,34 @@
 import { GearSix, UsersThree } from "@phosphor-icons/react";
+import { useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { Button } from "../common/Button";
 import { IconButton } from "../common/IconButton";
 
 export function AppHeader() {
   const { signOut, status, user } = useAuth();
+  const { pathname } = useLocation();
+  const title = getPageTitle(pathname);
+  const isHome = title === "스마트 홈";
 
   return (
-    <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[color-mix(in_srgb,var(--color-background)_88%,transparent)] px-4 py-3 backdrop-blur sm:px-6 lg:static lg:px-0">
+    <header className="sticky top-0 z-20 border-b border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 sm:px-6 lg:static lg:px-0">
       <div className="mx-auto flex max-w-screen-2xl items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="grid size-10 place-items-center rounded-2xl bg-brand-soft text-brand">
-            <UsersThree size={22} weight="fill" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-              우리 가족
-            </p>
-            <h1 className="text-lg font-bold leading-6">스마트 홈</h1>
-          </div>
+          {isHome ? (
+            <>
+              <div className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand">
+                <UsersThree size={22} weight="fill" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
+                  우리 가족
+                </p>
+                <h1 className="text-lg font-bold leading-6">스마트 홈</h1>
+              </div>
+            </>
+          ) : (
+            <h1 className="text-lg font-black leading-10">{title}</h1>
+          )}
         </div>
         <div className="flex items-center gap-2">
           {status === "authenticated" && (
@@ -40,4 +50,28 @@ export function AppHeader() {
       </div>
     </header>
   );
+}
+
+function getPageTitle(pathname: string) {
+  if (pathname.startsWith("/chat")) {
+    return "채팅";
+  }
+
+  if (pathname.startsWith("/poll")) {
+    return "투표";
+  }
+
+  if (pathname.startsWith("/memo")) {
+    return "메모";
+  }
+
+  if (pathname.startsWith("/calendar")) {
+    return "캘린더";
+  }
+
+  if (pathname.startsWith("/diagnostics")) {
+    return "진단";
+  }
+
+  return "스마트 홈";
 }

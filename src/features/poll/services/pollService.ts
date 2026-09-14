@@ -1,5 +1,6 @@
 import {
   collection,
+  deleteDoc,
   doc,
   getDocs,
   onSnapshot,
@@ -54,6 +55,16 @@ export async function createPoll(input: CreatePollInput) {
   });
 
   return pollRef.id;
+}
+
+export async function deletePoll({
+  familyId,
+  pollId,
+}: {
+  familyId: string;
+  pollId: string;
+}) {
+  await deleteDoc(doc(db, "families", familyId, "polls", pollId));
 }
 
 export async function getPolls(familyId: string): Promise<Poll[]> {

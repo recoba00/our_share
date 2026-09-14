@@ -223,12 +223,12 @@ export function HomePage() {
   if (status === "guest") {
     return (
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-        <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-slate-800 p-6 text-white shadow-lg lg:p-8">
-          <p className="text-sm font-semibold opacity-80">우리 가족 스마트 홈</p>
+        <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
+          <p className="text-sm font-semibold text-brand">우리 가족 스마트 홈</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-black leading-tight lg:text-5xl">
             가족 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-emerald-50 lg:text-base">
+          <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
             Google 계정으로 시작하고 가족을 만들거나 초대 코드로 참여하세요.
           </p>
         </section>
@@ -381,18 +381,18 @@ export function HomePage() {
 
   return (
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="rounded-[28px] bg-gradient-to-br from-emerald-500 to-slate-800 p-6 text-white shadow-lg">
-        <p className="text-sm font-semibold opacity-80">오늘의 가족 상황</p>
+      <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+        <p className="text-sm font-semibold text-brand">오늘의 가족 상황</p>
         <h2 className="mt-2 text-3xl font-black leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
         <div className="mt-6 grid gap-3 sm:grid-cols-3">
           {members.slice(0, 3).map((member) => (
-            <div key={member.userId} className="rounded-2xl bg-white/15 p-4 backdrop-blur">
+            <div key={member.userId} className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
               <div className="flex items-center justify-between">
                 <strong>{member.displayName ?? member.nickname}</strong>
                 <BatteryHigh
-                  className={liveLocations[member.userId]?.charging ? "text-emerald-100" : ""}
+                  className={liveLocations[member.userId]?.charging ? "text-brand" : "text-[var(--color-text-secondary)]"}
                   size={18}
                 />
               </div>
@@ -402,7 +402,7 @@ export function HomePage() {
                   ? formatLocationPreview(liveLocations[member.userId])
                   : "위치 공유 대기"}
               </p>
-              <p className="mt-1 text-xs opacity-80">
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
                 {liveLocations[member.userId]
                   ? formatUpdatedAt(liveLocations[member.userId].updatedAt)
                   : "앱에서 현재 위치 공유 필요"}
@@ -410,7 +410,7 @@ export function HomePage() {
             </div>
           ))}
           {members.length === 0 && (
-            <div className="rounded-2xl bg-white/15 p-4 text-sm backdrop-blur sm:col-span-3">
+            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)] sm:col-span-3">
               가족을 만들거나 초대 코드로 참여하면 가족 상황이 표시됩니다.
             </div>
           )}

@@ -1,12 +1,14 @@
-import { Eye, LockKey, NotePencil, Plus } from "@phosphor-icons/react";
+import { Eye, LockKey, NotePencil, Plus, Trash } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
+import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createMemo,
+  deleteMemo,
   revealSensitiveMemo,
   subscribeMemos,
 } from "../../features/memo/services/memoService";
@@ -29,6 +31,7 @@ export function MemoPage() {
   const [revealPassword, setRevealPassword] = useState("");
   const [revealedContent, setRevealedContent] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const selectedMemo = useMemo(
     () => memos.find((memo) => memo.id === selectedMemoId) ?? memos[0],
@@ -92,6 +95,7 @@ export function MemoPage() {
       setCreatePassword("");
       setMemoType("PUBLIC");
       setSelectedMemoId(memoId);
+      setIsCreateOpen(false);
       setStatusMessage("메모를 저장했습니다.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "메모 저장에 실패했습니다.");
@@ -123,6 +127,33 @@ export function MemoPage() {
     setRevealPassword("");
   }
 
+  async function handleDeleteMemo(memo: Memo) {
+    if (!activeFamily) {
+      return;
+    }
+
+    const confirmed = window.confirm(`'${memo.title}' 메모를 삭제할까요?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await deleteMemo({
+        familyId: activeFamily.id,
+        memoId: memo.id,
+      });
+      if (selectedMemoId === memo.id) {
+        setSelectedMemoId("");
+        setRevealedContent("");
+        setRevealPassword("");
+      }
+      setStatusMessage("메모를 삭제했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "메모 삭제에 실패했습니다.");
+    }
+  }
+
   if (!activeFamily) {
     return (
       <Card>
@@ -134,8 +165,72 @@ export function MemoPage() {
     );
   }
 
+  const createMemoForm = (
+    <>
+      <h3 className="text-lg font-bold">메모 작성</h3>
+      <form className="mt-4 grid gap-3" onSubmit={handleCreateMemo}>
+        <Input
+          label="제목"
+          onChange={(event) => setTitle(event.target.value)}
+          placeholder="예: 장보기 목록"
+          value={title}
+        />
+        <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
+          내용
+          <textarea
+            className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            onChange={(event) => setContent(event.target.value)}
+            placeholder="가족과 공유할 내용을 적어주세요."
+            value={content}
+          />
+        </label>
+        <label className="flex items-center gap-3 text-sm font-semibold">
+          <input
+            checked={memoType === "SENSITIVE"}
+            className="size-4 accent-emerald-500"
+            onChange={(event) => setMemoType(event.target.checked ? "SENSITIVE" : "PUBLIC")}
+            type="checkbox"
+          />
+          민감정보 메모로 저장
+        </label>
+        {memoType === "SENSITIVE" ? (
+          <Input
+            label="개인 비밀번호"
+            onChange={(event) => setCreatePassword(event.target.value)}
+            placeholder="열람할 때 사용할 비밀번호"
+            type="password"
+            value={createPassword}
+          />
+        ) : null}
+        <Button type="submit">
+          <Plus size={18} weight="bold" />
+          저장
+        </Button>
+      </form>
+      {statusMessage ? (
+        <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
+          {statusMessage}
+        </p>
+      ) : null}
+    </>
+  );
+
   return (
-    <div className="grid gap-4 lg:grid-cols-[1fr_380px]">
+    <>
+      <MobileCreateButton label="+ 메모" onClick={() => setIsCreateOpen(true)} />
+      <ActionLayer
+        isOpen={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="메모 작성"
+      >
+        {createMemoForm}
+      </ActionLayer>
+
+    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
+      <Card className="hidden self-start lg:block">
+        {createMemoForm}
+      </Card>
+
       <Card>
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-black">메모</h2>
@@ -153,76 +248,47 @@ export function MemoPage() {
             </div>
           ) : (
             memos.map((memo) => (
-              <button
+              <div
                 className={`rounded-2xl p-4 text-left transition ${
                   selectedMemo?.id === memo.id
                     ? "bg-emerald-50 ring-2 ring-brand"
                     : "bg-[var(--color-surface-muted)] hover:bg-slate-200"
                 }`}
                 key={memo.id}
-                onClick={() => selectMemo(memo.id)}
-                type="button"
               >
-                <div className="flex items-center gap-2">
-                  {memo.type === "SENSITIVE" ? (
-                    <LockKey className="text-brand" size={18} weight="bold" />
-                  ) : (
-                    <NotePencil className="text-brand" size={18} weight="bold" />
-                  )}
-                  <strong>{memo.title}</strong>
+                <button
+                  className="w-full text-left"
+                  onClick={() => selectMemo(memo.id)}
+                  type="button"
+                >
+                  <div className="flex items-center gap-2">
+                    {memo.type === "SENSITIVE" ? (
+                      <LockKey className="text-brand" size={18} weight="bold" />
+                    ) : (
+                      <NotePencil className="text-brand" size={18} weight="bold" />
+                    )}
+                    <strong>{memo.title}</strong>
+                  </div>
+                  <p className="mt-1 line-clamp-2 text-sm text-[var(--color-text-secondary)]">
+                    {memo.type === "PUBLIC"
+                      ? memo.content
+                      : "개인 비밀번호 확인 후 열람할 수 있습니다."}
+                  </p>
+                </button>
+                <div className="mt-3 flex justify-end">
+                  <Button
+                    onClick={() => void handleDeleteMemo(memo)}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <Trash size={18} weight="bold" />
+                    삭제
+                  </Button>
                 </div>
-                <p className="mt-1 line-clamp-2 text-sm text-[var(--color-text-secondary)]">
-                  {memo.type === "PUBLIC"
-                    ? memo.content
-                    : "개인 비밀번호 확인 후 열람할 수 있습니다."}
-                </p>
-              </button>
+              </div>
             ))
           )}
         </div>
-      </Card>
-
-      <Card>
-        <h3 className="text-lg font-bold">메모 작성</h3>
-        <form className="mt-4 grid gap-3" onSubmit={handleCreateMemo}>
-          <Input
-            label="제목"
-            onChange={(event) => setTitle(event.target.value)}
-            placeholder="예: 장보기 목록"
-            value={title}
-          />
-          <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-            내용
-            <textarea
-              className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-medium outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) => setContent(event.target.value)}
-              placeholder="가족과 공유할 내용을 적어주세요."
-              value={content}
-            />
-          </label>
-          <label className="flex items-center gap-3 text-sm font-semibold">
-            <input
-              checked={memoType === "SENSITIVE"}
-              className="size-4 accent-emerald-500"
-              onChange={(event) => setMemoType(event.target.checked ? "SENSITIVE" : "PUBLIC")}
-              type="checkbox"
-            />
-            민감정보 메모로 저장
-          </label>
-          {memoType === "SENSITIVE" ? (
-            <Input
-              label="개인 비밀번호"
-              onChange={(event) => setCreatePassword(event.target.value)}
-              placeholder="열람할 때 사용할 비밀번호"
-              type="password"
-              value={createPassword}
-            />
-          ) : null}
-          <Button type="submit">
-            <Plus size={18} weight="bold" />
-            저장
-          </Button>
-        </form>
 
         {selectedMemo ? (
           <div className="mt-6 border-t border-[var(--color-border)] pt-5">
@@ -261,5 +327,6 @@ export function MemoPage() {
         ) : null}
       </Card>
     </div>
+    </>
   );
 }
