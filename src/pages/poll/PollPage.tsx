@@ -150,7 +150,7 @@ export function PollPage() {
       });
       setTitle("");
       setDescription("");
-      setOptions([""]);
+      setOptions(["치킨", "피자", "삼겹살"]);
       setDateOptions([]);
       setMultipleChoice(false);
       setIsCreateOpen(false);

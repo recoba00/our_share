@@ -28,13 +28,18 @@ type CreatePollInput = {
 export async function createPoll(input: CreatePollInput) {
   const pollRef = doc(collection(db, "families", input.familyId, "polls"));
   const normalizedOptions = input.options.map((option) => option.trim()).filter(Boolean);
+  const uniqueOptions = Array.from(new Set(normalizedOptions));
 
   if (!input.title.trim()) {
     throw new Error("투표 제목을 입력해주세요.");
   }
 
-  if (normalizedOptions.length < 2) {
+  if (uniqueOptions.length < 2) {
     throw new Error("투표 보기는 2개 이상 필요합니다.");
+  }
+
+  if (uniqueOptions.length !== normalizedOptions.length) {
+    throw new Error("중복된 투표 보기가 있습니다.");
   }
 
   await setDoc(pollRef, {
@@ -44,7 +49,7 @@ export async function createPoll(input: CreatePollInput) {
     title: input.title.trim(),
     description: input.description.trim(),
     type: input.type,
-    options: normalizedOptions,
+    options: uniqueOptions,
     multipleChoice: input.multipleChoice,
     anonymous: false,
     closesAt: null,
