@@ -58,6 +58,7 @@ export function App() {
               <Routes>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+                <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
                 <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
                 <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
                 <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />

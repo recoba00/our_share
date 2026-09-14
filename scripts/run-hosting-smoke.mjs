@@ -2,7 +2,17 @@ const baseUrl = process.env.SMOKE_BASE_URL ?? "http://recoba00.dothome.co.kr/our
 const expectedCommit = process.env.EXPECTED_COMMIT ?? (await getGitCommit());
 const retryCount = Number(process.env.SMOKE_RETRIES ?? 0);
 const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 5000);
-const routes = ["/", "/chat", "/poll", "/memo", "/calendar", "/diagnostics"];
+const routes = [
+  "/",
+  "/chat",
+  "/chat/smoke-room",
+  "/poll",
+  "/memo",
+  "/calendar",
+  "/diagnostics",
+  "/profile",
+  "/settings",
+];
 
 const normalizedBaseUrl = baseUrl.replace(/\/$/, "");
 const basePath = new URL(normalizedBaseUrl).pathname.replace(/\/$/, "");

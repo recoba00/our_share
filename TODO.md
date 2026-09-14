@@ -87,9 +87,13 @@
 - [x] Figma Handoff Ready Token Structure
 - [x] Desktop feature pages use a consistent left-side action panel
 - [x] Mobile feature pages separate create forms into full-screen action layers
+- [x] Floating action button bottom safe spacing
 - [x] Header title matches active bottom navigation tab outside Home
+- [x] Header notification list entry
 - [x] Header profile entry opens My Info
 - [x] Header icon actions support unboxed ghost style
+- [x] Mobile zoom prevention for field focus
+- [x] Horizontal overflow prevention on responsive layouts
 - [x] Strong gradient surfaces simplified to neutral/brand-soft surfaces
 
 ## Authentication
@@ -134,6 +138,7 @@
 ## Calendar
 
 - [x] Calendar UI
+- [x] Calendar Day 1:1 Ratio
 - [x] Event CRUD
 - [x] Calendar Event Delete
 - [x] Calendar Dot Event Markers
@@ -173,6 +178,8 @@
 ## Chat
 
 - [x] Family Room
+- [x] Mobile Chat Room List to Detail Navigation
+- [x] Mobile Chat Room Back Header
 - [x] DM
 - [x] Private Group
 - [x] Secret Room
@@ -188,6 +195,7 @@
 ## Notification
 
 - [x] Browser Notification Permission
+- [x] Header Notification List
 - [x] Today Calendar Reminder
 - [x] Poll Closing Soon Reminder
 - [x] Duplicate Reminder Guard

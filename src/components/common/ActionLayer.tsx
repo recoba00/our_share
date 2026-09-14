@@ -22,7 +22,7 @@ export function ActionLayer({ children, isOpen, onClose, title }: ActionLayerPro
             <X size={20} weight="bold" />
           </IconButton>
         </header>
-        <div className="flex-1 overflow-y-auto p-4 pb-8">{children}</div>
+        <div className="flex-1 overflow-y-auto p-4 pb-28">{children}</div>
       </div>
     </div>
   );
@@ -37,7 +37,7 @@ export function MobileCreateButton({
 }) {
   return (
     <button
-      className="fixed bottom-24 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full bg-brand px-5 text-sm font-black text-white shadow-lg transition hover:bg-brand-hover lg:hidden"
+      className="fixed bottom-28 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full bg-brand px-5 text-sm font-black text-white shadow-lg transition hover:bg-brand-hover lg:hidden"
       onClick={onClick}
       type="button"
     >

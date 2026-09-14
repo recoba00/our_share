@@ -1,7 +1,7 @@
 import { LockKey, PaperPlaneTilt, Trash, User, Users, UserPlus } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
@@ -29,6 +29,8 @@ import type { Poll } from "../../features/poll/types/pollTypes";
 
 export function ChatPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { roomId } = useParams();
   const [activeFamily, setActiveFamily] = useState<{
     id: string;
     inviteCode: string;
@@ -47,8 +49,8 @@ export function ChatPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const selectedRoom = useMemo(
-    () => rooms.find((room) => room.id === selectedRoomId) ?? rooms[0],
-    [rooms, selectedRoomId]
+    () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
+    [roomId, rooms, selectedRoomId]
   );
   const pollMap = useMemo(
     () => new Map(polls.map((poll) => [poll.id, poll])),
@@ -130,6 +132,14 @@ export function ChatPage() {
     };
   }, [activeFamily, user]);
 
+  function openRoom(nextRoomId: string) {
+    setSelectedRoomId(nextRoomId);
+
+    if (!window.matchMedia("(min-width: 1024px)").matches) {
+      navigate(`/chat/${nextRoomId}`);
+    }
+  }
+
   async function handleCreateDirectRoom(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
       return;
@@ -144,6 +154,7 @@ export function ChatPage() {
       });
 
       setSelectedRoomId(roomId);
+      openRoom(roomId);
       setStatusMessage("1:1 채팅방을 열었습니다.");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "1:1 채팅방 생성에 실패했습니다.");
@@ -168,6 +179,7 @@ export function ChatPage() {
       setPrivateGroupName("");
       setPrivateGroupMemberIds([]);
       setSelectedRoomId(roomId);
+      openRoom(roomId);
       setIsCreateOpen(false);
       setStatusMessage("그룹방을 만들었어요.");
     } catch (error) {
@@ -248,6 +260,7 @@ export function ChatPage() {
       });
       setSecretRoomName("");
       setSelectedRoomId(roomId);
+      openRoom(roomId);
       setIsCreateOpen(false);
       setStatusMessage("비밀방을 만들었어요.");
     } catch (error) {
@@ -292,8 +305,9 @@ export function ChatPage() {
         familyId: activeFamily.id,
         roomId: room.id,
       });
-      if (selectedRoomId === room.id) {
+      if (selectedRoomId === room.id || roomId === room.id) {
         setSelectedRoomId("");
+        navigate("/chat");
         setMessages([]);
       }
       setStatusMessage("채팅방을 삭제했습니다.");
@@ -397,8 +411,8 @@ export function ChatPage() {
         {chatCreateTools}
       </ActionLayer>
 
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
-      <Card>
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0`}>
         <h2 className="text-xl font-black">채팅</h2>
         <div className="hidden lg:block">{chatCreateTools}</div>
 
@@ -451,7 +465,7 @@ export function ChatPage() {
             >
               <button
                 className="w-full text-left"
-                onClick={() => setSelectedRoomId(room.id)}
+                onClick={() => openRoom(room.id)}
                 type="button"
               >
                 <strong>{getRoomDisplayName(room, members, user?.uid)}</strong>
@@ -482,9 +496,9 @@ export function ChatPage() {
         ) : null}
       </Card>
 
-      <Card className="min-h-[520px]">
+      <Card className={`${roomId ? "block" : "hidden lg:block"} min-w-0`}>
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-lg font-bold">
+          <h3 className="min-w-0 truncate text-lg font-bold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
           <Link
@@ -494,7 +508,7 @@ export function ChatPage() {
             투표 만들기
           </Link>
         </div>
-        <div className="mt-4 flex min-h-[360px] flex-col justify-end gap-3 rounded-2xl bg-slate-50 p-4">
+        <div className="mt-4 flex min-h-[calc(100dvh-280px)] flex-col justify-end gap-3 overflow-y-auto rounded-2xl bg-slate-50 p-4 lg:min-h-[360px]">
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
               첫 메시지를 보내 가족 대화를 시작해보세요.
@@ -517,7 +531,7 @@ export function ChatPage() {
                     />
                   ) : (
                     <p
-                      className={`max-w-[280px] rounded-2xl p-3 text-sm shadow-sm ${
+                      className={`max-w-[min(280px,75vw)] break-words rounded-2xl p-3 text-sm shadow-sm ${
                         isMine ? "bg-brand text-white" : "bg-white"
                       }`}
                     >
@@ -532,14 +546,14 @@ export function ChatPage() {
             })
           )}
         </div>
-        <form className="mt-4 flex gap-2" onSubmit={handleSendMessage}>
+        <form className="mt-4 flex min-w-0 gap-2" onSubmit={handleSendMessage}>
           <input
-            className="h-11 flex-1 rounded-xl border border-[var(--color-border)] px-4 text-sm outline-none focus:border-brand"
+            className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] px-4 outline-none focus:border-brand"
             onChange={(event) => setMessageText(event.target.value)}
             placeholder="메시지 입력"
             value={messageText}
           />
-          <Button disabled={!selectedRoom} type="submit">
+          <Button className="shrink-0" disabled={!selectedRoom} type="submit">
             <PaperPlaneTilt size={18} weight="bold" />
             전송
           </Button>

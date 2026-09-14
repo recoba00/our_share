@@ -361,7 +361,7 @@ export function CalendarPage() {
         />
       </ActionLayer>
 
-    <div className="grid gap-4 lg:grid-cols-[360px_1fr]">
+    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <Card className="hidden self-start lg:block">
         <CalendarTools
           allDay={allDay}
@@ -395,25 +395,27 @@ export function CalendarPage() {
         />
       </Card>
 
-      <Card>
-        <div className="flex items-center justify-between">
-          <div>
+      <Card className="min-w-0">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <h2 className="text-xl font-black">캘린더</h2>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
               {activeFamily.name}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center justify-between gap-1 sm:justify-start sm:gap-2">
             <IconButton
+              className="size-10 sm:size-11"
               label="이전 달"
               onClick={() => setViewDate(addMonths(viewDate, -1))}
             >
               <CaretLeft size={18} weight="bold" />
             </IconButton>
-            <strong className="min-w-24 text-center">
+            <strong className="min-w-20 text-center text-sm sm:min-w-24 sm:text-base">
               {viewDate.getFullYear()}.{String(viewDate.getMonth() + 1).padStart(2, "0")}
             </strong>
             <IconButton
+              className="size-10 sm:size-11"
               label="다음 달"
               onClick={() => setViewDate(addMonths(viewDate, 1))}
             >
@@ -421,12 +423,12 @@ export function CalendarPage() {
             </IconButton>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-7 gap-2 text-center text-xs font-bold text-[var(--color-text-secondary)]">
+        <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-bold text-[var(--color-text-secondary)] sm:gap-2">
           {weekLabels.map((label) => (
             <span key={label}>{label}</span>
           ))}
         </div>
-        <div className="mt-2 grid grid-cols-7 gap-2">
+        <div className="mt-2 grid grid-cols-7 gap-1 sm:gap-2">
           {monthDays.map((day) => {
             const dayEvents = monthEvents.filter((event) =>
               isEventVisibleOnDate(event, day.date)
@@ -434,7 +436,7 @@ export function CalendarPage() {
 
             return (
               <div
-                className={`min-h-24 rounded-2xl p-2 text-left text-sm font-semibold transition hover:bg-emerald-50 ${
+                className={`aspect-square min-w-0 rounded-xl p-1 text-left text-xs font-semibold transition hover:bg-emerald-50 sm:rounded-2xl sm:p-2 sm:text-sm ${
                   day.isCurrentMonth
                     ? "bg-[var(--color-surface-muted)]"
                     : "bg-slate-50 text-slate-300"
@@ -450,11 +452,11 @@ export function CalendarPage() {
                 tabIndex={0}
               >
                 <span>{day.date.getDate()}</span>
-                <div className="mt-2 flex flex-wrap gap-1">
+                <div className="mt-1 flex flex-wrap gap-1 sm:mt-2">
                   {dayEvents.slice(0, 5).map((event) => (
                     <button
                       aria-label={event.title}
-                      className={`size-2.5 rounded-full ${
+                      className={`size-2 rounded-full sm:size-2.5 ${
                         event.isDayOff
                           ? "bg-amber-400"
                           : event.repeat === "YEARLY"
