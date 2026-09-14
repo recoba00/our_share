@@ -261,3 +261,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 홈, 채팅, 투표, 메모, 캘린더, 내 정보의 주요 성공/오류 피드백을 공통 Toast 메시지로 연결했다.
 - 채팅 메시지 수정 흐름을 브라우저 prompt 대신 앱 Modal 입력 UI로 변경했다.
 - 투표 페이지의 데이터 로딩 함수를 안정화해 React Hooks lint 경고를 제거했다.
+- `npm run test:mvp` 통합 점검에서 lint, Firebase Rules, Dothome/Firebase Hosting 산출물 검증이 모두 통과함을 확인했다.
+- Firebase Hosting 이전 완료 상태에 맞춰 `DEPLOYMENT.md`의 남은 이전 작업 문구를 현재 자동배포 기준으로 정리했다.

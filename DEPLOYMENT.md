@@ -172,8 +172,6 @@ npm run test:dist:firebase
 
 `npm run test:dist`와 `npm run test:dist:firebase`는 `dist/index.html`의 asset 경로, PWA 파일, manifest/service worker의 하드코딩 경로를 검사한다.
 
-현재 Dothome 배포 workflow도 Firebase Hosting 후보 빌드를 먼저 검증한 뒤, Dothome용 `/our_share/` 빌드를 다시 생성해 FTP 업로드한다.
-
 MVP 최종 점검은 아래 명령으로 한 번에 실행할 수 있다.
 
 ```bash
@@ -182,11 +180,11 @@ npm run test:mvp
 
 이 명령은 lint, Firebase Rules 테스트, Dothome 빌드/산출물 검증, Firebase Hosting 빌드/산출물 검증을 순서대로 실행한다.
 
-실제 Firebase Hosting 이전 시에는 아직 아래 작업이 남아 있다.
+Firebase Hosting 이전은 완료된 상태다.
 
-- Firebase Hosting 배포 실행
-- Firebase Auth 승인 도메인에 Firebase Hosting 도메인 추가
-- GitHub Actions 배포용 서비스 계정 Secret 검증
+현재 운영 배포는 GitHub Actions가 `master` 브랜치 push를 기준으로 Firebase Hosting live 채널에 자동 배포한다.
+
+릴리즈 후보 점검은 배포 전 로컬에서 `npm run test:mvp`를 실행하고, 배포 후 GitHub Actions의 `npm run test:hosting` 단계 성공 여부로 확인한다.
 
 ## PWA
 
