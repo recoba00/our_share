@@ -264,3 +264,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - `npm run test:mvp` 통합 점검에서 lint, Firebase Rules, Dothome/Firebase Hosting 산출물 검증이 모두 통과함을 확인했다.
 - Firebase Hosting 이전 완료 상태에 맞춰 `DEPLOYMENT.md`의 남은 이전 작업 문구를 현재 자동배포 기준으로 정리했다.
 - 브라우저 기본 alert/confirm/prompt 재도입을 막는 `npm run test:ui-feedback` 스모크 검사를 추가하고 MVP 통합 점검에 포함했다.
+- 투표 메뉴와 채팅방 인라인 투표 생성 UI를 textarea 방식에서 항목별 추가/삭제 입력 방식으로 변경했다.
+- 캘린더 날짜 투표 생성 UI를 직접 날짜 텍스트 입력 방식에서 월간 달력 터치 선택 방식으로 변경했다.

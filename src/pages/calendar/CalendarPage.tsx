@@ -75,7 +75,10 @@ export function CalendarPage() {
   const [isDayOff, setIsDayOff] = useState(false);
   const [voteTitle, setVoteTitle] = useState("");
   const [voteDescription, setVoteDescription] = useState("");
-  const [voteOptionsText, setVoteOptionsText] = useState(getDefaultDatePollOptions(today));
+  const [voteSelectedDates, setVoteSelectedDates] = useState<string[]>([]);
+  const [voteViewDate, setVoteViewDate] = useState(
+    () => new Date(today.getFullYear(), today.getMonth(), 1)
+  );
   const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [detailEventId, setDetailEventId] = useState("");
@@ -242,14 +245,14 @@ export function CalendarPage() {
         description: voteDescription,
         familyId: activeFamily.id,
         multipleChoice: false,
-        options: voteOptionsText.split("\n"),
+        options: voteSelectedDates,
         title: voteTitle,
         type: "DATE",
       });
 
       setVoteTitle("");
       setVoteDescription("");
-      setVoteOptionsText(getDefaultDatePollOptions(viewDate));
+      setVoteSelectedDates([]);
       notify("날짜 투표를 만들었습니다. 투표 메뉴에서 채팅방으로 전송할 수 있어요.", "success");
     } catch (error) {
       notify(error instanceof Error ? error.message : "날짜 투표 생성에 실패했습니다.", "error");
@@ -259,6 +262,14 @@ export function CalendarPage() {
   function notify(message: string, variant: "error" | "info" | "success") {
     setStatusMessage(message);
     showToast({ message, variant });
+  }
+
+  function toggleVoteDate(dateValue: string) {
+    setVoteSelectedDates((current) =>
+      current.includes(dateValue)
+        ? current.filter((selectedDate) => selectedDate !== dateValue)
+        : [...current, dateValue].sort()
+    );
   }
 
   function editEvent(event: CalendarEvent) {
@@ -389,14 +400,16 @@ export function CalendarPage() {
           setStartDate={setStartDate}
           setTitle={setTitle}
           setVoteDescription={setVoteDescription}
-          setVoteOptionsText={setVoteOptionsText}
+          setVoteViewDate={setVoteViewDate}
+          toggleVoteDate={toggleVoteDate}
           setVoteTitle={setVoteTitle}
           startDate={startDate}
           statusMessage={statusMessage}
           title={title}
           repeat={repeat}
           voteDescription={voteDescription}
-          voteOptionsText={voteOptionsText}
+          voteSelectedDates={voteSelectedDates}
+          voteViewDate={voteViewDate}
           voteTitle={voteTitle}
         />
       </ActionLayer>
@@ -423,14 +436,16 @@ export function CalendarPage() {
           setStartDate={setStartDate}
           setTitle={setTitle}
           setVoteDescription={setVoteDescription}
-          setVoteOptionsText={setVoteOptionsText}
+          setVoteViewDate={setVoteViewDate}
+          toggleVoteDate={toggleVoteDate}
           setVoteTitle={setVoteTitle}
           startDate={startDate}
           statusMessage={statusMessage}
           title={title}
           repeat={repeat}
           voteDescription={voteDescription}
-          voteOptionsText={voteOptionsText}
+          voteSelectedDates={voteSelectedDates}
+          voteViewDate={voteViewDate}
           voteTitle={voteTitle}
         />
       </Card>
@@ -597,14 +612,16 @@ function CalendarTools({
   setStartDate,
   setTitle,
   setVoteDescription,
-  setVoteOptionsText,
+  setVoteViewDate,
   setVoteTitle,
   startDate,
   statusMessage,
   title,
+  toggleVoteDate,
   repeat,
   voteDescription,
-  voteOptionsText,
+  voteSelectedDates,
+  voteViewDate,
   voteTitle,
 }: {
   allDay: boolean;
@@ -626,17 +643,20 @@ function CalendarTools({
   setStartDate: (value: string) => void;
   setTitle: (value: string) => void;
   setVoteDescription: (value: string) => void;
-  setVoteOptionsText: (value: string) => void;
+  setVoteViewDate: (value: Date) => void;
   setVoteTitle: (value: string) => void;
   startDate: string;
   statusMessage: string;
   title: string;
+  toggleVoteDate: (dateValue: string) => void;
   repeat: CalendarEventRepeat;
   voteDescription: string;
-  voteOptionsText: string;
+  voteSelectedDates: string[];
+  voteViewDate: Date;
   voteTitle: string;
 }) {
   const [activeTab, setActiveTab] = useState<"event" | "poll">("event");
+  const voteMonthDays = useMemo(() => createMonthDays(voteViewDate), [voteViewDate]);
 
   return (
     <>
@@ -782,15 +802,13 @@ function CalendarTools({
             placeholder="선택 사항"
             value={voteDescription}
           />
-          <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
-            후보 날짜
-            <textarea
-              className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) => setVoteOptionsText(event.target.value)}
-              placeholder="한 줄에 하나씩 입력"
-              value={voteOptionsText}
-            />
-          </label>
+          <DatePollPicker
+            monthDays={voteMonthDays}
+            selectedDates={voteSelectedDates}
+            setViewDate={setVoteViewDate}
+            toggleDate={toggleVoteDate}
+            viewDate={voteViewDate}
+          />
           <Button type="submit" variant="secondary">
             <SealQuestion size={18} />
             날짜 투표 생성
@@ -811,12 +829,89 @@ function addMonths(date: Date, amount: number) {
   return new Date(date.getFullYear(), date.getMonth() + amount, 1);
 }
 
-function getDefaultDatePollOptions(baseDate: Date) {
-  return [0, 1, 2]
-    .map((offset) => {
-      const date = new Date(baseDate);
-      date.setDate(baseDate.getDate() + offset);
-      return toDateInputValue(date);
-    })
-    .join("\n");
+function DatePollPicker({
+  monthDays,
+  selectedDates,
+  setViewDate,
+  toggleDate,
+  viewDate,
+}: {
+  monthDays: ReturnType<typeof createMonthDays>;
+  selectedDates: string[];
+  setViewDate: (value: Date) => void;
+  toggleDate: (dateValue: string) => void;
+  viewDate: Date;
+}) {
+  return (
+    <div className="grid gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold">후보 날짜</span>
+        <div className="flex items-center gap-1">
+          <IconButton
+            className="size-9"
+            label="이전 달"
+            onClick={() => setViewDate(addMonths(viewDate, -1))}
+          >
+            <CaretLeft size={16} />
+          </IconButton>
+          <strong className="min-w-20 text-center text-sm font-semibold">
+            {viewDate.getFullYear()}.{String(viewDate.getMonth() + 1).padStart(2, "0")}
+          </strong>
+          <IconButton
+            className="size-9"
+            label="다음 달"
+            onClick={() => setViewDate(addMonths(viewDate, 1))}
+          >
+            <CaretRight size={16} />
+          </IconButton>
+        </div>
+      </div>
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-semibold text-[var(--color-text-secondary)]">
+        {weekLabels.map((label) => (
+          <span key={label}>{label}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1">
+        {monthDays.map((day) => {
+          const dateValue = toDateInputValue(day.date);
+          const selected = selectedDates.includes(dateValue);
+
+          return (
+            <button
+              className={`aspect-square rounded-lg text-sm font-semibold transition ${
+                selected
+                  ? "bg-brand text-white"
+                  : day.isCurrentMonth
+                    ? "bg-[var(--color-surface-muted)] text-[var(--color-text-primary)]"
+                    : "bg-slate-50 text-slate-300"
+              }`}
+              key={day.key}
+              onClick={() => toggleDate(dateValue)}
+              type="button"
+            >
+              {day.date.getDate()}
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex min-h-10 flex-wrap gap-2">
+        {selectedDates.length === 0 ? (
+          <p className="text-sm text-[var(--color-text-secondary)]">
+            날짜를 터치해서 후보를 선택해주세요.
+          </p>
+        ) : (
+          selectedDates.map((date) => (
+            <button
+              className="rounded-full bg-brand-soft px-3 py-2 text-xs font-semibold text-brand"
+              key={date}
+              onClick={() => toggleDate(date)}
+              type="button"
+            >
+              {date} 삭제
+            </button>
+          ))
+        )}
+      </div>
+    </div>
+  );
 }
