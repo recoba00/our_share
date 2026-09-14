@@ -5,6 +5,7 @@ import { ActionLayer, MobileCreateButton } from "../../components/common/ActionL
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
+import { LoadingState } from "../../components/common/LoadingState";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createMemo,
@@ -22,6 +23,7 @@ export function MemoPage() {
     inviteCode: string;
     name: string;
   } | null>(null);
+  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [memos, setMemos] = useState<Memo[]>([]);
   const [selectedMemoId, setSelectedMemoId] = useState("");
   const [title, setTitle] = useState("");
@@ -47,14 +49,19 @@ export function MemoPage() {
     const userId = user.uid;
 
     async function loadFamily() {
+      setIsFamilyLoading(true);
       const family = await getFirstFamilyForUser(userId);
 
       if (active) {
         setActiveFamily(family);
+        setIsFamilyLoading(false);
       }
     }
 
-    loadFamily().catch((error: Error) => setStatusMessage(error.message));
+    loadFamily().catch((error: Error) => {
+      setIsFamilyLoading(false);
+      setStatusMessage(error.message);
+    });
 
     return () => {
       active = false;
@@ -152,6 +159,10 @@ export function MemoPage() {
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "메모 삭제에 실패했습니다.");
     }
+  }
+
+  if (isFamilyLoading) {
+    return <LoadingState title="메모 정보를 불러오는 중입니다." />;
   }
 
   if (!activeFamily) {

@@ -15,6 +15,7 @@ import { ActionLayer, MobileCreateButton } from "../../components/common/ActionL
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { Input } from "../../components/common/Input";
+import { LoadingState } from "../../components/common/LoadingState";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createPrivateGroupRoom,
@@ -50,6 +51,7 @@ export function ChatPage() {
     name: string;
   } | null>(null);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -86,6 +88,7 @@ export function ChatPage() {
     const userId = user.uid;
 
     async function loadFamily() {
+      setIsFamilyLoading(true);
       const family = await getFirstFamilyForUser(userId);
 
       if (!active) {
@@ -123,9 +126,14 @@ export function ChatPage() {
           );
         }
       }
+
+      setIsFamilyLoading(false);
     }
 
-    loadFamily().catch((error: Error) => setStatusMessage(getErrorMessage(error)));
+    loadFamily().catch((error: Error) => {
+      setIsFamilyLoading(false);
+      setStatusMessage(getErrorMessage(error));
+    });
 
     return () => {
       active = false;
@@ -430,6 +438,10 @@ export function ChatPage() {
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "채팅방 삭제에 실패했습니다.");
     }
+  }
+
+  if (isFamilyLoading) {
+    return <LoadingState title="채팅 정보를 불러오는 중입니다." />;
   }
 
   if (!activeFamily) {

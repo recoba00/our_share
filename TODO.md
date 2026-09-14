@@ -107,6 +107,7 @@
 - [x] 400/600 font-weight token normalization
 - [x] Mobile zoom prevention for field focus
 - [x] Horizontal overflow prevention on responsive layouts
+- [x] Family Loading State Separation
 - [x] Strong gradient surfaces simplified to neutral/brand-soft surfaces
 
 ## Authentication

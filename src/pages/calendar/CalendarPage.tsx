@@ -14,6 +14,7 @@ import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
+import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -54,6 +55,7 @@ export function CalendarPage() {
     inviteCode: string;
     name: string;
   } | null>(null);
+  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
@@ -93,14 +95,19 @@ export function CalendarPage() {
     const userId = user.uid;
 
     async function loadFamily() {
+      setIsFamilyLoading(true);
       const family = await getFirstFamilyForUser(userId);
 
       if (active) {
         setActiveFamily(family);
+        setIsFamilyLoading(false);
       }
     }
 
-    loadFamily().catch((error: Error) => setStatusMessage(error.message));
+    loadFamily().catch((error: Error) => {
+      setIsFamilyLoading(false);
+      setStatusMessage(error.message);
+    });
 
     return () => {
       active = false;
@@ -262,6 +269,10 @@ export function CalendarPage() {
     setRepeat("NONE");
     setAllDay(true);
     setIsDayOff(false);
+  }
+
+  if (isFamilyLoading) {
+    return <LoadingState title="캘린더 정보를 불러오는 중입니다." />;
   }
 
   if (!activeFamily) {
