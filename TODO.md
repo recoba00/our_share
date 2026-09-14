@@ -68,6 +68,7 @@
 - [x] Phosphor Icons
 - [x] Firebase 프로젝트 연결
 - [x] `.env` 구성
+- [x] Firestore Persistent Local Cache
 
 ## Design System
 
