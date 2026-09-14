@@ -1,4 +1,13 @@
-import { LockKey, PaperPlaneTilt, Trash, User, Users, UserPlus } from "@phosphor-icons/react";
+import {
+  LockKey,
+  PaperPlaneTilt,
+  PencilSimple,
+  SealQuestion,
+  Trash,
+  User,
+  Users,
+  UserPlus,
+} from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
@@ -11,12 +20,14 @@ import {
   createPrivateGroupRoom,
   createSecretRoom,
   deleteChatRoom,
+  deleteMessage,
   getOrCreateDirectRoom,
   getOrCreateFamilyRoom,
   markRoomMessagesAsRead,
   sendTextMessage,
   subscribeChatRooms,
   subscribeMessages,
+  updateTextMessage,
 } from "../../features/chat/services/chatService";
 import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
 import {
@@ -47,6 +58,7 @@ export function ChatPage() {
   const [secretRoomName, setSecretRoomName] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [editingMessageId, setEditingMessageId] = useState("");
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
@@ -134,9 +146,13 @@ export function ChatPage() {
 
   function openRoom(nextRoomId: string) {
     setSelectedRoomId(nextRoomId);
+    const nextRoom = rooms.find((room) => room.id === nextRoomId);
+    const chatRoomName = nextRoom
+      ? getRoomDisplayName(nextRoom, members, user?.uid)
+      : "채팅방";
 
     if (!window.matchMedia("(min-width: 1024px)").matches) {
-      navigate(`/chat/${nextRoomId}`);
+      navigate(`/chat/${nextRoomId}`, { state: { chatRoomName } });
     }
   }
 
@@ -289,6 +305,59 @@ export function ChatPage() {
     }
   }
 
+  async function handleEditMessage(message: ChatMessage) {
+    if (!activeFamily || message.type !== "TEXT") {
+      return;
+    }
+
+    const nextText = window.prompt("메시지를 수정합니다.", message.text);
+
+    if (nextText === null || nextText.trim() === message.text) {
+      return;
+    }
+
+    setEditingMessageId(message.id);
+
+    try {
+      await updateTextMessage({
+        familyId: activeFamily.id,
+        messageId: message.id,
+        text: nextText,
+      });
+      setStatusMessage("메시지를 수정했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "메시지 수정에 실패했습니다.");
+    } finally {
+      setEditingMessageId("");
+    }
+  }
+
+  async function handleDeleteMessage(message: ChatMessage) {
+    if (!activeFamily) {
+      return;
+    }
+
+    const confirmed = window.confirm("이 메시지를 삭제할까요?");
+
+    if (!confirmed) {
+      return;
+    }
+
+    setEditingMessageId(message.id);
+
+    try {
+      await deleteMessage({
+        familyId: activeFamily.id,
+        messageId: message.id,
+      });
+      setStatusMessage("메시지를 삭제했습니다.");
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : "메시지 삭제에 실패했습니다.");
+    } finally {
+      setEditingMessageId("");
+    }
+  }
+
   async function handleDeleteRoom(room: ChatRoom) {
     if (!activeFamily || !user || room.type === "FAMILY") {
       return;
@@ -402,7 +471,9 @@ export function ChatPage() {
 
   return (
     <>
-      <MobileCreateButton label="+ 채팅방" onClick={() => setIsCreateOpen(true)} />
+      {!roomId ? (
+        <MobileCreateButton label="+ 채팅방" onClick={() => setIsCreateOpen(true)} />
+      ) : null}
       <ActionLayer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -411,8 +482,8 @@ export function ChatPage() {
         {chatCreateTools}
       </ActionLayer>
 
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0`}>
+    <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
         <h2 className="text-xl font-black">채팅</h2>
         <div className="hidden lg:block">{chatCreateTools}</div>
 
@@ -431,7 +502,7 @@ export function ChatPage() {
                 .filter((member) => member.userId !== user?.uid)
                 .map((member) => (
                   <button
-                    className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-left transition hover:bg-slate-200"
+                    className="flex w-full min-w-0 items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-left transition hover:bg-slate-200"
                     key={member.userId}
                     onClick={() => void handleCreateDirectRoom(member)}
                     type="button"
@@ -439,7 +510,7 @@ export function ChatPage() {
                     <span className="grid size-9 place-items-center rounded-xl bg-white text-sm font-black text-brand">
                       {(member.displayName ?? member.nickname).slice(0, 1)}
                     </span>
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       <strong className="block truncate text-sm">
                         {member.displayName ?? member.nickname}
                       </strong>
@@ -456,7 +527,7 @@ export function ChatPage() {
         <div className="mt-6 space-y-3">
           {rooms.map((room) => (
             <div
-              className={`w-full rounded-2xl p-4 text-left transition ${
+              className={`w-full min-w-0 rounded-2xl p-4 text-left transition ${
                 selectedRoom?.id === room.id
                   ? "bg-emerald-50 ring-2 ring-brand"
                   : "bg-[var(--color-surface-muted)] hover:bg-slate-200"
@@ -464,11 +535,11 @@ export function ChatPage() {
               key={room.id}
             >
               <button
-                className="w-full text-left"
+                className="w-full min-w-0 text-left"
                 onClick={() => openRoom(room.id)}
                 type="button"
               >
-                <strong>{getRoomDisplayName(room, members, user?.uid)}</strong>
+                <strong className="block truncate">{getRoomDisplayName(room, members, user?.uid)}</strong>
                 <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
                   {getRoomTypeLabel(room)} · {room.lastMessageText ?? "아직 대화가 없습니다."}
                 </p>
@@ -496,19 +567,13 @@ export function ChatPage() {
         ) : null}
       </Card>
 
-      <Card className={`${roomId ? "block" : "hidden lg:block"} min-w-0`}>
-        <div className="flex items-center justify-between gap-3">
+      <section className={`${roomId ? "block" : "hidden lg:block"} -mx-4 min-w-0 overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
+        <div className="hidden min-w-0 items-center justify-between gap-3 lg:flex">
           <h3 className="min-w-0 truncate text-lg font-bold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
-          <Link
-            className="inline-flex h-11 items-center justify-center rounded-xl border border-[var(--color-border)] bg-white px-4 text-sm font-bold text-[var(--color-text-primary)] transition hover:bg-[var(--color-surface-muted)]"
-            to="/poll"
-          >
-            투표 만들기
-          </Link>
         </div>
-        <div className="mt-4 flex min-h-[calc(100dvh-280px)] flex-col justify-end gap-3 overflow-y-auto rounded-2xl bg-slate-50 p-4 lg:min-h-[360px]">
+        <div className="flex min-h-[calc(100dvh-152px)] flex-col justify-end gap-3 overflow-y-auto px-4 py-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4">
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
               첫 메시지를 보내 가족 대화를 시작해보세요.
@@ -523,42 +588,51 @@ export function ChatPage() {
                   className={`grid gap-1 ${isMine ? "justify-items-end" : "justify-items-start"}`}
                   key={message.id}
                 >
-                  {message.type === "POLL" ? (
-                    <PollMessageCard
-                      isMine={isMine}
-                      message={message}
-                      poll={message.pollId ? pollMap.get(message.pollId) : undefined}
-                    />
-                  ) : (
-                    <p
-                      className={`max-w-[min(280px,75vw)] break-words rounded-2xl p-3 text-sm shadow-sm ${
-                        isMine ? "bg-brand text-white" : "bg-white"
-                      }`}
-                    >
-                      {message.text}
-                    </p>
-                  )}
-                  <span className="px-2 text-[10px] font-bold text-[var(--color-text-secondary)]">
-                    {isMine ? `읽음 ${readCount}명` : message.readBy.includes(user?.uid ?? "") ? "읽음" : "안 읽음"}
-                  </span>
+                  <MessageRow
+                    isBusy={editingMessageId === message.id}
+                    isMine={isMine}
+                    member={members.find((member) => member.userId === message.createdBy)}
+                    message={message}
+                    onDelete={handleDeleteMessage}
+                    onEdit={handleEditMessage}
+                    poll={message.pollId ? pollMap.get(message.pollId) : undefined}
+                    readLabel={
+                      isMine
+                        ? `읽음 ${readCount}명`
+                        : message.readBy.includes(user?.uid ?? "")
+                          ? "읽음"
+                          : "안 읽음"
+                    }
+                  />
                 </div>
               );
             })
           )}
         </div>
-        <form className="mt-4 flex min-w-0 gap-2" onSubmit={handleSendMessage}>
+        <form className="sticky bottom-0 flex min-w-0 gap-2 border-t border-white/70 bg-white/80 px-4 py-3 backdrop-blur-xl sm:px-6 lg:static lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:backdrop-blur-none" onSubmit={handleSendMessage}>
           <input
             className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] px-4 outline-none focus:border-brand"
             onChange={(event) => setMessageText(event.target.value)}
             placeholder="메시지 입력"
             value={messageText}
           />
-          <Button className="shrink-0" disabled={!selectedRoom} type="submit">
-            <PaperPlaneTilt size={18} weight="bold" />
-            전송
-          </Button>
+          <Link
+            aria-label="투표 만들기"
+            className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-muted)] hover:text-brand"
+            to="/poll"
+          >
+            <SealQuestion size={21} />
+          </Link>
+          <button
+            aria-label="전송"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={!selectedRoom}
+            type="submit"
+          >
+            <PaperPlaneTilt size={21} />
+          </button>
         </form>
-      </Card>
+      </section>
     </div>
     </>
   );
@@ -591,6 +665,96 @@ function getRoomDisplayName(
   return targetMember
     ? `${targetMember.displayName ?? targetMember.nickname}님과의 대화`
     : room.name;
+}
+
+function MessageRow({
+  isBusy,
+  isMine,
+  member,
+  message,
+  onDelete,
+  onEdit,
+  poll,
+  readLabel,
+}: {
+  isBusy: boolean;
+  isMine: boolean;
+  member: FamilyMemberProfile | undefined;
+  message: ChatMessage;
+  onDelete: (message: ChatMessage) => void;
+  onEdit: (message: ChatMessage) => void;
+  poll: Poll | undefined;
+  readLabel: string;
+}) {
+  return (
+    <div className={`flex w-full min-w-0 gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
+      {!isMine ? (
+        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-xs font-semibold text-brand shadow-sm">
+          {member?.photoURL ? (
+            <img
+              alt={member.displayName ?? member.nickname}
+              className="size-full object-cover"
+              src={member.photoURL}
+            />
+          ) : (
+            (member?.displayName ?? member?.nickname ?? "?").slice(0, 1)
+          )}
+        </span>
+      ) : null}
+      <div className={`min-w-0 max-w-[78%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
+        {!isMine ? (
+          <span className="px-1 text-xs font-normal text-[var(--color-text-secondary)]">
+            {member?.displayName ?? member?.nickname ?? "가족"}
+          </span>
+        ) : null}
+        <div className={`group flex items-end gap-1 ${isMine ? "flex-row-reverse" : ""}`}>
+          {message.type === "POLL" ? (
+            <PollMessageCard
+              isMine={isMine}
+              message={message}
+              poll={poll}
+            />
+          ) : (
+            <p
+              className={`relative break-words px-4 py-3 text-sm font-normal leading-6 shadow-sm ${
+                isMine
+                  ? "rounded-2xl rounded-br-md bg-brand text-white after:absolute after:bottom-2 after:-right-1 after:size-3 after:rotate-45 after:bg-brand"
+                  : "rounded-2xl rounded-bl-md bg-white text-[var(--color-text-primary)] after:absolute after:bottom-2 after:-left-1 after:size-3 after:rotate-45 after:bg-white"
+              }`}
+            >
+              {message.text}
+            </p>
+          )}
+          {isMine && message.type === "TEXT" ? (
+            <div className="flex shrink-0 items-center gap-1 opacity-100 transition sm:opacity-0 sm:group-hover:opacity-100">
+              <button
+                aria-label="메시지 수정"
+                className="grid size-7 place-items-center rounded-full bg-white/80 text-slate-500 shadow-sm transition hover:text-brand disabled:opacity-40"
+                disabled={isBusy}
+                onClick={() => onEdit(message)}
+                type="button"
+              >
+                <PencilSimple size={15} />
+              </button>
+              <button
+                aria-label="메시지 삭제"
+                className="grid size-7 place-items-center rounded-full bg-white/80 text-slate-500 shadow-sm transition hover:text-red-500 disabled:opacity-40"
+                disabled={isBusy}
+                onClick={() => onDelete(message)}
+                type="button"
+              >
+                <Trash size={15} />
+              </button>
+            </div>
+          ) : null}
+        </div>
+        <span className="px-2 text-[11px] font-normal text-[var(--color-text-secondary)]">
+          {readLabel}
+          {message.updatedAt ? " · 수정됨" : ""}
+        </span>
+      </div>
+    </div>
+  );
 }
 
 function PollMessageCard({

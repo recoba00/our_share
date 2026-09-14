@@ -22,6 +22,14 @@ const config: Config = {
         card: "20px",
       },
     },
+    fontWeight: {
+      normal: "400",
+      medium: "400",
+      semibold: "600",
+      bold: "600",
+      extrabold: "600",
+      black: "600",
+    },
   },
   plugins: [],
 };

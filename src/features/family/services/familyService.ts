@@ -1,6 +1,7 @@
 import type { User } from "firebase/auth";
 import {
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -11,7 +12,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import { ref, set } from "firebase/database";
+import { ref, remove, set } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 
@@ -29,6 +30,12 @@ type UpdateFamilyMemberRoleInput = {
   actorUserId: string;
   familyId: string;
   role: Exclude<FamilyRole, "OWNER">;
+  targetUserId: string;
+};
+
+type DeleteFamilyMemberInput = {
+  actorUserId: string;
+  familyId: string;
   targetUserId: string;
 };
 
@@ -211,6 +218,31 @@ export async function updateFamilyMemberRole({
     userId: targetUserId,
     updatedAt: Date.now(),
   });
+}
+
+export async function deleteFamilyMember({
+  actorUserId,
+  familyId,
+  targetUserId,
+}: DeleteFamilyMemberInput) {
+  const actorSnapshot = await getDoc(doc(db, "familyMembers", `${familyId}_${actorUserId}`));
+  const targetRef = doc(db, "familyMembers", `${familyId}_${targetUserId}`);
+  const targetSnapshot = await getDoc(targetRef);
+
+  if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
+    throw new Error("가족 구성원 삭제는 OWNER만 할 수 있습니다.");
+  }
+
+  if (!targetSnapshot.exists()) {
+    throw new Error("삭제할 가족 구성원을 찾을 수 없습니다.");
+  }
+
+  if (targetSnapshot.data().role === "OWNER") {
+    throw new Error("OWNER는 삭제할 수 없습니다.");
+  }
+
+  await deleteDoc(targetRef);
+  await remove(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`));
 }
 
 async function upsertFamilyMember({

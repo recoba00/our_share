@@ -24,5 +24,6 @@ export type ChatMessage = {
   pollId: string | null;
   createdBy: string;
   createdAt: unknown;
+  updatedAt?: unknown;
   readBy: string[];
 };

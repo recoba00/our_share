@@ -5,6 +5,7 @@ import { Card } from "../components/common/Card";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { ToastProvider } from "../components/common/Toast";
 import { AppLayout } from "../components/layout/AppLayout";
+import { PwaPrompt } from "../components/pwa/PwaPrompt";
 import { AuthProvider } from "../features/auth/AuthProvider";
 
 const CalendarPage = lazy(() =>
@@ -68,6 +69,7 @@ export function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
             </Suspense>
+            <PwaPrompt />
           </AppLayout>
         </ErrorBoundary>
       </ToastProvider>

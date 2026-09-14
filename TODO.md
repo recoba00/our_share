@@ -61,6 +61,8 @@
 - [x] PWA 설정
 - [x] PWA App Icon
 - [x] PWA Cache Version Bump for App Icon Refresh
+- [x] PWA Install Prompt Bottom Sheet
+- [x] PWA Update Prompt
 - [x] Pretendard
 - [x] Phosphor Icons
 - [x] Firebase 프로젝트 연결
@@ -94,6 +96,11 @@
 - [x] Header notification list entry
 - [x] Header profile entry opens My Info
 - [x] Header icon actions support unboxed ghost style
+- [x] Fixed glass header
+- [x] Glass bottom navigation with safe area
+- [x] Hide bottom navigation on second-depth screens
+- [x] Scroll-aware compact floating action buttons
+- [x] 400/600 font-weight token normalization
 - [x] Mobile zoom prevention for field focus
 - [x] Horizontal overflow prevention on responsive layouts
 - [x] Strong gradient surfaces simplified to neutral/brand-soft surfaces
@@ -119,6 +126,7 @@
 - [x] Join Family
 - [x] Family Member List
 - [x] Member Permissions
+- [x] Owner Member Delete
 
 ## Home
 
@@ -144,9 +152,11 @@
 - [x] Event CRUD
 - [x] Calendar Event Delete
 - [x] Calendar Dot Event Markers
+- [x] Calendar Dot Count Touch Target
 - [x] Calendar Event Detail Dialog
 - [x] Date Click Opens Event Form
 - [x] Mobile Full-Screen Event Form
+- [x] Calendar Event/Poll Tabbed Create Panel
 - [x] Anniversary
 - [x] D-Day
 - [x] Calendar Vote
@@ -182,6 +192,10 @@
 - [x] Family Room
 - [x] Mobile Chat Room List to Detail Navigation
 - [x] Mobile Chat Room Back Header
+- [x] Mobile Chat Room Header Name
+- [x] Messenger Style Chat Detail Layout
+- [x] Chat Message Edit
+- [x] Chat Message Delete
 - [x] DM
 - [x] Private Group
 - [x] Secret Room

@@ -207,6 +207,7 @@ service cloud.firestore {
           "pollId",
           "createdBy",
           "createdAt",
+          "updatedAt",
           "readBy"
         ]) &&
         (
@@ -527,15 +528,32 @@ service cloud.firestore {
         request.resource.data.familyId == familyId &&
         request.resource.data.roomId == resource.data.roomId &&
         request.resource.data.type == resource.data.type &&
-        request.resource.data.text == resource.data.text &&
         request.resource.data.pollId == resource.data.pollId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.readBy is list &&
-        request.resource.data.readBy.hasAll(resource.data.readBy) &&
-        request.auth.uid in request.resource.data.readBy &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
-      allow delete: if false;
+        (
+          (
+            request.resource.data.text == resource.data.text &&
+            request.resource.data.readBy.hasAll(resource.data.readBy) &&
+            request.auth.uid in request.resource.data.readBy &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"])
+          ) ||
+          (
+            resource.data.createdBy == request.auth.uid &&
+            resource.data.type == "TEXT" &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() > 0 &&
+            request.resource.data.text.size() <= 2000 &&
+            request.resource.data.readBy == resource.data.readBy &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "text",
+              "updatedAt"
+            ])
+          )
+        );
+      allow delete: if signedIn() &&
+        resource.data.createdBy == request.auth.uid;
     }
 
     match /calendarEvents/{eventId} {
@@ -666,15 +684,32 @@ service cloud.firestore {
         request.resource.data.familyId == resource.data.familyId &&
         request.resource.data.roomId == resource.data.roomId &&
         request.resource.data.type == resource.data.type &&
-        request.resource.data.text == resource.data.text &&
         request.resource.data.pollId == resource.data.pollId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.readBy is list &&
-        request.resource.data.readBy.hasAll(resource.data.readBy) &&
-        request.auth.uid in request.resource.data.readBy &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"]);
-      allow delete: if false;
+        (
+          (
+            request.resource.data.text == resource.data.text &&
+            request.resource.data.readBy.hasAll(resource.data.readBy) &&
+            request.auth.uid in request.resource.data.readBy &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly(["readBy"])
+          ) ||
+          (
+            resource.data.createdBy == request.auth.uid &&
+            resource.data.type == "TEXT" &&
+            request.resource.data.text is string &&
+            request.resource.data.text.size() > 0 &&
+            request.resource.data.text.size() <= 2000 &&
+            request.resource.data.readBy == resource.data.readBy &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "text",
+              "updatedAt"
+            ])
+          )
+        );
+      allow delete: if signedIn() &&
+        resource.data.createdBy == request.auth.uid;
     }
 
     match /{document=**} {

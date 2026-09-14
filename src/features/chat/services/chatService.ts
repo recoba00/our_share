@@ -44,6 +44,12 @@ type SendTextMessageInput = {
   text: string;
 };
 
+type UpdateTextMessageInput = {
+  familyId: string;
+  messageId: string;
+  text: string;
+};
+
 type SendPollMessageInput = {
   createdBy: string;
   familyId: string;
@@ -373,6 +379,33 @@ export async function sendPollMessage({
     lastMessageAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   });
+}
+
+export async function updateTextMessage({
+  familyId,
+  messageId,
+  text,
+}: UpdateTextMessageInput) {
+  const normalizedText = text.trim();
+
+  if (!normalizedText) {
+    throw new Error("수정할 메시지를 입력해주세요.");
+  }
+
+  await updateDoc(doc(db, "families", familyId, "messages", messageId), {
+    text: normalizedText,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteMessage({
+  familyId,
+  messageId,
+}: {
+  familyId: string;
+  messageId: string;
+}) {
+  await deleteDoc(doc(db, "families", familyId, "messages", messageId));
 }
 
 export async function markRoomMessagesAsRead({

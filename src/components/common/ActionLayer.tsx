@@ -1,5 +1,6 @@
-import { X } from "@phosphor-icons/react";
+import { Plus, X } from "@phosphor-icons/react";
 import type { PropsWithChildren } from "react";
+import { useEffect, useState } from "react";
 import { IconButton } from "./IconButton";
 
 type ActionLayerProps = PropsWithChildren<{
@@ -35,13 +36,34 @@ export function MobileCreateButton({
   label: string;
   onClick: () => void;
 }) {
+  const [isScrolling, setIsScrolling] = useState(false);
+
+  useEffect(() => {
+    let timeoutId: number | undefined;
+
+    function handleScroll() {
+      setIsScrolling(true);
+      window.clearTimeout(timeoutId);
+      timeoutId = window.setTimeout(() => setIsScrolling(false), 180);
+    }
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      window.clearTimeout(timeoutId);
+    };
+  }, []);
+
   return (
     <button
-      className="fixed bottom-28 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full bg-brand px-5 text-sm font-black text-white shadow-lg transition hover:bg-brand-hover lg:hidden"
+      className={`fixed bottom-28 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-emerald-500/85 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 backdrop-blur-xl transition-all duration-300 hover:bg-brand-hover lg:hidden ${
+        isScrolling ? "w-12 px-0" : "w-auto px-5"
+      }`}
       onClick={onClick}
       type="button"
     >
-      {label}
+      {isScrolling ? <Plus size={22} /> : label}
     </button>
   );
 }

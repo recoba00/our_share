@@ -8,6 +8,7 @@ import {
   MapPin,
   Note,
   Plus,
+  Trash,
   UsersThree,
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
@@ -18,6 +19,7 @@ import { Input } from "../../components/common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   createFamily,
+  deleteFamilyMember,
   getFamilyMembers,
   getFirstFamilyForUser,
   joinFamilyByInviteCode,
@@ -82,6 +84,7 @@ export function HomePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
+  const [deletingMemberId, setDeletingMemberId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -336,6 +339,36 @@ export function HomePage() {
     }
   }
 
+  async function handleDeleteMember(member: FamilyMemberProfile) {
+    if (!activeFamily || !user) {
+      setFeedback("가족 정보를 먼저 불러와주세요.");
+      return;
+    }
+
+    const confirmed = window.confirm(`${member.displayName ?? member.nickname}님을 가족에서 삭제할까요?`);
+
+    if (!confirmed) {
+      return;
+    }
+
+    setDeletingMemberId(member.userId);
+    setFeedback("");
+
+    try {
+      await deleteFamilyMember({
+        actorUserId: user.uid,
+        familyId: activeFamily.id,
+        targetUserId: member.userId,
+      });
+      setMembers(await getFamilyMembers(activeFamily.id));
+      setFeedback("가족 구성원을 삭제했습니다.");
+    } catch (error) {
+      setFeedback(getErrorMessage(error));
+    } finally {
+      setDeletingMemberId("");
+    }
+  }
+
   async function handleEnableNotifications() {
     if (!activeFamily || !user) {
       setFeedback("가족 정보를 먼저 불러와주세요.");
@@ -585,23 +618,34 @@ export function HomePage() {
                     {roleLabels[member.role]} · {member.email ?? "이메일 없음"}
                   </p>
                   {isFamilyOwner && member.role !== "OWNER" ? (
-                    <select
-                      className="mt-3 h-9 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-xs font-bold outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
-                      disabled={updatingMemberRoleId === member.userId}
-                      onChange={(event) =>
-                        void handleUpdateMemberRole(
-                          member,
-                          event.target.value as Exclude<FamilyRole, "OWNER">
-                        )
-                      }
-                      value={member.role}
-                    >
-                      {editableRoleOptions.map((role) => (
-                        <option key={role} value={role}>
-                          {roleLabels[role]}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
+                      <select
+                        className="h-9 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-xs font-semibold outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                        disabled={updatingMemberRoleId === member.userId}
+                        onChange={(event) =>
+                          void handleUpdateMemberRole(
+                            member,
+                            event.target.value as Exclude<FamilyRole, "OWNER">
+                          )
+                        }
+                        value={member.role}
+                      >
+                        {editableRoleOptions.map((role) => (
+                          <option key={role} value={role}>
+                            {roleLabels[role]}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        aria-label="가족 구성원 삭제"
+                        className="grid size-9 place-items-center rounded-full bg-white text-slate-500 transition hover:text-red-500 disabled:opacity-40"
+                        disabled={deletingMemberId === member.userId}
+                        onClick={() => void handleDeleteMember(member)}
+                        type="button"
+                      >
+                        <Trash size={17} />
+                      </button>
+                    </div>
                   ) : null}
                 </div>
               </div>
