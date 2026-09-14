@@ -14,6 +14,7 @@ import {
 } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { PollOptionEditor } from "../../features/poll/components/PollOptionEditor";
 import {
   createPoll,
@@ -38,6 +39,10 @@ export function PollPage() {
   const [type, setType] = useState<PollType>("GENERAL");
   const [multipleChoice, setMultipleChoice] = useState(false);
   const [options, setOptions] = useState(["치킨", "피자", "삼겹살"]);
+  const [dateOptions, setDateOptions] = useState<string[]>([]);
+  const [datePickerViewDate, setDatePickerViewDate] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [feedback, setFeedback] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -134,13 +139,14 @@ export function PollPage() {
         description,
         familyId: family.id,
         multipleChoice,
-        options,
+        options: type === "DATE" ? dateOptions : options,
         title,
         type,
       });
       setTitle("");
       setDescription("");
       setOptions([""]);
+      setDateOptions([]);
       setMultipleChoice(false);
       setIsCreateOpen(false);
       await loadPollData(user.uid);
@@ -266,6 +272,14 @@ export function PollPage() {
     );
   }
 
+  function toggleDateOption(dateValue: string) {
+    setDateOptions((current) =>
+      current.includes(dateValue)
+        ? current.filter((selectedDate) => selectedDate !== dateValue)
+        : [...current, dateValue].sort()
+    );
+  }
+
   const createPollForm = (
     <>
         <div>
@@ -287,12 +301,6 @@ export function PollPage() {
             placeholder="선택 사항"
             value={description}
           />
-          <PollOptionEditor
-            onAdd={addPollOption}
-            onRemove={removePollOption}
-            onUpdate={updatePollOption}
-            options={options}
-          />
           <div className="grid grid-cols-2 gap-2">
             <ChoiceButton active={type === "GENERAL"} onClick={() => setType("GENERAL")}>
               일반
@@ -301,6 +309,21 @@ export function PollPage() {
               날짜
             </ChoiceButton>
           </div>
+          {type === "DATE" ? (
+            <DatePollPicker
+              selectedDates={dateOptions}
+              setViewDate={setDatePickerViewDate}
+              toggleDate={toggleDateOption}
+              viewDate={datePickerViewDate}
+            />
+          ) : (
+            <PollOptionEditor
+              onAdd={addPollOption}
+              onRemove={removePollOption}
+              onUpdate={updatePollOption}
+              options={options}
+            />
+          )}
           <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
             <input
               checked={multipleChoice}

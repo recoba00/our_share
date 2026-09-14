@@ -40,6 +40,7 @@ import {
   getFirstFamilyForUser,
 } from "../../features/family/services/familyService";
 import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
+import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { PollOptionEditor } from "../../features/poll/components/PollOptionEditor";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import { createPoll } from "../../features/poll/services/pollService";
@@ -77,6 +78,10 @@ export function ChatPage() {
   const [pollType, setPollType] = useState<PollType>("GENERAL");
   const [pollMultipleChoice, setPollMultipleChoice] = useState(false);
   const [pollOptions, setPollOptions] = useState(["치킨", "피자", "삼겹살"]);
+  const [pollDateOptions, setPollDateOptions] = useState<string[]>([]);
+  const [pollDateViewDate, setPollDateViewDate] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
 
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
@@ -411,7 +416,7 @@ export function ChatPage() {
         description: pollDescription,
         familyId: activeFamily.id,
         multipleChoice: pollMultipleChoice,
-        options: pollOptions,
+        options: pollType === "DATE" ? pollDateOptions : pollOptions,
         title: pollTitle,
         type: pollType,
       });
@@ -429,6 +434,7 @@ export function ChatPage() {
       setPollType("GENERAL");
       setPollMultipleChoice(false);
       setPollOptions(["치킨", "피자", "삼겹살"]);
+      setPollDateOptions([]);
       setIsPollCreateOpen(false);
       notify("투표를 만들고 채팅방에 전송했습니다.", "success");
     } catch (error) {
@@ -486,6 +492,14 @@ export function ChatPage() {
   function updatePollOption(index: number, value: string) {
     setPollOptions((current) =>
       current.map((option, optionIndex) => (optionIndex === index ? value : option))
+    );
+  }
+
+  function togglePollDateOption(dateValue: string) {
+    setPollDateOptions((current) =>
+      current.includes(dateValue)
+        ? current.filter((selectedDate) => selectedDate !== dateValue)
+        : [...current, dateValue].sort()
     );
   }
 
@@ -607,12 +621,6 @@ export function ChatPage() {
             placeholder="선택 사항"
             value={pollDescription}
           />
-          <PollOptionEditor
-            onAdd={addPollOption}
-            onRemove={removePollOption}
-            onUpdate={updatePollOption}
-            options={pollOptions}
-          />
           <div className="grid grid-cols-2 gap-2">
             <button
               className={`h-11 rounded-xl text-sm font-semibold transition ${
@@ -637,6 +645,21 @@ export function ChatPage() {
               날짜
             </button>
           </div>
+          {pollType === "DATE" ? (
+            <DatePollPicker
+              selectedDates={pollDateOptions}
+              setViewDate={setPollDateViewDate}
+              toggleDate={togglePollDateOption}
+              viewDate={pollDateViewDate}
+            />
+          ) : (
+            <PollOptionEditor
+              onAdd={addPollOption}
+              onRemove={removePollOption}
+              onUpdate={updatePollOption}
+              options={pollOptions}
+            />
+          )}
           <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
             <input
               checked={pollMultipleChoice}
