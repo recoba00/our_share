@@ -89,7 +89,7 @@ export function AppHeader() {
           ) : status === "authenticated" ? (
             <Link
               aria-label="내 정보"
-              className="grid size-8 place-items-center overflow-hidden rounded-full border border-white/70 bg-brand-soft text-sm font-semibold text-brand"
+              className="grid size-8 place-items-center overflow-hidden rounded-full bg-brand-soft text-sm font-semibold text-brand ring-1 ring-inset ring-black/[0.04]"
               to="/profile"
             >
               {user?.photoURL ? (

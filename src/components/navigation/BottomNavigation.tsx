@@ -19,6 +19,12 @@ const navItems = [
 export function BottomNavigation() {
   const [isScrolling, setIsScrolling] = useState(false);
 
+  function scrollToTop() {
+    window.requestAnimationFrame(() => {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+  }
+
   useEffect(() => {
     let timeoutId: number | undefined;
 
@@ -42,6 +48,7 @@ export function BottomNavigation() {
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
+            onClick={scrollToTop}
             to={to}
             className={({ isActive }) =>
               [

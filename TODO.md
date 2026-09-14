@@ -96,9 +96,11 @@
 - [x] Header title matches active bottom navigation tab outside Home
 - [x] Header notification list entry
 - [x] Header profile entry opens My Info
+- [x] Header profile black 4% inside border
 - [x] Header icon actions support unboxed ghost style
 - [x] Fixed glass header
 - [x] Glass bottom navigation with safe area
+- [x] Bottom Navigation Scroll To Top
 - [x] Hide bottom navigation on second-depth screens
 - [x] Scroll-aware compact floating action buttons
 - [x] 400/600 font-weight token normalization
