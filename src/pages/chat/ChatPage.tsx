@@ -82,11 +82,15 @@ export function ChatPage() {
   const [pollDateViewDate, setPollDateViewDate] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
-
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
   );
+  const normalizedPollOptionCount = pollOptions.filter((option) => option.trim()).length;
+  const canCreateRoomPoll =
+    Boolean(selectedRoom) &&
+    pollTitle.trim().length > 0 &&
+    (pollType === "DATE" ? pollDateOptions.length >= 2 : normalizedPollOptionCount >= 2);
   const pollMap = useMemo(
     () => new Map(polls.map((poll) => [poll.id, poll])),
     [polls]
@@ -669,10 +673,15 @@ export function ChatPage() {
             />
             복수 선택 허용
           </label>
-          <Button type="submit">
+          <Button disabled={!canCreateRoomPoll} type="submit">
             <SealQuestion size={18} />
             투표 만들고 전송
           </Button>
+          {!canCreateRoomPoll ? (
+            <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+              제목과 후보 {pollType === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.
+            </p>
+          ) : null}
         </form>
       </ActionLayer>
       <Modal

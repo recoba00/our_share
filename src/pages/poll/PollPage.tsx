@@ -47,6 +47,11 @@ export function PollPage() {
   const [feedback, setFeedback] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const normalizedOptionCount = options.filter((option) => option.trim()).length;
+  const canCreatePoll =
+    Boolean(family) &&
+    title.trim().length > 0 &&
+    (type === "DATE" ? dateOptions.length >= 2 : normalizedOptionCount >= 2);
 
   const notify = useCallback(
     (message: string, variant: "error" | "info" | "success") => {
@@ -333,10 +338,15 @@ export function PollPage() {
             />
             복수 선택 허용
           </label>
-          <Button disabled={isLoading || !family} onClick={handleCreatePoll}>
+          <Button disabled={isLoading || !canCreatePoll} onClick={handleCreatePoll}>
             <Plus size={18} weight="bold" />
             투표 만들기
           </Button>
+          {!canCreatePoll ? (
+            <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+              제목과 후보 {type === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.
+            </p>
+          ) : null}
           {family ? (
             <label className="grid gap-2 text-sm font-semibold">
               전송할 채팅방
