@@ -45,6 +45,10 @@ import { PollOptionEditor } from "../../features/poll/components/PollOptionEdito
 import { subscribePolls } from "../../features/poll/services/pollService";
 import { createPoll } from "../../features/poll/services/pollService";
 import type { Poll, PollType } from "../../features/poll/types/pollTypes";
+import {
+  getNormalizedPollOptions,
+  hasDuplicatePollOptions,
+} from "../../features/poll/utils/pollDraft";
 
 export function ChatPage() {
   const { user } = useAuth();
@@ -86,11 +90,14 @@ export function ChatPage() {
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
   );
-  const normalizedPollOptionCount = pollOptions.filter((option) => option.trim()).length;
+  const normalizedPollOptions = getNormalizedPollOptions(pollOptions);
+  const hasDuplicatePollDraftOptions = hasDuplicatePollOptions(pollOptions);
   const canCreateRoomPoll =
     Boolean(selectedRoom) &&
     pollTitle.trim().length > 0 &&
-    (pollType === "DATE" ? pollDateOptions.length >= 2 : normalizedPollOptionCount >= 2);
+    (pollType === "DATE"
+      ? pollDateOptions.length >= 2
+      : normalizedPollOptions.length >= 2 && !hasDuplicatePollDraftOptions);
   const pollMap = useMemo(
     () => new Map(polls.map((poll) => [poll.id, poll])),
     [polls]
@@ -688,7 +695,9 @@ export function ChatPage() {
           </Button>
           {!canCreateRoomPoll ? (
             <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
-              제목과 후보 {pollType === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.
+              {pollType === "GENERAL" && hasDuplicatePollDraftOptions
+                ? "중복된 후보 항목은 사용할 수 없습니다."
+                : `제목과 후보 ${pollType === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.`}
             </p>
           ) : null}
         </form>

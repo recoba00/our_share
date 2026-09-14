@@ -24,6 +24,10 @@ import {
   votePoll,
 } from "../../features/poll/services/pollService";
 import type { Poll, PollType, PollVote } from "../../features/poll/types/pollTypes";
+import {
+  getNormalizedPollOptions,
+  hasDuplicatePollOptions,
+} from "../../features/poll/utils/pollDraft";
 
 export function PollPage() {
   const { user } = useAuth();
@@ -47,11 +51,14 @@ export function PollPage() {
   const [feedback, setFeedback] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const normalizedOptionCount = options.filter((option) => option.trim()).length;
+  const normalizedOptions = getNormalizedPollOptions(options);
+  const hasDuplicateOptions = hasDuplicatePollOptions(options);
   const canCreatePoll =
     Boolean(family) &&
     title.trim().length > 0 &&
-    (type === "DATE" ? dateOptions.length >= 2 : normalizedOptionCount >= 2);
+    (type === "DATE"
+      ? dateOptions.length >= 2
+      : normalizedOptions.length >= 2 && !hasDuplicateOptions);
 
   const notify = useCallback(
     (message: string, variant: "error" | "info" | "success") => {
@@ -357,7 +364,9 @@ export function PollPage() {
           </Button>
           {!canCreatePoll ? (
             <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
-              제목과 후보 {type === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.
+              {type === "GENERAL" && hasDuplicateOptions
+                ? "중복된 후보 항목은 사용할 수 없습니다."
+                : `제목과 후보 ${type === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.`}
             </p>
           ) : null}
           {family ? (
