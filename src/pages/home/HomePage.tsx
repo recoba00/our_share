@@ -688,6 +688,18 @@ export function HomePage() {
           ? "구성원 역할 변경"
           : selectedManageMember?.displayName ?? selectedManageMember?.nickname ?? "구성원 관리"
       }
+      titleAction={
+        memberManageView === "ROLE" ? (
+          <button
+            aria-label="구성원 관리로 돌아가기"
+            className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+            onClick={() => setMemberManageView("ACTIONS")}
+            type="button"
+          >
+            <CaretLeft size={20} />
+          </button>
+        ) : null
+      }
     >
       {selectedManageMember && memberManageView === "ACTIONS" ? (
         <div className="grid gap-3">
@@ -715,14 +727,6 @@ export function HomePage() {
       ) : null}
       {selectedManageMember && memberManageView === "ROLE" ? (
         <div className="grid gap-3">
-          <button
-            className="flex h-10 w-fit items-center gap-1 text-sm font-semibold text-[var(--color-text-secondary)]"
-            onClick={() => setMemberManageView("ACTIONS")}
-            type="button"
-          >
-            <CaretLeft size={18} />
-            뒤로
-          </button>
           <MemberSheetProfile member={selectedManageMember} />
           <div className="grid gap-2">
             {editableRoleOptions.map((role) => (
