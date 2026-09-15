@@ -149,7 +149,7 @@ export function ChatPage() {
         } else {
           setSelectedRoomId("");
           reportError(
-            `가족 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
+            `그룹 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
           );
         }
       }
@@ -524,7 +524,7 @@ export function ChatPage() {
       <Card>
         <h2 className="text-xl font-semibold">채팅</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-          홈에서 가족을 만들거나 초대 코드로 참여하면 채팅방을 사용할 수 있어요.
+          홈에서 그룹을 만들거나 초대 코드로 참여하면 채팅방을 사용할 수 있어요.
         </p>
       </Card>
     );
@@ -535,7 +535,7 @@ export function ChatPage() {
       <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
         <div className="flex items-center gap-2 text-sm font-semibold">
           <UserPlus size={18} weight="bold" />
-          가족 초대 코드
+          그룹 초대 코드
         </div>
         <p className="mt-2 font-mono text-2xl font-semibold text-brand">
           {activeFamily.inviteCode}
@@ -750,7 +750,7 @@ export function ChatPage() {
           <div className="mt-3 grid gap-2">
             {members.filter((member) => member.userId !== user?.uid).length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-                다른 가족 구성원이 참여하면 1:1 대화를 시작할 수 있어요.
+                다른 그룹 구성원이 참여하면 1:1 대화를 시작할 수 있어요.
               </p>
             ) : (
               members
@@ -826,7 +826,7 @@ export function ChatPage() {
         <div className="flex min-h-[calc(100dvh-152px)] flex-col justify-end gap-3 overflow-y-auto px-4 pb-24 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4">
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
-              첫 메시지를 보내 가족 대화를 시작해보세요.
+              첫 메시지를 보내 그룹 대화를 시작해보세요.
             </p>
           ) : (
             messages.map((message) => {
@@ -898,7 +898,7 @@ function getRoomTypeLabel(room: ChatRoom) {
     return "그룹";
   }
 
-  return "가족";
+  return "그룹";
 }
 
 function getRoomDisplayName(
@@ -955,7 +955,7 @@ function MessageRow({
       <div className={`min-w-0 max-w-[78%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
         {!isMine ? (
           <span className="px-1 text-xs font-normal text-[var(--color-text-secondary)]">
-            {member?.displayName ?? member?.nickname ?? "가족"}
+            {member?.displayName ?? member?.nickname ?? "그룹 구성원"}
           </span>
         ) : null}
         <div className={`group flex items-end gap-1 ${isMine ? "flex-row-reverse" : ""}`}>

@@ -77,7 +77,7 @@ export function PollPage() {
         setPolls([]);
         setRooms([]);
         setSelectedRoomId("");
-        notify("투표를 만들려면 먼저 홈에서 가족을 만들거나 초대 코드로 참여해주세요.", "info");
+        notify("투표를 만들려면 먼저 홈에서 그룹을 만들거나 초대 코드로 참여해주세요.", "info");
         return;
       }
 
@@ -135,7 +135,7 @@ export function PollPage() {
 
   async function handleCreatePoll() {
     if (!user || !family) {
-      notify("가족 정보를 먼저 불러와주세요.", "info");
+      notify("그룹 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -291,7 +291,7 @@ export function PollPage() {
         <div>
           <h2 className="text-xl font-semibold">투표 만들기</h2>
           <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            {family ? `${family.name} 가족 투표` : "가족 정보가 필요합니다"}
+            {family ? `${family.name} 그룹 투표` : "그룹 정보가 필요합니다"}
           </p>
         </div>
         <div className="mt-5 grid gap-4">

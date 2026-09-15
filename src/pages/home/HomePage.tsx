@@ -232,7 +232,7 @@ export function HomePage() {
 
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
-      notify("가족 이름을 입력해주세요.", "info");
+      notify("그룹 이름을 입력해주세요.", "info");
       return;
     }
 
@@ -245,7 +245,7 @@ export function HomePage() {
         name: familyName.trim(),
       });
       setMembers(await getFamilyMembers(result.id));
-      notify(`가족이 생성되었습니다. 초대 코드: ${result.inviteCode}`, "success");
+      notify(`그룹이 생성되었습니다. 초대 코드: ${result.inviteCode}`, "success");
       setFamilyName("");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -272,7 +272,7 @@ export function HomePage() {
         name: result.name,
       });
       setMembers(await getFamilyMembers(result.id));
-      notify(`${result.name} 가족에 참여했습니다.`, "success");
+      notify(`${result.name} 그룹에 참여했습니다.`, "success");
       setInviteCode("");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -295,12 +295,12 @@ export function HomePage() {
     return (
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
         <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
-          <p className="text-sm font-semibold text-brand">우리 가족 스마트 홈</p>
+          <p className="text-sm font-semibold text-brand">우리끼리 스마트 홈</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
-            가족 위치, 일정, 메모, 투표를 한곳에서 관리해요
+            그룹 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
-            Google 계정으로 시작하고 가족을 만들거나 초대 코드로 참여하세요.
+            Google 계정으로 시작하고 그룹을 만들거나 초대 코드로 참여하세요.
           </p>
         </section>
         <Card className="self-start">
@@ -332,13 +332,13 @@ export function HomePage() {
       const result = await getFirstFamilyForUser(user.uid);
 
       if (!result) {
-        notify("아직 참여한 가족이 없습니다.", "info");
+        notify("아직 참여한 그룹이 없습니다.", "info");
         return;
       }
 
       setActiveFamily(result);
       setMembers(await getFamilyMembers(result.id));
-      notify(`${result.name} 가족 정보를 불러왔습니다.`, "success");
+      notify(`${result.name} 그룹 정보를 불러왔습니다.`, "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -348,7 +348,7 @@ export function HomePage() {
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
     if (!activeFamily || !user) {
-      notify("가족 정보를 먼저 불러와주세요.", "info");
+      notify("그룹 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -367,7 +367,7 @@ export function HomePage() {
         text: createQuickMessageText(member, message),
       });
 
-      notify("가족 전체방으로 빠른 메시지를 보냈습니다.", "success");
+      notify("그룹 전체방으로 빠른 메시지를 보냈습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -380,7 +380,7 @@ export function HomePage() {
     nextRole: Exclude<FamilyRole, "OWNER">
   ) {
     if (!activeFamily || !user) {
-      notify("가족 정보를 먼저 불러와주세요.", "info");
+      notify("그룹 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -408,14 +408,14 @@ export function HomePage() {
 
   async function handleDeleteMember(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
-      notify("가족 정보를 먼저 불러와주세요.", "info");
+      notify("그룹 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `${member.displayName ?? member.nickname}님을 가족에서 삭제합니다. 삭제된 구성원은 초대 코드로 다시 참여해야 합니다.`,
-      title: "가족 구성원을 삭제할까요?",
+      description: `${member.displayName ?? member.nickname}님을 그룹에서 삭제합니다. 삭제된 구성원은 초대 코드로 다시 참여해야 합니다.`,
+      title: "그룹 구성원을 삭제할까요?",
       tone: "danger",
     });
 
@@ -434,7 +434,7 @@ export function HomePage() {
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
       setPendingMemberRole(null);
-      notify("가족 구성원을 삭제했습니다.", "success");
+      notify("그룹 구성원을 삭제했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -480,7 +480,7 @@ export function HomePage() {
     <>
     <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-        <p className="text-sm font-semibold text-brand">오늘의 가족 상황</p>
+        <p className="text-sm font-semibold text-brand">오늘의 그룹 상황</p>
         <h2 className="mt-2 text-3xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
@@ -511,7 +511,7 @@ export function HomePage() {
           ))}
           {members.length === 0 && (
             <div className="col-span-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-              가족을 만들거나 초대 코드로 참여하면 가족 상황이 표시됩니다.
+              그룹을 만들거나 초대 코드로 참여하면 그룹 상황이 표시됩니다.
             </div>
           )}
         </div>
@@ -523,7 +523,7 @@ export function HomePage() {
             <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                  현재 가족
+                  현재 그룹
                 </p>
                 <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
               </div>
@@ -539,15 +539,15 @@ export function HomePage() {
             </div>
           )}
           <Input
-            label="새 가족 이름"
+            label="새 그룹 이름"
             onChange={(event) => setFamilyName(event.target.value)}
-            placeholder="예: 우리 가족"
+            placeholder="예: 우리 그룹"
             value={familyName}
           />
           <div className="grid grid-cols-2 gap-2">
             <Button disabled={isSubmitting} onClick={handleCreateFamily}>
               <Plus size={18} weight="bold" />
-              가족 생성
+              그룹 생성
             </Button>
             <Button disabled={isSubmitting} onClick={handleLoadFamily} variant="secondary">
               <UsersThree size={18} weight="bold" />
@@ -577,10 +577,10 @@ export function HomePage() {
             <>
               <div className="flex items-center gap-2">
                 <MapPin className="text-brand" size={22} weight="bold" />
-                <h3 className="text-base font-semibold">가족 위치</h3>
+                <h3 className="text-base font-semibold">그룹 위치</h3>
               </div>
               <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-                가족 구성원이 있으면 위치 핀이 표시됩니다.
+                그룹 구성원이 있으면 위치 핀이 표시됩니다.
               </p>
             </>
           ) : (
@@ -602,7 +602,7 @@ export function HomePage() {
       <Card className="lg:col-span-2">
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
-          <h3 className="text-base font-semibold">가족 구성원</h3>
+          <h3 className="text-base font-semibold">그룹 구성원</h3>
         </div>
         {members.length > 0 ? (
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -642,7 +642,7 @@ export function HomePage() {
           </div>
         ) : (
           <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-            가족을 만들거나 초대 코드로 참여하면 구성원이 표시됩니다.
+            그룹을 만들거나 초대 코드로 참여하면 구성원이 표시됩니다.
           </p>
         )}
       </Card>
@@ -650,7 +650,7 @@ export function HomePage() {
     <BottomSheet
       isOpen={Boolean(selectedLocationMember)}
       onClose={() => setSelectedLocationMemberId("")}
-      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "가족 위치"}
+      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "그룹 위치"}
     >
       {selectedLocationMember ? (
         <FamilyLocationPin
@@ -1011,7 +1011,7 @@ function FamilyLocationMap({
         <div>
           <MapPin className="mx-auto text-slate-400" size={28} weight="bold" />
           <p className="mt-3 text-sm font-semibold text-[var(--color-text-secondary)]">
-            현재 위치 공유를 누르면 지도 위에 가족 핀이 표시됩니다.
+            현재 위치 공유를 누르면 지도 위에 그룹 핀이 표시됩니다.
           </p>
         </div>
       </div>
@@ -1023,7 +1023,7 @@ function FamilyLocationMap({
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="shrink-0 text-brand" size={22} weight="bold" />
-          <h3 className="min-w-0 truncate text-base font-semibold">가족 위치</h3>
+          <h3 className="min-w-0 truncate text-base font-semibold">그룹 위치</h3>
         </div>
         <button
           className="shrink-0 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:text-brand"

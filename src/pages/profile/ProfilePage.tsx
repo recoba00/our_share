@@ -63,7 +63,7 @@ export function ProfilePage() {
               내 정보
             </p>
             <h2 className="truncate text-2xl font-semibold">
-              {displayName || "가족 구성원"}
+              {displayName || "그룹 구성원"}
             </h2>
             <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
               {user?.email ?? "이메일 없음"}
@@ -75,7 +75,7 @@ export function ProfilePage() {
           <Input
             label="닉네임"
             onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="가족에게 표시될 이름"
+            placeholder="그룹에 표시될 이름"
             value={displayName}
           />
           <Input

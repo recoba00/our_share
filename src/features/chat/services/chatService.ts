@@ -77,7 +77,7 @@ export async function getOrCreateFamilyRoom({
     id: roomId,
     familyId,
     type: "FAMILY",
-    name: "가족 전체방",
+    name: "그룹 전체방",
     memberIds: [],
     createdBy,
     createdAt: serverTimestamp(),

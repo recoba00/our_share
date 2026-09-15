@@ -181,7 +181,7 @@ export function MemoPage() {
       <Card>
         <h2 className="text-xl font-semibold">메모</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-          홈에서 가족을 만들거나 초대 코드로 참여하면 메모를 사용할 수 있어요.
+          홈에서 그룹을 만들거나 초대 코드로 참여하면 메모를 사용할 수 있어요.
         </p>
       </Card>
     );
@@ -202,7 +202,7 @@ export function MemoPage() {
           <textarea
             className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
             onChange={(event) => setContent(event.target.value)}
-            placeholder="가족과 공유할 내용을 적어주세요."
+            placeholder="그룹과 공유할 내용을 적어주세요."
             value={content}
           />
         </label>
@@ -260,7 +260,7 @@ export function MemoPage() {
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
               <strong>아직 메모가 없습니다.</strong>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                첫 가족 메모를 작성해보세요.
+                첫 그룹 메모를 작성해보세요.
               </p>
             </div>
           ) : (

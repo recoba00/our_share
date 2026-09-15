@@ -20,7 +20,7 @@ export function useMyLocationShare({
   async function shareCurrentLocation() {
     if (!familyId || !userId) {
       setStatus("error");
-      setMessage("가족 생성 또는 참여 후 위치를 공유할 수 있습니다.");
+      setMessage("그룹 생성 또는 참여 후 위치를 공유할 수 있습니다.");
       return;
     }
 

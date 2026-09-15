@@ -197,11 +197,11 @@ export async function updateFamilyMemberRole({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("가족 역할은 OWNER만 변경할 수 있습니다.");
+    throw new Error("그룹 역할은 OWNER만 변경할 수 있습니다.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("변경할 가족 구성원을 찾을 수 없습니다.");
+    throw new Error("변경할 그룹 구성원을 찾을 수 없습니다.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
@@ -230,11 +230,11 @@ export async function deleteFamilyMember({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("가족 구성원 삭제는 OWNER만 할 수 있습니다.");
+    throw new Error("그룹 구성원 삭제는 OWNER만 할 수 있습니다.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("삭제할 가족 구성원을 찾을 수 없습니다.");
+    throw new Error("삭제할 그룹 구성원을 찾을 수 없습니다.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
@@ -264,7 +264,7 @@ async function upsertFamilyMember({
       familyId,
       userId: user.uid,
       role,
-      nickname: user.displayName ?? "가족",
+      nickname: user.displayName ?? "그룹 구성원",
       relation,
       permissions: [],
       ...(inviteCode ? { inviteCode } : {}),

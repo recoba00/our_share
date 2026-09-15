@@ -109,14 +109,14 @@ export function AppHeader() {
                 to="/calendar"
               />
               <NotificationLink
-                description="진행 중인 가족 투표를 확인하세요."
+                description="진행 중인 그룹 투표를 확인하세요."
                 icon={<SealQuestion size={20} weight="bold" />}
                 label="투표 확인"
                 onClick={() => setIsNotificationsOpen(false)}
                 to="/poll"
               />
               <NotificationLink
-                description="가족 채팅방 새 소식을 확인하세요."
+                description="그룹 채팅방 새 소식을 확인하세요."
                 icon={<ChatCircleDots size={20} weight="bold" />}
                 label="채팅 확인"
                 onClick={() => setIsNotificationsOpen(false)}
