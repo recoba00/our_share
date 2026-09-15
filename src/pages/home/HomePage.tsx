@@ -1053,10 +1053,10 @@ function FamilyLocationMap({
           return (
             <button
               aria-label={`${name} 위치로 확대`}
-              className={`flex shrink-0 items-center gap-2 rounded-full border px-2 py-1.5 text-sm font-semibold transition ${
+              className={`grid size-12 shrink-0 place-items-center rounded-full border-2 transition ${
                 isFocused
                   ? "border-brand bg-brand-soft text-brand"
-                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-primary)] hover:border-brand"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] hover:border-brand"
               }`}
               key={member.userId}
               onClick={() => focusMember(member.userId)}
@@ -1065,15 +1065,14 @@ function FamilyLocationMap({
               {member.photoURL ? (
                 <img
                   alt=""
-                  className="size-8 rounded-full object-cover"
+                  className="size-10 rounded-full object-cover"
                   src={member.photoURL}
                 />
               ) : (
-                <span className="grid size-8 place-items-center rounded-full bg-white text-xs text-brand">
+                <span className="grid size-10 place-items-center rounded-full bg-white text-xs text-brand">
                   {getLocationPinLabel(member)}
                 </span>
               )}
-              <span className="max-w-24 truncate">{name}</span>
             </button>
           );
         })}
