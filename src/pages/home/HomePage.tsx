@@ -436,29 +436,31 @@ export function HomePage() {
 
   return (
     <>
-    <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-      <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+    <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+      <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">오늘의 가족 상황</p>
         <h2 className="mt-2 text-3xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+        <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
           {members.slice(0, 3).map((member) => (
-            <div key={member.userId} className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <div className="flex items-center justify-between">
-                <strong>{member.displayName ?? member.nickname}</strong>
+            <div key={member.userId} className="min-w-0 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <strong className="min-w-0 truncate">{member.displayName ?? member.nickname}</strong>
                 <BatteryHigh
-                  className={liveLocations[member.userId]?.charging ? "text-brand" : "text-[var(--color-text-secondary)]"}
+                  className={`shrink-0 ${liveLocations[member.userId]?.charging ? "text-brand" : "text-[var(--color-text-secondary)]"}`}
                   size={18}
                 />
               </div>
-              <p className="mt-3 flex items-center gap-1 text-sm">
-                <MapPin size={16} weight="fill" />
-                {liveLocations[member.userId]
-                  ? formatLocationPreview(liveLocations[member.userId])
-                  : "위치 공유 대기"}
+              <p className="mt-3 flex min-w-0 items-center gap-1 text-sm">
+                <MapPin className="shrink-0" size={16} weight="fill" />
+                <span className="min-w-0 truncate">
+                  {liveLocations[member.userId]
+                    ? formatLocationPreview(liveLocations[member.userId])
+                    : "위치 공유 대기"}
+                </span>
               </p>
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+              <p className="mt-1 truncate text-xs text-[var(--color-text-secondary)]">
                 {liveLocations[member.userId]
                   ? formatUpdatedAt(liveLocations[member.userId].updatedAt)
                   : "앱에서 현재 위치 공유 필요"}
@@ -482,11 +484,11 @@ export function HomePage() {
               src={user.photoURL}
             />
           )}
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
               로그인됨
             </p>
-            <h3 className="text-lg font-semibold">{user?.displayName ?? "가족 구성원"}</h3>
+            <h3 className="truncate text-lg font-semibold">{user?.displayName ?? "가족 구성원"}</h3>
           </div>
         </div>
         <div className="mt-5 grid gap-4">
@@ -546,7 +548,7 @@ export function HomePage() {
         </div>
       </Card>
 
-      <div className="grid gap-4 lg:col-span-2 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-2">
         <Card>
           <div className="flex items-center gap-2">
             <MapPin className="text-brand" size={22} weight="bold" />
@@ -730,7 +732,7 @@ function FamilyLocationMap({
   const bounds = getLocationBounds(pins.map((pin) => pin.location));
 
   return (
-    <div className="relative min-h-[260px] overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
+    <div className="relative min-h-[260px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
       <div className="absolute inset-0 opacity-70">
         <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
@@ -739,9 +741,9 @@ function FamilyLocationMap({
         <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
         <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
       </div>
-      <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-3 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
-        <span>{pins.length}명 위치 공유중</span>
-        <span>{formatLocationPreview(getLocationCenter(pins.map((pin) => pin.location)))}</span>
+      <div className="absolute inset-x-4 top-4 flex min-w-0 items-center justify-between gap-3 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
+        <span className="shrink-0">{pins.length}명 위치 공유중</span>
+        <span className="min-w-0 truncate text-right">{formatLocationPreview(getLocationCenter(pins.map((pin) => pin.location)))}</span>
       </div>
       {pins.map(({ location, member }) => {
         const position = getLocationPinPosition(location, bounds);
@@ -758,21 +760,23 @@ function FamilyLocationMap({
             }}
             type="button"
           >
-            <div className="relative flex min-w-[88px] flex-col items-center transition active:scale-95">
-              <div className="rounded-full bg-emerald-500 p-1.5 shadow-lg shadow-emerald-900/20">
-                <div className="rounded-full bg-slate-950 p-1">
-                <Avatar
-                  alt={member.displayName ?? member.nickname}
-                  src={member.photoURL}
-                />
+            <div className="relative grid w-20 justify-items-center pb-4 transition active:scale-95">
+              <div className="absolute bottom-2 size-7 rotate-45 rounded-br-[6px] bg-emerald-500 shadow-lg shadow-emerald-900/20" />
+              <div className="relative grid size-16 place-items-center rounded-full bg-emerald-500 p-1.5 shadow-lg shadow-emerald-900/20">
+                <div className="grid size-full place-items-center overflow-hidden rounded-full bg-slate-950 text-[11px] font-semibold text-white ring-2 ring-slate-950">
+                  {member.photoURL ? (
+                    <img
+                      alt={member.displayName ?? member.nickname}
+                      className="size-full rounded-full object-cover"
+                      src={member.photoURL}
+                    />
+                  ) : (
+                    <span className="px-1 text-center leading-4">
+                      {getLocationPinLabel(member)}
+                    </span>
+                  )}
                 </div>
               </div>
-              <div className="mt-1 max-w-[116px] rounded-full bg-slate-950 px-3 py-1 text-center text-xs font-semibold text-white shadow-sm">
-                <span className="block truncate">
-                  {member.displayName ?? member.nickname}
-                </span>
-              </div>
-              <div className="mt-[-1px] size-4 rotate-45 rounded-br-sm bg-emerald-500" />
             </div>
           </button>
         );
@@ -797,7 +801,7 @@ function DashboardList({
   }
 
   return (
-    <ul className="mt-4 space-y-3 text-sm">
+    <ul className="mt-4 min-w-0 space-y-3 overflow-hidden text-sm">
       {items.map((item) => (
         <li className="flex min-w-0 justify-between gap-3" key={`${item.label}-${item.meta}`}>
           <span className="min-w-0 truncate">{item.label}</span>
@@ -880,6 +884,12 @@ function formatEventMeta(event: CalendarEvent) {
 
 function formatLocationPreview(location: LiveLocation) {
   return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+}
+
+function getLocationPinLabel(member: FamilyMemberProfile) {
+  const name = member.displayName ?? member.nickname;
+
+  return name.length > 3 ? name.slice(0, 2) : name;
 }
 
 function getLocationBounds(locations: LiveLocation[]) {
