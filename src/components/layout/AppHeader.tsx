@@ -6,7 +6,6 @@ import {
   GearSix,
   NotePencil,
   SealQuestion,
-  UsersThree,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
@@ -23,7 +22,7 @@ export function AppHeader() {
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const locationState = state as LocationState | null;
   const title = getPageTitle(pathname);
-  const isHome = title === "스마트 홈";
+  const isHome = title === "우리끼리";
   const isProfile = pathname.startsWith("/profile");
   const isSettings = pathname.startsWith("/settings");
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
@@ -51,15 +50,12 @@ export function AppHeader() {
             </>
           ) : isHome ? (
             <>
-              <div className="grid size-8 place-items-center rounded-xl bg-brand-soft text-brand">
-                <UsersThree size={20} />
-              </div>
-              <div>
-                <p className="text-xs font-normal text-[var(--color-text-secondary)]">
-                  우리 가족
-                </p>
-                <h1 className="text-lg font-semibold leading-6">스마트 홈</h1>
-              </div>
+              <img
+                alt=""
+                className="size-8 rounded-xl object-cover"
+                src={`${import.meta.env.BASE_URL}brand-logo.svg`}
+              />
+              <h1 className="text-lg font-semibold leading-8">우리끼리</h1>
             </>
           ) : (
             <h1 className="text-lg font-semibold leading-8">{title}</h1>
@@ -200,5 +196,5 @@ function getPageTitle(pathname: string) {
     return "설정";
   }
 
-  return "스마트 홈";
+  return "우리끼리";
 }
