@@ -425,9 +425,9 @@ export function HomePage() {
     showToast({ message, variant });
   }
 
-  const isFamilyOwner = members.some(
-    (member) => member.userId === user?.uid && member.role === "OWNER"
-  );
+  const isFamilyOwner =
+    activeFamily?.role === "OWNER" ||
+    members.some((member) => member.userId === user?.uid && member.role === "OWNER");
   const selectedLocationMember =
     members.find((member) => member.userId === selectedLocationMemberId) ?? null;
   const selectedLocation = selectedLocationMember
@@ -483,34 +483,58 @@ export function HomePage() {
 
       <Card className="order-2">
         <div className="grid gap-3">
-          {activeFamily && (
-            <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                  그룹 초대하기
-                </p>
-                <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
-              </div>
-              <div className="flex shrink-0 items-center gap-1">
-                <button
-                  aria-label="그룹 초대 코드 복사"
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
-                  onClick={() => void handleCopyInviteCode()}
-                  type="button"
+          {activeFamily ? (
+            <div
+              className={`flex min-w-0 items-center justify-between gap-3 rounded-2xl border p-3 ${
+                isFamilyOwner
+                  ? "border-brand/30 bg-brand-soft/40"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
+              }`}
+            >
+              <div className="flex min-w-0 items-center gap-3">
+                <div
+                  className={`grid size-10 shrink-0 place-items-center rounded-xl ${
+                    isFamilyOwner
+                      ? "bg-brand text-white"
+                      : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
+                  }`}
                 >
-                  {activeFamily.inviteCode}
-                  <CopySimple size={14} weight="bold" />
-                </button>
-                <Link
-                  aria-label="그룹 관리하기"
-                  className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                  to="/profile"
-                >
-                  <GearSix size={18} weight="bold" />
-                </Link>
+                  <UsersThree size={20} weight="bold" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                    {isFamilyOwner ? "그룹 오너" : "그룹원"}
+                  </p>
+                  <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
+                  <p className="mt-1 truncate text-xs text-[var(--color-text-secondary)]">
+                    {isFamilyOwner
+                      ? "초대코드를 공유해 그룹원을 초대할 수 있어요."
+                      : "초대코드는 그룹 오너가 관리해요."}
+                  </p>
+                </div>
               </div>
+              {isFamilyOwner ? (
+                <div className="flex shrink-0 items-center gap-1">
+                  <button
+                    aria-label="그룹 초대 코드 복사"
+                    className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
+                    onClick={() => void handleCopyInviteCode()}
+                    type="button"
+                  >
+                    {activeFamily.inviteCode}
+                    <CopySimple size={14} weight="bold" />
+                  </button>
+                  <Link
+                    aria-label="그룹 관리하기"
+                    className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                    to="/profile"
+                  >
+                    <GearSix size={18} weight="bold" />
+                  </Link>
+                </div>
+              ) : null}
             </div>
-          )}
+          ) : null}
           <Button
             className={isLocationShared ? "bg-red-600 text-white hover:bg-red-700" : ""}
             disabled={locationShare.isSharing}
@@ -524,6 +548,9 @@ export function HomePage() {
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
+            <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+              초대코드로 다른 그룹 참여
+            </p>
             <div className="flex min-w-0 items-end gap-2">
               <div className="min-w-0 flex-1">
                 <Input

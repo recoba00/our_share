@@ -220,7 +220,7 @@ export function ProfilePage() {
               <h2 className="text-lg font-semibold">내 그룹</h2>
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              그룹을 선택하고 이름을 수정하거나 삭제할 수 있습니다.
+              오너는 초대코드와 그룹을 관리하고, 그룹원은 참여 상태를 확인할 수 있습니다.
             </p>
           </div>
         </div>
@@ -262,7 +262,7 @@ export function ProfilePage() {
             </p>
           ) : families.length > 0 ? (
             families.map((family) => {
-              const isOwner = family.ownerId === user?.uid;
+              const isOwner = family.role === "OWNER" || family.ownerId === user?.uid;
               const isActive = activeFamily?.id === family.id;
               const isEditing = editingFamilyId === family.id;
               const isBusy = busyFamilyId === family.id;
@@ -272,7 +272,9 @@ export function ProfilePage() {
                   className={`rounded-2xl border p-4 ${
                     isActive
                       ? "border-brand bg-brand-soft/40"
-                      : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
+                      : isOwner
+                        ? "border-brand/30 bg-brand-soft/20"
+                        : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
                   }`}
                   key={family.id}
                 >
@@ -306,9 +308,22 @@ export function ProfilePage() {
                         onClick={() => selectFamily(family.id)}
                         type="button"
                       >
-                        <strong className="block truncate text-base">{family.name}</strong>
+                        <span className="flex min-w-0 items-center gap-2">
+                          <strong className="min-w-0 truncate text-base">{family.name}</strong>
+                          <span
+                            className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                              isOwner
+                                ? "bg-brand text-white"
+                                : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
+                            }`}
+                          >
+                            {isOwner ? "오너" : "그룹원"}
+                          </span>
+                        </span>
                         <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
-                          초대 코드 {family.inviteCode}
+                          {isOwner
+                            ? `초대 코드 ${family.inviteCode}`
+                            : "초대코드는 그룹 오너가 관리해요."}
                         </span>
                       </button>
                       <div className="flex shrink-0 items-center gap-1">

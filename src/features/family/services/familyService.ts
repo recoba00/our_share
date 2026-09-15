@@ -216,6 +216,7 @@ export async function getFamiliesForUser(userId: string) {
         name: family.name as string,
         inviteCode,
         ownerId: family.ownerId as string,
+        role,
         createdAt: family.createdAt,
       };
     })

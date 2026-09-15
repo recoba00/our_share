@@ -5,6 +5,7 @@ export type Family = {
   name: string;
   ownerId: string;
   inviteCode: string;
+  role: FamilyRole;
   createdAt: unknown;
 };
 
