@@ -867,7 +867,7 @@ export function ChatPage() {
                 <div
                   className={`flex min-w-0 items-center gap-3 px-1 py-3 transition ${
                     selectedRoom?.id === room.id
-                      ? "rounded-xl bg-brand-soft px-3 ring-2 ring-brand"
+                      ? "rounded-xl bg-brand-soft/50 px-3"
                       : "hover:bg-[var(--color-surface-muted)]"
                   }`}
                   key={room.id}

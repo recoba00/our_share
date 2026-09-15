@@ -18,6 +18,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar } from "../../components/common/Avatar";
 import { BottomSheet } from "../../components/common/BottomSheet";
+import { BottomSheetItem } from "../../components/common/BottomSheetItem";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -693,8 +694,7 @@ export function HomePage() {
       {selectedManageMember && memberManageView === "ACTIONS" ? (
         <div className="grid gap-3">
           <MemberSheetProfile member={selectedManageMember} />
-          <button
-            className="flex h-12 items-center justify-between rounded-2xl bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:text-brand"
+          <BottomSheetItem
             onClick={() => {
               setPendingMemberRole(
                 selectedManageMember.role as Exclude<FamilyRole, "OWNER">
@@ -702,21 +702,21 @@ export function HomePage() {
               setMemberManageView("ROLE");
             }}
             type="button"
-          >
+            >
             <span>구성원 역할 변경</span>
             <span className="text-xs text-[var(--color-text-secondary)]">
               {roleLabels[selectedManageMember.role]}
             </span>
-          </button>
-          <button
-            className="flex h-12 items-center justify-between rounded-2xl bg-red-50 px-4 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+          </BottomSheetItem>
+          <BottomSheetItem
             disabled={deletingMemberId === selectedManageMember.userId}
             onClick={() => void handleDeleteMember(selectedManageMember)}
+            tone="danger"
             type="button"
           >
             <span>삭제</span>
             <Trash size={18} />
-          </button>
+          </BottomSheetItem>
         </div>
       ) : null}
       {selectedManageMember && memberManageView === "ROLE" ? (
@@ -724,12 +724,8 @@ export function HomePage() {
           <MemberSheetProfile member={selectedManageMember} />
           <div className="grid gap-2">
             {editableRoleOptions.map((role) => (
-              <button
-                className={`flex h-12 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition ${
-                  pendingMemberRole === role
-                    ? "bg-brand text-white"
-                    : "bg-[var(--color-surface-muted)] text-[var(--color-text-primary)] hover:text-brand"
-                }`}
+              <BottomSheetItem
+                active={pendingMemberRole === role || selectedManageMember.role === role}
                 disabled={
                   updatingMemberRoleId === selectedManageMember.userId ||
                   selectedManageMember.role === role
@@ -742,7 +738,7 @@ export function HomePage() {
                 {pendingMemberRole === role ? (
                   <span className="text-xs">현재 역할</span>
                 ) : null}
-              </button>
+              </BottomSheetItem>
             ))}
           </div>
           <Button

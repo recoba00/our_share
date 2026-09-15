@@ -104,6 +104,7 @@
 - [x] Remove inconsistent chat and action-layer title separators
 - [x] Kakao-style chat list toolbar, filters, avatars, previews, and timestamps
 - [x] Calendar create tabs share the same content spacing
+- [x] Shared bottom sheet item styling and lightweight chat room selection state
 - [x] Role-aware owner/member group cards with owner-only invite code visibility
 - [x] Back buttons use the `ArrowLeft` icon consistently
 - [x] App / modal / bottom sheet header height fixed to 64px

@@ -14,6 +14,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { useFamily } from "../../features/family/useFamily";
 import { BottomSheet } from "../common/BottomSheet";
+import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
 
 type LocationState = {
@@ -180,11 +181,11 @@ function GroupSwitcher({
         {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
       </button>
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="그룹 전환">
-        <div className="grid gap-2" role="listbox">
+        <div className="grid gap-3" role="listbox">
           {families.map((family) => (
-            <button
+            <BottomSheetItem
               aria-selected={family.id === activeFamilyId}
-              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-[var(--color-surface-muted)]"
+              active={family.id === activeFamilyId}
               key={family.id}
               onClick={() => {
                 onSelect(family.id);
@@ -195,7 +196,7 @@ function GroupSwitcher({
             >
               <span className="min-w-0 truncate">{family.name}</span>
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
-            </button>
+            </BottomSheetItem>
           ))}
         </div>
       </BottomSheet>
