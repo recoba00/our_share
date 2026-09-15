@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { SectionHeading } from "../../components/common/SectionHeading";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
@@ -156,7 +157,11 @@ export function MemoPage() {
 
   const createMemoForm = (
     <>
-      <h3 className="text-lg font-semibold">메모 작성</h3>
+      <SectionHeading
+        icon={<NotePencil size={20} weight="bold" />}
+        level="h3"
+        title="메모 작성"
+      />
       <form className="mt-4 grid gap-3" onSubmit={handleCreateMemo}>
         <Input
           label="제목"
@@ -216,13 +221,16 @@ export function MemoPage() {
       </Card>
 
       <Card>
-        <div className="flex items-center justify-between">
-          <h2 className="text-xl font-semibold">메모</h2>
-          <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
-            {activeFamily.name}
-          </span>
-        </div>
-        <div className="mt-5 grid gap-3">
+        <SectionHeading
+          action={
+            <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
+              {activeFamily.name}
+            </span>
+          }
+          icon={<NotePencil size={20} weight="bold" />}
+          title="메모"
+        />
+        <div className="mt-4 grid gap-3">
           {memos.length === 0 ? (
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
               <strong>아직 메모가 없습니다.</strong>
@@ -275,14 +283,24 @@ export function MemoPage() {
         </div>
 
         {selectedMemo ? (
-          <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-            <h3 className="text-lg font-semibold">{selectedMemo.title}</h3>
+          <div className="mt-6">
+            <SectionHeading
+              icon={
+                selectedMemo.type === "SENSITIVE" ? (
+                  <LockKey size={20} weight="bold" />
+                ) : (
+                  <NotePencil size={20} weight="bold" />
+                )
+              }
+              level="h3"
+              title={selectedMemo.title}
+            />
             {selectedMemo.type === "PUBLIC" ? (
-              <p className="mt-3 whitespace-pre-wrap rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-6">
+              <p className="mt-4 whitespace-pre-wrap rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-6">
                 {selectedMemo.content}
               </p>
             ) : (
-              <form className="mt-3 grid gap-3" onSubmit={handleRevealMemo}>
+              <form className="mt-4 grid gap-3" onSubmit={handleRevealMemo}>
                 <Input
                   label="열람 비밀번호"
                   onChange={(event) => setRevealPassword(event.target.value)}

@@ -1,4 +1,7 @@
 import {
+  CalendarDots,
+  ChartBar,
+  ChatCircleDots,
   LockKey,
   PaperPlaneTilt,
   PencilSimple,
@@ -18,6 +21,7 @@ import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
+import { SectionHeading } from "../../components/common/SectionHeading";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -540,13 +544,14 @@ export function ChatPage() {
       </form>
 
       <form
-        className="mt-6 grid gap-3 border-t border-[var(--color-border)] pt-5"
+        className="mt-6 grid gap-3"
         onSubmit={handleCreatePrivateGroupRoom}
       >
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <Users size={18} weight="bold" />
-          그룹방 만들기
-        </div>
+        <SectionHeading
+          icon={<Users size={20} weight="bold" />}
+          level="h3"
+          title="그룹방 만들기"
+        />
         <Input
           label="그룹방 이름"
           onChange={(event) => setPrivateGroupName(event.target.value)}
@@ -619,7 +624,7 @@ export function ChatPage() {
           />
           <div className="grid grid-cols-2 gap-2">
             <button
-              className={`h-11 rounded-xl text-sm font-semibold transition ${
+              className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
                 pollType === "GENERAL"
                   ? "bg-brand text-white"
                   : "border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]"
@@ -627,10 +632,11 @@ export function ChatPage() {
               onClick={() => setPollType("GENERAL")}
               type="button"
             >
+              <ChartBar size={17} weight="bold" />
               일반
             </button>
             <button
-              className={`h-11 rounded-xl text-sm font-semibold transition ${
+              className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
                 pollType === "DATE"
                   ? "bg-brand text-white"
                   : "border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)]"
@@ -641,6 +647,7 @@ export function ChatPage() {
               }}
               type="button"
             >
+              <CalendarDots size={17} weight="bold" />
               날짜
             </button>
           </div>
@@ -723,14 +730,11 @@ export function ChatPage() {
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
-        <h2 className="text-xl font-semibold">채팅</h2>
+        <SectionHeading icon={<ChatCircleDots size={20} weight="bold" />} title="채팅" />
         <div className="hidden lg:block">{chatCreateTools}</div>
 
-        <div className="mt-6 border-t border-[var(--color-border)] pt-5">
-          <div className="flex items-center gap-2 text-sm font-semibold">
-            <User size={18} weight="bold" />
-            1:1 대화
-          </div>
+        <div className="mt-6">
+          <SectionHeading icon={<User size={20} weight="bold" />} level="h3" title="1:1 대화" />
           <div className="mt-3 grid gap-2">
             {members.filter((member) => member.userId !== user?.uid).length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
@@ -763,7 +767,9 @@ export function ChatPage() {
           </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        <div className="mt-6">
+          <SectionHeading icon={<ChatCircleDots size={20} weight="bold" />} level="h3" title="채팅방" />
+          <div className="mt-3 grid gap-3">
           {rooms.map((room) => (
             <div
               className={`w-full min-w-0 rounded-2xl p-4 text-left transition ${
@@ -797,6 +803,7 @@ export function ChatPage() {
               ) : null}
             </div>
           ))}
+          </div>
         </div>
 
       </Card>

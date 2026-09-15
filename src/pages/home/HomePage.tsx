@@ -547,7 +547,7 @@ export function HomePage() {
             <MapPin size={18} weight="bold" />
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
-          <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
+          <div className="mt-3 grid gap-2">
             <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
               초대코드로 다른 그룹 참여
             </p>

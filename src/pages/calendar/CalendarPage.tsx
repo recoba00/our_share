@@ -1,4 +1,5 @@
 import {
+  CalendarCheck,
   CalendarPlus,
   CaretLeft,
   CaretRight,
@@ -17,6 +18,7 @@ import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
+import { SectionHeading } from "../../components/common/SectionHeading";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -421,14 +423,9 @@ export function CalendarPage() {
       </Card>
 
       <Card className="min-w-0">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h2 className="text-xl font-semibold">캘린더</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              {activeFamily.name}
-            </p>
-          </div>
-          <div className="flex shrink-0 items-center justify-between gap-1 sm:justify-start sm:gap-2">
+        <SectionHeading
+          action={
+            <div className="flex shrink-0 items-center justify-between gap-1 sm:justify-start sm:gap-2">
             <IconButton
               className="size-10 sm:size-11"
               label="이전 달"
@@ -446,8 +443,12 @@ export function CalendarPage() {
             >
               <CaretRight size={18} weight="bold" />
             </IconButton>
-          </div>
-        </div>
+            </div>
+          }
+          description={activeFamily.name}
+          icon={<CalendarCheck size={20} weight="bold" />}
+          title="캘린더"
+        />
         <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[var(--color-text-secondary)] sm:gap-2">
           {weekLabels.map((label) => (
             <span key={label}>{label}</span>
@@ -633,30 +634,34 @@ function CalendarTools({
     <>
       <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-surface-muted)] p-1">
         <button
-          className={`h-10 rounded-xl text-sm font-semibold transition ${
+          className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
             activeTab === "event" ? "bg-white text-brand shadow-sm" : "text-[var(--color-text-secondary)]"
           }`}
           onClick={() => setActiveTab("event")}
           type="button"
         >
+          <CalendarPlus size={16} weight="bold" />
           일정 등록
         </button>
         <button
-          className={`h-10 rounded-xl text-sm font-semibold transition ${
+          className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
             activeTab === "poll" ? "bg-white text-brand shadow-sm" : "text-[var(--color-text-secondary)]"
           }`}
           onClick={() => setActiveTab("poll")}
           type="button"
         >
+          <SealQuestion size={16} weight="bold" />
           날짜 투표
         </button>
       </div>
 
       {activeTab === "event" ? (
         <>
-          <h3 className="mt-5 text-lg font-semibold">
-            {editingEventId ? "일정 수정" : "일정 등록"}
-          </h3>
+          <SectionHeading
+            icon={<CalendarPlus size={20} weight="bold" />}
+            level="h3"
+            title={editingEventId ? "일정 수정" : "일정 등록"}
+          />
           <form className="mt-4 grid gap-3" onSubmit={handleSaveEvent}>
             <Input
               label="일정 제목"
@@ -755,11 +760,12 @@ function CalendarTools({
           </form>
         </>
       ) : (
-        <div className="mt-5">
-        <div className="flex items-center gap-2">
-          <SealQuestion className="text-brand" size={20} />
-          <h3 className="text-lg font-semibold">날짜 투표 만들기</h3>
-        </div>
+        <div className="mt-4">
+        <SectionHeading
+          icon={<SealQuestion size={20} weight="bold" />}
+          level="h3"
+          title="날짜 투표 만들기"
+        />
         <form className="mt-4 grid gap-3" onSubmit={handleCreateDatePoll}>
           <Input
             label="투표 제목"

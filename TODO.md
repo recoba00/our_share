@@ -100,6 +100,8 @@
 - [x] Header profile black 4% inside border
 - [x] Header icon actions support unboxed ghost style
 - [x] Header group switcher uses shared Bottom Sheet with immediate selection
+- [x] Shared card section heading typography, icon, and spacing
+- [x] Remove inconsistent chat and action-layer title separators
 - [x] Role-aware owner/member group cards with owner-only invite code visibility
 - [x] Back buttons use the `ArrowLeft` icon consistently
 - [x] App / modal / bottom sheet header height fixed to 64px

@@ -1,8 +1,17 @@
-import { ChatCircleDots, CheckCircle, Plus, Trash } from "@phosphor-icons/react";
+import {
+  CalendarDots,
+  ChartBar,
+  ChatCircleDots,
+  CheckCircle,
+  Plus,
+  Trash,
+} from "@phosphor-icons/react";
+import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { SectionHeading } from "../../components/common/SectionHeading";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
@@ -282,13 +291,12 @@ export function PollPage() {
 
   const createPollForm = (
     <>
-        <div>
-          <h2 className="text-xl font-semibold">투표 만들기</h2>
-          <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-            {family ? `${family.name} 그룹 투표` : "그룹 정보가 필요합니다"}
-          </p>
-        </div>
-        <div className="mt-5 grid gap-4">
+        <SectionHeading
+          description={family ? `${family.name} 그룹 투표` : "그룹 정보가 필요합니다"}
+          icon={<ChartBar size={20} weight="bold" />}
+          title="투표 만들기"
+        />
+        <div className="mt-4 grid gap-3">
           <Input
             label="투표 제목"
             onChange={(event) => setTitle(event.target.value)}
@@ -303,6 +311,7 @@ export function PollPage() {
           />
           <div className="grid grid-cols-2 gap-2">
             <ChoiceButton active={type === "GENERAL"} onClick={() => setType("GENERAL")}>
+              <ChartBar size={17} weight="bold" />
               일반
             </ChoiceButton>
             <ChoiceButton
@@ -312,6 +321,7 @@ export function PollPage() {
                 setMultipleChoice(false);
               }}
             >
+              <CalendarDots size={17} weight="bold" />
               날짜
             </ChoiceButton>
           </div>
@@ -394,21 +404,20 @@ export function PollPage() {
 
       <section className="grid gap-4">
       <Card>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold">진행중 투표</h2>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              투표 메뉴에서 만들고 이후 채팅방으로 보낼 수 있습니다.
-            </p>
-          </div>
-          <Button
-            disabled={isLoading || !user}
-            onClick={() => user && void loadPollData(user.uid)}
-            variant="secondary"
-          >
-            새로고침
-          </Button>
-        </div>
+        <SectionHeading
+          action={
+            <Button
+              disabled={isLoading || !user}
+              onClick={() => user && void loadPollData(user.uid)}
+              variant="secondary"
+            >
+              새로고침
+            </Button>
+          }
+          description="투표 메뉴에서 만들고 이후 채팅방으로 보낼 수 있습니다."
+          icon={<ChartBar size={20} weight="bold" />}
+          title="진행중 투표"
+        />
       </Card>
 
         {polls.length === 0 ? (
@@ -537,12 +546,12 @@ function ChoiceButton({
   onClick,
 }: {
   active: boolean;
-  children: string;
+  children: ReactNode;
   onClick: () => void;
 }) {
   return (
     <button
-      className={`h-11 rounded-xl text-sm font-semibold transition ${
+      className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
         active
           ? "bg-brand text-white"
           : "border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
