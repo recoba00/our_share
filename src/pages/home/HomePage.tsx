@@ -1,7 +1,7 @@
 import {
   BatteryHigh,
+  ArrowLeft,
   CalendarDots,
-  CaretLeft,
   Check,
   ChatCircleDots,
   CopySimple,
@@ -658,7 +658,7 @@ export function HomePage() {
             onClick={() => setMemberManageView("ACTIONS")}
             type="button"
           >
-            <CaretLeft size={20} />
+            <ArrowLeft size={20} />
           </button>
         ) : null
       }

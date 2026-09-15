@@ -1,7 +1,7 @@
 import {
   Bell,
   CalendarCheck,
-  CaretLeft,
+  ArrowLeft,
   CaretDown,
   Check,
   ChatCircleDots,
@@ -39,14 +39,14 @@ export function AppHeader() {
           {isSettings ? (
             <>
               <Link aria-label="내 정보로 돌아가기" className="grid size-8 place-items-center" to="/profile">
-                <CaretLeft size={22} />
+                <ArrowLeft size={22} />
               </Link>
               <h1 className="text-lg font-semibold leading-none">{title}</h1>
             </>
           ) : isChatRoom ? (
             <>
               <Link aria-label="채팅 목록으로 돌아가기" className="grid size-8 place-items-center lg:hidden" to="/chat">
-                <CaretLeft size={22} />
+                <ArrowLeft size={22} />
               </Link>
               <h1 className="min-w-0 truncate text-lg font-semibold leading-none lg:hidden">
                 {locationState?.chatRoomName ?? "채팅방"}

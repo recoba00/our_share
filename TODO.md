@@ -100,6 +100,7 @@
 - [x] Header profile black 4% inside border
 - [x] Header icon actions support unboxed ghost style
 - [x] Header group switcher uses shared Bottom Sheet with immediate selection
+- [x] Back buttons use the `ArrowLeft` icon consistently
 - [x] App / modal / bottom sheet header height fixed to 64px
 - [x] App / modal / bottom sheet header title typography unified
 - [x] Fixed glass header
