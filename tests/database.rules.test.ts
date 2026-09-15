@@ -65,6 +65,45 @@ describe("Realtime Database family membership mirror rules", () => {
     );
   });
 
+  it("scopes mirror writes to the owner role in each family", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+    await seedFamilyMembersMirror({
+      familyId: "familyB",
+      members: [
+        ["dave", "OWNER"],
+        ["alice", "MEMBER"],
+        ["erin", "MEMBER"],
+      ],
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+
+    await assertSucceeds(
+      set(
+        ref(aliceDb, "familyMembers/familyA/erin"),
+        createFamilyMemberMirror("erin", "MEMBER")
+      )
+    );
+    await assertFails(
+      set(
+        ref(aliceDb, "familyMembers/familyB/erin"),
+        createFamilyMemberMirror("erin", "OWNER")
+      )
+    );
+    await assertFails(
+      set(
+        ref(aliceDb, "familyMembers/familyB/alice"),
+        createFamilyMemberMirror("alice", "OWNER")
+      )
+    );
+  });
+
   it("allows family members to read membership mirrors and blocks outsiders", async () => {
     await seedFamilyMembersMirror({
       familyId: "familyA",

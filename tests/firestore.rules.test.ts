@@ -127,6 +127,49 @@ describe("family membership rules", () => {
     await assertFails(deleteDoc(doc(bobDb, "familyMembers", "familyA_chris")));
     await assertSucceeds(deleteDoc(doc(aliceDb, "familyMembers", "familyA_chris")));
   });
+
+  it("scopes owner permissions to the selected family", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedFamilyWithMembers({
+      familyId: "familyB",
+      inviteCode: "XYZ789",
+      memberIds: ["dave", "alice", "erin"],
+      ownerId: "dave",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, "familyMembers", "familyA_bob"), {
+        role: "PARENT",
+        updatedAt: new Date(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(aliceDb, "familyMembers", "familyB_erin"), {
+        role: "PARENT",
+        updatedAt: new Date(),
+      })
+    );
+    await assertFails(deleteDoc(doc(aliceDb, "familyMembers", "familyB_erin")));
+    await assertFails(
+      updateDoc(doc(aliceDb, "familyMembers", "familyA_alice"), {
+        role: "PARENT",
+        updatedAt: new Date(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(aliceDb, "familyMembers", "familyA_bob"), {
+        role: "OWNER",
+        updatedAt: new Date(),
+      })
+    );
+  });
 });
 
 describe("chat message rules", () => {
