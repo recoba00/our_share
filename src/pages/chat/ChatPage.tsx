@@ -2,7 +2,6 @@ import {
   CalendarDots,
   ChartBar,
   ChatCircleDots,
-  GearSix,
   LockKey,
   MagnifyingGlass,
   PaperPlaneTilt,
@@ -602,82 +601,94 @@ export function ChatPage() {
   }
 
   const chatCreateTools = (
-    <>
+    <div className="mx-auto grid w-full max-w-xl gap-6">
       {activeFamily.role === "OWNER" ? (
-        <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold">
+        <section className="grid gap-2 rounded-2xl bg-brand-soft/50 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-brand">
             <UserPlus size={18} weight="bold" />
             그룹 초대 코드
           </div>
-          <p className="mt-2 font-mono text-2xl font-semibold text-brand">
+          <p className="font-mono text-2xl font-semibold tracking-wide">
             {activeFamily.inviteCode}
           </p>
-        </div>
+          <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+            그룹원을 초대할 때 이 코드를 공유하세요.
+          </p>
+        </section>
       ) : null}
 
-      <form className="mt-4 grid gap-2" onSubmit={handleCreateSecretRoom}>
-        <Input
-          label="비밀방 이름"
-          onChange={(event) => setSecretRoomName(event.target.value)}
-          placeholder="예: 선물 작전방"
-          value={secretRoomName}
-        />
-        <Button type="submit" variant="secondary">
-          <LockKey size={18} weight="bold" />
-          비밀방 만들기
-        </Button>
-      </form>
-
-      <form
-        className="mt-6 grid gap-3"
-        onSubmit={handleCreatePrivateGroupRoom}
-      >
+      <section className="grid gap-3">
         <SectionHeading
+          description="초대된 구성원만 참여할 수 있어요."
+          icon={<LockKey size={20} weight="bold" />}
+          level="h3"
+          title="비밀방"
+        />
+        <form className="grid gap-3" onSubmit={handleCreateSecretRoom}>
+          <Input
+            label="방 이름"
+            onChange={(event) => setSecretRoomName(event.target.value)}
+            placeholder="예: 선물 작전방"
+            value={secretRoomName}
+          />
+          <Button type="submit" variant="secondary">
+            <LockKey size={18} weight="bold" />
+            비밀방 만들기
+          </Button>
+        </form>
+      </section>
+
+      <section className="grid gap-3">
+        <SectionHeading
+          description="선택한 구성원과 함께 사용할 방을 만들어요."
           icon={<Users size={20} weight="bold" />}
           level="h3"
-          title="그룹방 만들기"
+          title="그룹방"
         />
-        <Input
-          label="그룹방 이름"
-          onChange={(event) => setPrivateGroupName(event.target.value)}
-          placeholder="예: 주말 준비방"
-          value={privateGroupName}
-        />
-        <div className="grid gap-2">
-          {members
-            .filter((member) => member.userId !== user?.uid)
-            .map((member) => (
-              <label
-                className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
-                key={member.userId}
-              >
-                <AnimatedCheckbox
-                  checked={privateGroupMemberIds.includes(member.userId)}
-                  onChange={() => togglePrivateGroupMember(member.userId)}
-                />
-                <span className="min-w-0 truncate">
-                  {member.displayName ?? member.nickname}
-                </span>
-              </label>
-            ))}
-        </div>
-        <Button
-          disabled={
-            members.filter((member) => member.userId !== user?.uid).length === 0
-          }
-          type="submit"
-          variant="secondary"
-        >
-          <LockKey size={18} weight="bold" />
-          그룹방 만들기
-        </Button>
-      </form>
-    </>
+        <form className="grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
+          <Input
+            label="방 이름"
+            onChange={(event) => setPrivateGroupName(event.target.value)}
+            placeholder="예: 주말 준비방"
+            value={privateGroupName}
+          />
+          <div className="grid gap-2">
+            {members
+              .filter((member) => member.userId !== user?.uid)
+              .map((member) => (
+                <label
+                  className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
+                  key={member.userId}
+                >
+                  <AnimatedCheckbox
+                    checked={privateGroupMemberIds.includes(member.userId)}
+                    onChange={() => togglePrivateGroupMember(member.userId)}
+                  />
+                  <span className="min-w-0 truncate">
+                    {member.displayName ?? member.nickname}
+                  </span>
+                </label>
+              ))}
+          </div>
+          <Button
+            disabled={
+              members.filter((member) => member.userId !== user?.uid).length === 0
+            }
+            type="submit"
+            variant="secondary"
+          >
+            <Users size={18} weight="bold" />
+            그룹방 만들기
+          </Button>
+        </form>
+      </section>
+    </div>
   );
 
   return (
     <>
       <ActionLayer
+        desktop
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="채팅방 만들기"
@@ -822,13 +833,6 @@ export function ChatPage() {
               <IconButton label="채팅방 만들기" onClick={() => setIsCreateOpen(true)} variant="ghost">
                 <ChatCircleDots size={21} />
               </IconButton>
-              <Link
-                aria-label="설정"
-                className="grid size-11 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-primary)]"
-                to="/settings"
-              >
-                <GearSix size={21} />
-              </Link>
             </div>
           }
           icon={<ChatCircleDots size={20} weight="bold" />}
@@ -863,11 +867,9 @@ export function ChatPage() {
             </button>
           ))}
         </div>
-        <div className="hidden lg:block">{chatCreateTools}</div>
-
         <div className="mt-6">
           <SectionHeading icon={<User size={20} weight="bold" />} level="h3" title="1:1 대화" />
-          <div className="mt-3 grid gap-2">
+          <div className="mt-3 grid gap-1">
             {members.filter((member) => member.userId !== user?.uid).length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
                 다른 그룹 구성원이 참여하면 1:1 대화를 시작할 수 있어요.
@@ -877,22 +879,20 @@ export function ChatPage() {
                 .filter((member) => member.userId !== user?.uid)
                 .map((member) => (
                   <button
-                    className="flex w-full min-w-0 items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-left transition hover:bg-slate-200"
+                    className="flex w-full min-w-0 items-center gap-3 rounded-xl px-2 py-2.5 text-left transition hover:bg-[var(--color-surface-muted)]"
                     key={member.userId}
                     onClick={() => void handleCreateDirectRoom(member)}
                     type="button"
                   >
-                    <span className="grid size-9 place-items-center rounded-xl bg-white text-sm font-semibold text-brand">
+                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-semibold text-brand">
                       {(member.displayName ?? member.nickname).slice(0, 1)}
                     </span>
                     <span className="min-w-0 flex-1">
                       <strong className="block truncate text-sm">
                         {member.displayName ?? member.nickname}
                       </strong>
-                      <span className="block truncate text-xs text-[var(--color-text-secondary)]">
-                        {member.email ?? "이메일 없음"}
-                      </span>
                     </span>
+                    <ChatCircleDots className="shrink-0 text-[var(--color-text-secondary)]" size={18} />
                   </button>
                 ))
             )}
@@ -901,7 +901,7 @@ export function ChatPage() {
 
         <div className="mt-6">
           <SectionHeading icon={<ChatCircleDots size={20} weight="bold" />} level="h3" title="채팅방" />
-          <div className="mt-3 grid gap-3">
+          <div className="mt-3 grid gap-1">
             {visibleRooms.length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
                 {roomQuery || roomFilter !== "ALL"
@@ -911,10 +911,10 @@ export function ChatPage() {
             ) : (
               visibleRooms.map((room) => (
                 <div
-                  className={`flex min-w-0 items-center gap-3 px-1 py-3 transition ${
-                    selectedRoom?.id === room.id
-                      ? "rounded-xl bg-brand-soft/50 px-3"
-                      : "hover:bg-[var(--color-surface-muted)]"
+                    className={`flex min-w-0 items-center gap-3 rounded-xl px-2 py-2.5 transition ${
+                      selectedRoom?.id === room.id
+                        ? "bg-brand-soft/50"
+                        : "hover:bg-[var(--color-surface-muted)]"
                   }`}
                   key={room.id}
                 >
