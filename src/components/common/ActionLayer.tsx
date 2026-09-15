@@ -4,18 +4,19 @@ import { useEffect, useState } from "react";
 import { IconButton } from "./IconButton";
 
 type ActionLayerProps = PropsWithChildren<{
+  desktop?: boolean;
   isOpen: boolean;
   onClose: () => void;
   title: string;
 }>;
 
-export function ActionLayer({ children, isOpen, onClose, title }: ActionLayerProps) {
+export function ActionLayer({ children, desktop = false, isOpen, onClose, title }: ActionLayerProps) {
   if (!isOpen) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 z-40 bg-[var(--color-background)] lg:hidden">
+    <div className={`fixed inset-0 z-40 bg-[var(--color-background)] ${desktop ? "" : "lg:hidden"}`}>
       <div className="flex h-dvh flex-col sheet-panel-enter">
         <header className="flex h-16 shrink-0 items-center justify-between bg-[var(--color-surface)] px-4">
           <h2 className="text-lg font-semibold leading-none">{title}</h2>

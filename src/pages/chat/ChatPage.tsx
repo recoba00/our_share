@@ -685,6 +685,7 @@ export function ChatPage() {
         {chatCreateTools}
       </ActionLayer>
       <ActionLayer
+        desktop
         isOpen={isPollCreateOpen}
         onClose={() => setIsPollCreateOpen(false)}
         title="투표 만들기"
@@ -806,8 +807,8 @@ export function ChatPage() {
         </form>
       </Modal>
 
-    <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
+    <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-y-auto lg:h-full`}>
         <SectionHeading
           action={
             <div className="flex items-center gap-1">
@@ -960,14 +961,14 @@ export function ChatPage() {
 
       </Card>
 
-      <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-auto lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
+      <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-full lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
           <h3 className="min-w-0 truncate text-lg font-semibold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
         </div>
         <div
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-0 lg:rounded-2xl lg:bg-slate-50 lg:p-4"
           ref={messagesScrollRef}
         >
           <div className="mt-auto grid gap-3">
