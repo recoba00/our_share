@@ -35,6 +35,15 @@ jobs:
       - name: Test Firebase rules
         run: npm run test:rules
 
+      - name: Validate Kakao Map JavaScript key
+        env:
+          VITE_KAKAO_MAP_JAVASCRIPT_KEY: ${{ secrets.VITE_KAKAO_MAP_JAVASCRIPT_KEY }}
+        run: |
+          if [ -z "$VITE_KAKAO_MAP_JAVASCRIPT_KEY" ]; then
+            echo "VITE_KAKAO_MAP_JAVASCRIPT_KEY GitHub Secret is required for the map build."
+            exit 1
+          fi
+
       - name: Build Firebase Hosting candidate
         run: npm run build:firebase
         env:
