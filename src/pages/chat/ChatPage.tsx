@@ -79,6 +79,7 @@ export function ChatPage() {
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const previousMessageRoomIdRef = useRef("");
+  const shouldScrollToLatestRef = useRef(false);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -334,11 +335,13 @@ export function ChatPage() {
 
     const isNewRoom = previousMessageRoomIdRef.current !== roomKey;
     const hasNewMessage = messages.length > previousMessageCountRef.current;
+    const shouldForceScroll = shouldScrollToLatestRef.current;
     const distanceFromBottom =
       container.scrollHeight - container.scrollTop - container.clientHeight;
     const isNearBottom = distanceFromBottom <= 144;
 
-    if (isNewRoom || (hasNewMessage && isNearBottom)) {
+    if (isNewRoom || shouldForceScroll || (hasNewMessage && isNearBottom)) {
+      shouldScrollToLatestRef.current = false;
       const frameId = window.requestAnimationFrame(() => {
         container.scrollTo({
           behavior: isNewRoom ? "auto" : "smooth",
@@ -399,6 +402,7 @@ export function ChatPage() {
     }
 
     try {
+      shouldScrollToLatestRef.current = true;
       await sendTextMessage({
         createdBy: user.uid,
         familyId: activeFamily.id,
@@ -407,6 +411,7 @@ export function ChatPage() {
       });
       setMessageText("");
     } catch (error) {
+      shouldScrollToLatestRef.current = false;
       notify(error instanceof Error ? error.message : "메시지 전송에 실패했습니다.", "error");
     }
   }
@@ -488,6 +493,7 @@ export function ChatPage() {
     }
 
     try {
+      shouldScrollToLatestRef.current = true;
       const pollId = await createPoll({
         createdBy: user.uid,
         description: pollDescription,
@@ -515,6 +521,7 @@ export function ChatPage() {
       setIsPollCreateOpen(false);
       notify("투표를 만들고 채팅방에 전송했습니다.", "success");
     } catch (error) {
+      shouldScrollToLatestRef.current = false;
       notify(error instanceof Error ? error.message : "투표 생성에 실패했습니다.", "error");
     }
   }
@@ -953,7 +960,7 @@ export function ChatPage() {
 
       </Card>
 
-      <section className={`${roomId ? "flex" : "hidden lg:flex"} -mx-4 h-[calc(100dvh-6rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:h-auto lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
+      <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-auto lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
           <h3 className="min-w-0 truncate text-lg font-semibold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
