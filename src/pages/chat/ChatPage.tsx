@@ -960,43 +960,45 @@ export function ChatPage() {
           </h3>
         </div>
         <div
-          className="flex min-h-0 flex-1 flex-col justify-end gap-3 overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4"
           ref={messagesScrollRef}
         >
-          {messages.length === 0 ? (
-            <p className="text-sm text-[var(--color-text-secondary)]">
-              첫 메시지를 보내 그룹 대화를 시작해보세요.
-            </p>
-          ) : (
-            messages.map((message) => {
-              const isMine = message.createdBy === user?.uid;
-              const readCount = message.readBy.length;
+          <div className="mt-auto grid gap-3">
+            {messages.length === 0 ? (
+              <p className="text-sm text-[var(--color-text-secondary)]">
+                첫 메시지를 보내 그룹 대화를 시작해보세요.
+              </p>
+            ) : (
+              messages.map((message) => {
+                const isMine = message.createdBy === user?.uid;
+                const readCount = message.readBy.length;
 
-              return (
-                <div
-                  className={`grid gap-1 ${isMine ? "justify-items-end" : "justify-items-start"}`}
-                  key={message.id}
-                >
-                  <MessageRow
-                    isBusy={busyMessageId === message.id || editingMessageId === message.id}
-                    isMine={isMine}
-                    member={members.find((member) => member.userId === message.createdBy)}
-                    message={message}
-                    onDelete={handleDeleteMessage}
-                    onEdit={handleEditMessage}
-                    poll={message.pollId ? pollMap.get(message.pollId) : undefined}
-                    readLabel={
-                      isMine
-                        ? `읽음 ${readCount}명`
-                        : message.readBy.includes(user?.uid ?? "")
-                          ? "읽음"
-                          : "안 읽음"
-                    }
-                  />
-                </div>
-              );
-            })
-          )}
+                return (
+                  <div
+                    className={`grid gap-1 ${isMine ? "justify-items-end" : "justify-items-start"}`}
+                    key={message.id}
+                  >
+                    <MessageRow
+                      isBusy={busyMessageId === message.id || editingMessageId === message.id}
+                      isMine={isMine}
+                      member={members.find((member) => member.userId === message.createdBy)}
+                      message={message}
+                      onDelete={handleDeleteMessage}
+                      onEdit={handleEditMessage}
+                      poll={message.pollId ? pollMap.get(message.pollId) : undefined}
+                      readLabel={
+                        isMine
+                          ? `읽음 ${readCount}명`
+                          : message.readBy.includes(user?.uid ?? "")
+                            ? "읽음"
+                            : "안 읽음"
+                      }
+                    />
+                  </div>
+                );
+              })
+            )}
+          </div>
         </div>
         <form className="flex shrink-0 min-w-0 gap-2 border-t border-white/70 bg-white/85 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6 lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none" onSubmit={handleSendMessage}>
           <input
