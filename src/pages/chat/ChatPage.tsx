@@ -14,7 +14,7 @@ import {
   UserPlus,
 } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
@@ -76,6 +76,9 @@ export function ChatPage() {
   const { roomId } = useParams();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const messagesScrollRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
+  const previousMessageRoomIdRef = useRef("");
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -314,6 +317,44 @@ export function ChatPage() {
       roomId: selectedRoom.id,
     });
   }, [activeFamily, reportError, selectedRoom]);
+
+  useEffect(() => {
+    const container = messagesScrollRef.current;
+    const roomKey = selectedRoom?.id ?? "";
+
+    if (!container || !roomKey) {
+      previousMessageRoomIdRef.current = "";
+      previousMessageCountRef.current = 0;
+      return;
+    }
+
+    if (messages.length === 0) {
+      return;
+    }
+
+    const isNewRoom = previousMessageRoomIdRef.current !== roomKey;
+    const hasNewMessage = messages.length > previousMessageCountRef.current;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    const isNearBottom = distanceFromBottom <= 144;
+
+    if (isNewRoom || (hasNewMessage && isNearBottom)) {
+      const frameId = window.requestAnimationFrame(() => {
+        container.scrollTo({
+          behavior: isNewRoom ? "auto" : "smooth",
+          top: container.scrollHeight,
+        });
+      });
+
+      previousMessageRoomIdRef.current = roomKey;
+      previousMessageCountRef.current = messages.length;
+
+      return () => window.cancelAnimationFrame(frameId);
+    }
+
+    previousMessageRoomIdRef.current = roomKey;
+    previousMessageCountRef.current = messages.length;
+  }, [messages.length, selectedRoom?.id]);
 
   useEffect(() => {
     if (!activeFamily || !user || messages.length === 0) {
@@ -912,13 +953,16 @@ export function ChatPage() {
 
       </Card>
 
-      <section className={`${roomId ? "block" : "hidden lg:block"} -mx-4 min-w-0 overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
-        <div className="hidden min-w-0 items-center justify-between gap-3 lg:flex">
+      <section className={`${roomId ? "flex" : "hidden lg:flex"} -mx-4 h-[calc(100dvh-6rem)] min-h-0 min-w-0 flex-col overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:h-auto lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
+        <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
           <h3 className="min-w-0 truncate text-lg font-semibold">
             {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
           </h3>
         </div>
-        <div className="flex min-h-[calc(100dvh-152px)] flex-col justify-end gap-3 overflow-y-auto px-4 pb-24 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4">
+        <div
+          className="flex min-h-0 flex-1 flex-col justify-end gap-3 overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-[360px] lg:rounded-2xl lg:bg-slate-50 lg:p-4"
+          ref={messagesScrollRef}
+        >
           {messages.length === 0 ? (
             <p className="text-sm text-[var(--color-text-secondary)]">
               첫 메시지를 보내 그룹 대화를 시작해보세요.
@@ -954,7 +998,7 @@ export function ChatPage() {
             })
           )}
         </div>
-        <form className="fixed inset-x-0 bottom-0 z-30 flex min-w-0 gap-2 border-t border-white/70 bg-white/85 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6 lg:static lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none" onSubmit={handleSendMessage}>
+        <form className="flex shrink-0 min-w-0 gap-2 border-t border-white/70 bg-white/85 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6 lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none" onSubmit={handleSendMessage}>
           <input
             className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] px-4 outline-none focus:border-brand"
             onChange={(event) => setMessageText(event.target.value)}

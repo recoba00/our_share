@@ -103,6 +103,7 @@
 - [x] Shared card section heading typography, icon, and spacing
 - [x] Remove inconsistent chat and action-layer title separators
 - [x] Kakao-style chat list toolbar, filters, avatars, previews, and timestamps
+- [x] Chat detail bounded message scroll area and bottom composer
 - [x] Calendar create tabs share the same content spacing
 - [x] Shared bottom sheet item styling and lightweight chat room selection state
 - [x] Shared button press microinteraction
