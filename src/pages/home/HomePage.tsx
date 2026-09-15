@@ -89,6 +89,7 @@ type KakaoMap = {
   ) => void;
   setCenter: (latLng: unknown) => void;
   setDraggable: (draggable: boolean) => void;
+  setLevel: (level: number, options?: { animate?: boolean }) => void;
   setZoomable: (zoomable: boolean) => void;
 };
 
@@ -628,7 +629,7 @@ export function HomePage() {
                 {isFamilyOwner && member.role !== "OWNER" ? (
                   <button
                     aria-label={`${member.displayName ?? member.nickname} 관리`}
-                    className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-slate-500 transition hover:text-brand"
+                    className="grid size-9 shrink-0 place-items-center text-slate-500 transition hover:text-brand"
                     onClick={() => {
                       setSelectedManageMemberId(member.userId);
                       setMemberManageView("ACTIONS");
@@ -853,6 +854,7 @@ function FamilyLocationMap({
   const mapRef = useRef<KakaoMap | null>(null);
   const [mapStatus, setMapStatus] = useState<"FALLBACK" | "READY">("FALLBACK");
   const [projectedPositions, setProjectedPositions] = useState<Record<string, MapPinPosition>>({});
+  const [focusedMemberId, setFocusedMemberId] = useState("");
   const bounds = pins.length > 0 ? getLocationBounds(pins.map((pin) => pin.location)) : null;
   const fallbackPositions = Object.fromEntries(
     bounds
@@ -869,6 +871,8 @@ function FamilyLocationMap({
     if (!map || pins.length === 0) {
       return;
     }
+
+    setFocusedMemberId("");
 
     const kakao = getKakaoMaps();
     const center = getAverageLocation(pins.map((pin) => pin.location));
@@ -888,6 +892,28 @@ function FamilyLocationMap({
       map.relayout();
       setProjectedPositions(projectKakaoPinPositions(map, pins));
     }, 100);
+  }
+
+  function focusMember(memberId: string) {
+    const map = mapRef.current;
+    const targetPin = pins.find(({ member }) => member.userId === memberId);
+
+    setFocusedMemberId(memberId);
+
+    if (!map || !targetPin) {
+      return;
+    }
+
+    const kakao = getKakaoMaps();
+    map.setCenter(
+      new kakao.LatLng(targetPin.location.latitude, targetPin.location.longitude)
+    );
+    map.setLevel(3, { animate: true });
+
+    window.setTimeout(() => {
+      map.relayout();
+      setProjectedPositions(projectKakaoPinPositions(map, pins));
+    }, 250);
   }
 
   useEffect(() => {
@@ -1015,6 +1041,39 @@ function FamilyLocationMap({
               type="button"
             >
               <LocationMapPin member={member} />
+            </button>
+          );
+        })}
+      </div>
+      <div className="flex min-w-0 gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {pins.map(({ member }) => {
+          const name = member.displayName ?? member.nickname;
+          const isFocused = focusedMemberId === member.userId;
+
+          return (
+            <button
+              aria-label={`${name} 위치로 확대`}
+              className={`flex shrink-0 items-center gap-2 rounded-full border px-2 py-1.5 text-sm font-semibold transition ${
+                isFocused
+                  ? "border-brand bg-brand-soft text-brand"
+                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)] text-[var(--color-text-primary)] hover:border-brand"
+              }`}
+              key={member.userId}
+              onClick={() => focusMember(member.userId)}
+              type="button"
+            >
+              {member.photoURL ? (
+                <img
+                  alt=""
+                  className="size-8 rounded-full object-cover"
+                  src={member.photoURL}
+                />
+              ) : (
+                <span className="grid size-8 place-items-center rounded-full bg-white text-xs text-brand">
+                  {getLocationPinLabel(member)}
+                </span>
+              )}
+              <span className="max-w-24 truncate">{name}</span>
             </button>
           );
         })}

@@ -49,7 +49,7 @@ export function BottomSheet({
         onClick={onClose}
         type="button"
       />
-      <section className="relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card">
+      <section className="relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] pb-[calc(16px+env(safe-area-inset-bottom))] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card">
         <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-slate-300" />
         <header className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] p-4">
           <div className="flex min-w-0 items-center gap-2">
