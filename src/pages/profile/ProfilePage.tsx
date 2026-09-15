@@ -104,13 +104,13 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto grid max-w-2xl gap-4">
-      <div className="grid grid-cols-2 border-b border-[var(--color-border)]" role="tablist">
+      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-surface-muted)] p-1" role="tablist">
         <button
           aria-selected={activeTab === "MY"}
-          className={`h-12 border-b-2 text-sm font-semibold transition ${
+          className={`h-10 rounded-xl text-sm font-semibold transition ${
             activeTab === "MY"
-              ? "border-brand text-brand"
-              : "border-transparent text-[var(--color-text-secondary)] hover:text-brand"
+              ? "bg-white text-brand shadow-sm"
+              : "text-[var(--color-text-secondary)]"
           }`}
           onClick={() => setActiveTab("MY")}
           role="tab"
@@ -120,10 +120,10 @@ export function ProfilePage() {
         </button>
         <button
           aria-selected={activeTab === "GROUP"}
-          className={`h-12 border-b-2 text-sm font-semibold transition ${
+          className={`h-10 rounded-xl text-sm font-semibold transition ${
             activeTab === "GROUP"
-              ? "border-brand text-brand"
-              : "border-transparent text-[var(--color-text-secondary)] hover:text-brand"
+              ? "bg-white text-brand shadow-sm"
+              : "text-[var(--color-text-secondary)]"
           }`}
           onClick={() => setActiveTab("GROUP")}
           role="tab"
