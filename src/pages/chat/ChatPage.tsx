@@ -9,7 +9,7 @@ import {
   UserPlus,
 } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
@@ -71,7 +71,6 @@ export function ChatPage() {
   const [privateGroupMemberIds, setPrivateGroupMemberIds] = useState<string[]>([]);
   const [privateGroupName, setPrivateGroupName] = useState("");
   const [secretRoomName, setSecretRoomName] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPollCreateOpen, setIsPollCreateOpen] = useState(false);
   const [busyMessageId, setBusyMessageId] = useState("");
@@ -85,6 +84,10 @@ export function ChatPage() {
   const [pollDateOptions, setPollDateOptions] = useState<string[]>([]);
   const [pollDateViewDate, setPollDateViewDate] = useState(
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
+  const reportError = useCallback(
+    (message: string) => showToast({ message, variant: "error" }),
+    [showToast]
   );
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
@@ -138,14 +141,14 @@ export function ChatPage() {
           setMembers(membersResult.value);
         } else {
           setMembers([]);
-          setStatusMessage(getErrorMessage(membersResult.reason));
+          reportError(getErrorMessage(membersResult.reason));
         }
 
         if (familyRoomResult.status === "fulfilled") {
           setSelectedRoomId(familyRoomResult.value);
         } else {
           setSelectedRoomId("");
-          setStatusMessage(
+          reportError(
             `가족 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
           );
         }
@@ -156,13 +159,13 @@ export function ChatPage() {
 
     loadFamily().catch((error: Error) => {
       setIsFamilyLoading(false);
-      setStatusMessage(getErrorMessage(error));
+      reportError(getErrorMessage(error));
     });
 
     return () => {
       active = false;
     };
-  }, [user]);
+  }, [reportError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -177,12 +180,12 @@ export function ChatPage() {
           setMembers(nextMembers);
         }
       })
-      .catch((error: Error) => setStatusMessage(error.message));
+      .catch((error: Error) => reportError(error.message));
 
     return () => {
       active = false;
     };
-  }, [activeFamily, user]);
+  }, [activeFamily, reportError, user]);
 
   function openRoom(nextRoomId: string) {
     setSelectedRoomId(nextRoomId);
@@ -259,10 +262,10 @@ export function ChatPage() {
     return subscribeChatRooms({
       familyId: activeFamily.id,
       onChange: setRooms,
-      onError: setStatusMessage,
+      onError: reportError,
       userId: user.uid,
     });
-  }, [activeFamily, user]);
+  }, [activeFamily, reportError, user]);
 
   useEffect(() => {
     if (!activeFamily) {
@@ -272,9 +275,9 @@ export function ChatPage() {
     return subscribePolls({
       familyId: activeFamily.id,
       onChange: setPolls,
-      onError: setStatusMessage,
+      onError: reportError,
     });
-  }, [activeFamily]);
+  }, [activeFamily, reportError]);
 
   useEffect(() => {
     if (!activeFamily || !selectedRoom) {
@@ -284,10 +287,10 @@ export function ChatPage() {
     return subscribeMessages({
       familyId: activeFamily.id,
       onChange: setMessages,
-      onError: setStatusMessage,
+      onError: reportError,
       roomId: selectedRoom.id,
     });
-  }, [activeFamily, selectedRoom]);
+  }, [activeFamily, reportError, selectedRoom]);
 
   useEffect(() => {
     if (!activeFamily || !user || messages.length === 0) {
@@ -298,8 +301,8 @@ export function ChatPage() {
       familyId: activeFamily.id,
       messages,
       userId: user.uid,
-    }).catch((error: Error) => setStatusMessage(error.message));
-  }, [activeFamily, messages, user]);
+    }).catch((error: Error) => reportError(error.message));
+  }, [activeFamily, messages, reportError, user]);
 
   async function handleCreateSecretRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -339,7 +342,6 @@ export function ChatPage() {
         text: messageText,
       });
       setMessageText("");
-      setStatusMessage("");
     } catch (error) {
       notify(error instanceof Error ? error.message : "메시지 전송에 실패했습니다.", "error");
     }
@@ -486,7 +488,6 @@ export function ChatPage() {
   }
 
   function notify(message: string, variant: "error" | "info" | "success") {
-    setStatusMessage(message);
     showToast({ message, variant });
   }
 
@@ -814,11 +815,6 @@ export function ChatPage() {
           ))}
         </div>
 
-        {statusMessage ? (
-          <p className="mt-4 rounded-xl bg-emerald-50 p-3 text-sm font-semibold text-emerald-700">
-            {statusMessage}
-          </p>
-        ) : null}
       </Card>
 
       <section className={`${roomId ? "block" : "hidden lg:block"} -mx-4 min-w-0 overflow-hidden bg-transparent sm:-mx-6 lg:mx-0 lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>

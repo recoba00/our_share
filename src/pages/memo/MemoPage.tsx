@@ -36,7 +36,6 @@ export function MemoPage() {
   const [createPassword, setCreatePassword] = useState("");
   const [revealPassword, setRevealPassword] = useState("");
   const [revealedContent, setRevealedContent] = useState("");
-  const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   const selectedMemo = useMemo(
@@ -64,13 +63,13 @@ export function MemoPage() {
 
     loadFamily().catch((error: Error) => {
       setIsFamilyLoading(false);
-      setStatusMessage(error.message);
+      showToast({ message: error.message, variant: "error" });
     });
 
     return () => {
       active = false;
     };
-  }, [user]);
+  }, [showToast, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -80,10 +79,10 @@ export function MemoPage() {
     return subscribeMemos({
       familyId: activeFamily.id,
       onChange: setMemos,
-      onError: setStatusMessage,
+      onError: (message) => showToast({ message, variant: "error" }),
       userId: user.uid,
     });
-  }, [activeFamily, user]);
+  }, [activeFamily, showToast, user]);
 
   async function handleCreateMemo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -126,7 +125,6 @@ export function MemoPage() {
         password: revealPassword,
       });
       setRevealedContent(sensitiveContent);
-      setStatusMessage("");
     } catch (error) {
       notify(error instanceof Error ? error.message : "메모 열람에 실패했습니다.", "error");
     }
@@ -171,7 +169,6 @@ export function MemoPage() {
   }
 
   function notify(message: string, variant: "error" | "info" | "success") {
-    setStatusMessage(message);
     showToast({ message, variant });
   }
 
@@ -232,11 +229,6 @@ export function MemoPage() {
           저장
         </Button>
       </form>
-      {statusMessage ? (
-        <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-          {statusMessage}
-        </p>
-      ) : null}
     </>
   );
 
@@ -345,11 +337,6 @@ export function MemoPage() {
           </div>
         ) : null}
 
-        {statusMessage ? (
-          <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-            {statusMessage}
-          </p>
-        ) : null}
       </Card>
     </div>
     </>

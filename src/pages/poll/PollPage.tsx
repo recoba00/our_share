@@ -48,7 +48,6 @@ export function PollPage() {
     () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
-  const [feedback, setFeedback] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const normalizedOptions = getNormalizedPollOptions(options);
@@ -62,7 +61,6 @@ export function PollPage() {
 
   const notify = useCallback(
     (message: string, variant: "error" | "info" | "success") => {
-      setFeedback(message);
       showToast({ message, variant });
     },
     [showToast]
@@ -70,7 +68,6 @@ export function PollPage() {
 
   const loadPollData = useCallback(async (userId: string) => {
     setIsLoading(true);
-    setFeedback("");
 
     try {
       const nextFamily = await getFirstFamilyForUser(userId);
@@ -131,10 +128,10 @@ export function PollPage() {
         setRooms(nextRooms);
         setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");
       },
-      onError: setFeedback,
+      onError: (message) => notify(message, "error"),
       userId: user.uid,
     });
-  }, [family, user]);
+  }, [family, notify, user]);
 
   async function handleCreatePoll() {
     if (!user || !family) {
@@ -143,7 +140,6 @@ export function PollPage() {
     }
 
     setIsLoading(true);
-    setFeedback("");
 
     try {
       await createPoll({
@@ -177,7 +173,6 @@ export function PollPage() {
     }
 
     setIsLoading(true);
-    setFeedback("");
 
     try {
       await votePoll({
@@ -201,7 +196,6 @@ export function PollPage() {
     }
 
     setIsLoading(true);
-    setFeedback("");
 
     try {
       await sendPollMessage({
@@ -236,7 +230,6 @@ export function PollPage() {
     }
 
     setIsLoading(true);
-    setFeedback("");
 
     try {
       await deletePoll({
@@ -385,11 +378,6 @@ export function PollPage() {
               </select>
             </label>
           ) : null}
-          {feedback && (
-            <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-              {feedback}
-            </p>
-          )}
         </div>
     </>
   );

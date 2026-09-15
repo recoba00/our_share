@@ -2,6 +2,7 @@ import {
   BatteryHigh,
   CalendarDots,
   CaretLeft,
+  Check,
   ChatCircleDots,
   CopySimple,
   DotsThreeVertical,
@@ -13,7 +14,7 @@ import {
   Trash,
   UsersThree,
 } from "@phosphor-icons/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "../../components/common/Avatar";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
@@ -133,7 +134,6 @@ export function HomePage() {
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-  const [feedback, setFeedback] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
@@ -142,12 +142,17 @@ export function HomePage() {
   const [selectedLocationMemberId, setSelectedLocationMemberId] = useState("");
   const [selectedManageMemberId, setSelectedManageMemberId] = useState("");
   const [memberManageView, setMemberManageView] = useState<"ACTIONS" | "ROLE">("ACTIONS");
+  const [pendingMemberRole, setPendingMemberRole] = useState<Exclude<FamilyRole, "OWNER"> | null>(null);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const locationShare = useMyLocationShare({
     familyId: activeFamily?.id ?? null,
     userId: user?.uid ?? null,
   });
+  const handleDataError = useCallback(
+    (message: string) => showToast({ message, variant: "error" }),
+    [showToast]
+  );
 
   useEffect(() => {
     if (!user || activeFamily) {
@@ -173,33 +178,33 @@ export function HomePage() {
       subscribeCalendarEvents({
         familyId: activeFamily.id,
         onChange: setCalendarEvents,
-        onError: setFeedback,
+        onError: handleDataError,
         userId: user.uid,
       }),
       subscribeChatRooms({
         familyId: activeFamily.id,
         onChange: setChatRooms,
-        onError: setFeedback,
+        onError: handleDataError,
         userId: user.uid,
       }),
       subscribeMemos({
         familyId: activeFamily.id,
         onChange: setMemos,
-        onError: setFeedback,
+        onError: handleDataError,
         userId: user.uid,
       }),
       subscribePolls({
         familyId: activeFamily.id,
         onChange: setPolls,
-        onError: setFeedback,
+        onError: handleDataError,
       }),
-      subscribeFamilyLocations(activeFamily.id, setLiveLocations, setFeedback),
+      subscribeFamilyLocations(activeFamily.id, setLiveLocations, handleDataError),
     ];
 
     return () => {
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, [activeFamily, user]);
+  }, [activeFamily, handleDataError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user || getNotificationPermission() !== "granted") {
@@ -214,6 +219,17 @@ export function HomePage() {
     });
   }, [activeFamily, calendarEvents, polls, user]);
 
+  useEffect(() => {
+    if (!locationShare.message) {
+      return;
+    }
+
+    showToast({
+      message: locationShare.message,
+      variant: locationShare.status === "error" ? "error" : "success",
+    });
+  }, [locationShare.message, locationShare.status, showToast]);
+
   async function handleCreateFamily() {
     if (!user || !familyName.trim()) {
       notify("가족 이름을 입력해주세요.", "info");
@@ -221,8 +237,6 @@ export function HomePage() {
     }
 
     setIsSubmitting(true);
-    setFeedback("");
-
     try {
       const result = await createFamily({ name: familyName.trim(), owner: user });
       setActiveFamily({
@@ -247,8 +261,6 @@ export function HomePage() {
     }
 
     setIsSubmitting(true);
-    setFeedback("");
-
     try {
       const result = await joinFamilyByInviteCode({
         inviteCode,
@@ -316,8 +328,6 @@ export function HomePage() {
     }
 
     setIsSubmitting(true);
-    setFeedback("");
-
     try {
       const result = await getFirstFamilyForUser(user.uid);
 
@@ -343,7 +353,6 @@ export function HomePage() {
     }
 
     setSendingQuickMessageTo(`${member.userId}-${message}`);
-    setFeedback("");
 
     try {
       const roomId = await getOrCreateFamilyRoom({
@@ -376,7 +385,6 @@ export function HomePage() {
     }
 
     setUpdatingMemberRoleId(member.userId);
-    setFeedback("");
 
     try {
       await updateFamilyMemberRole({
@@ -389,6 +397,7 @@ export function HomePage() {
       setMembers(await getFamilyMembers(activeFamily.id));
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
+      setPendingMemberRole(null);
       notify(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`, "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -415,8 +424,6 @@ export function HomePage() {
     }
 
     setDeletingMemberId(member.userId);
-    setFeedback("");
-
     try {
       await deleteFamilyMember({
         actorUserId: user.uid,
@@ -426,6 +433,7 @@ export function HomePage() {
       setMembers(await getFamilyMembers(activeFamily.id));
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
+      setPendingMemberRole(null);
       notify("가족 구성원을 삭제했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -454,7 +462,6 @@ export function HomePage() {
   }
 
   function notify(message: string, variant: "error" | "info" | "success") {
-    setFeedback(message);
     showToast({ message, variant });
   }
 
@@ -561,16 +568,6 @@ export function HomePage() {
             <MapPin size={18} weight="bold" />
             위치 공유하기
           </Button>
-          {feedback && (
-            <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-              {feedback}
-            </p>
-          )}
-          {locationShare.message && (
-            <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold text-[var(--color-text-secondary)]">
-              {locationShare.message}
-            </p>
-          )}
         </div>
       </Card>
 
@@ -633,6 +630,7 @@ export function HomePage() {
                     onClick={() => {
                       setSelectedManageMemberId(member.userId);
                       setMemberManageView("ACTIONS");
+                      setPendingMemberRole(null);
                     }}
                     type="button"
                   >
@@ -668,6 +666,7 @@ export function HomePage() {
       onClose={() => {
         setSelectedManageMemberId("");
         setMemberManageView("ACTIONS");
+        setPendingMemberRole(null);
       }}
       title={
         memberManageView === "ROLE"
@@ -692,7 +691,12 @@ export function HomePage() {
           <MemberSheetProfile member={selectedManageMember} />
           <button
             className="flex h-12 items-center justify-between rounded-2xl bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:text-brand"
-            onClick={() => setMemberManageView("ROLE")}
+            onClick={() => {
+              setPendingMemberRole(
+                selectedManageMember.role as Exclude<FamilyRole, "OWNER">
+              );
+              setMemberManageView("ROLE");
+            }}
             type="button"
           >
             <span>구성원 역할 변경</span>
@@ -718,7 +722,7 @@ export function HomePage() {
             {editableRoleOptions.map((role) => (
               <button
                 className={`flex h-12 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition ${
-                  selectedManageMember.role === role
+                  pendingMemberRole === role
                     ? "bg-brand text-white"
                     : "bg-[var(--color-surface-muted)] text-[var(--color-text-primary)] hover:text-brand"
                 }`}
@@ -727,16 +731,33 @@ export function HomePage() {
                   selectedManageMember.role === role
                 }
                 key={role}
-                onClick={() => void handleUpdateMemberRole(selectedManageMember, role)}
+                onClick={() => setPendingMemberRole(role)}
                 type="button"
               >
                 <span>{roleLabels[role]}</span>
-                {selectedManageMember.role === role ? (
+                {pendingMemberRole === role ? (
                   <span className="text-xs">현재 역할</span>
                 ) : null}
               </button>
             ))}
           </div>
+          <Button
+            className="w-full"
+            disabled={
+              !pendingMemberRole ||
+              pendingMemberRole === selectedManageMember.role ||
+              updatingMemberRoleId === selectedManageMember.userId
+            }
+            onClick={() => {
+              if (pendingMemberRole) {
+                void handleUpdateMemberRole(selectedManageMember, pendingMemberRole);
+              }
+            }}
+            type="button"
+          >
+            <Check size={18} weight="bold" />
+            변경하기
+          </Button>
         </div>
       ) : null}
     </BottomSheet>

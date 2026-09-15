@@ -8,7 +8,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
@@ -80,9 +80,12 @@ export function CalendarPage() {
   const [voteViewDate, setVoteViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
   );
-  const [statusMessage, setStatusMessage] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [detailEventId, setDetailEventId] = useState("");
+  const reportError = useCallback(
+    (message: string) => showToast({ message, variant: "error" }),
+    [showToast]
+  );
 
   const monthDays = useMemo(() => createMonthDays(viewDate), [viewDate]);
   const monthEvents = useMemo(
@@ -115,13 +118,13 @@ export function CalendarPage() {
 
     loadFamily().catch((error: Error) => {
       setIsFamilyLoading(false);
-      setStatusMessage(error.message);
+      reportError(error.message);
     });
 
     return () => {
       active = false;
     };
-  }, [user]);
+  }, [reportError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -131,10 +134,10 @@ export function CalendarPage() {
     return subscribeCalendarEvents({
       familyId: activeFamily.id,
       onChange: setEvents,
-      onError: setStatusMessage,
+      onError: reportError,
       userId: user.uid,
     });
-  }, [activeFamily, user]);
+  }, [activeFamily, reportError, user]);
 
   async function handleSaveEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -262,7 +265,6 @@ export function CalendarPage() {
   }
 
   function notify(message: string, variant: "error" | "info" | "success") {
-    setStatusMessage(message);
     showToast({ message, variant });
   }
 
@@ -286,7 +288,6 @@ export function CalendarPage() {
     setIsDayOff(event.isDayOff);
     setDetailEventId("");
     setIsCreateOpen(true);
-    setStatusMessage("");
   }
 
   function openEventDetail(event: CalendarEvent) {
@@ -407,7 +408,6 @@ export function CalendarPage() {
           toggleVoteDate={toggleVoteDate}
           setVoteTitle={setVoteTitle}
           startDate={startDate}
-          statusMessage={statusMessage}
           title={title}
           repeat={repeat}
           voteDescription={voteDescription}
@@ -444,7 +444,6 @@ export function CalendarPage() {
           toggleVoteDate={toggleVoteDate}
           setVoteTitle={setVoteTitle}
           startDate={startDate}
-          statusMessage={statusMessage}
           title={title}
           repeat={repeat}
           voteDescription={voteDescription}
@@ -620,7 +619,6 @@ function CalendarTools({
   setVoteViewDate,
   setVoteTitle,
   startDate,
-  statusMessage,
   title,
   toggleVoteDate,
   repeat,
@@ -652,7 +650,6 @@ function CalendarTools({
   setVoteViewDate: (value: Date) => void;
   setVoteTitle: (value: string) => void;
   startDate: string;
-  statusMessage: string;
   title: string;
   toggleVoteDate: (dateValue: string) => void;
   repeat: CalendarEventRepeat;
@@ -824,11 +821,6 @@ function CalendarTools({
         </form>
         </div>
       )}
-      {statusMessage ? (
-        <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-          {statusMessage}
-        </p>
-      ) : null}
     </>
   );
 }

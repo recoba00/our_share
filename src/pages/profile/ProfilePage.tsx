@@ -12,7 +12,6 @@ export function ProfilePage() {
   const { showToast } = useToast();
   const [displayName, setDisplayName] = useState(() => user?.displayName ?? "");
   const [photoURL, setPhotoURL] = useState(() => user?.photoURL ?? "");
-  const [statusMessage, setStatusMessage] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -23,7 +22,6 @@ export function ProfilePage() {
     }
 
     setIsSaving(true);
-    setStatusMessage("");
 
     try {
       await updateUserProfile({
@@ -42,7 +40,6 @@ export function ProfilePage() {
   }
 
   function notify(message: string, variant: "error" | "info" | "success") {
-    setStatusMessage(message);
     showToast({ message, variant });
   }
 
@@ -97,11 +94,6 @@ export function ProfilePage() {
           </div>
         </form>
 
-        {statusMessage ? (
-          <p className="mt-4 rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
-            {statusMessage}
-          </p>
-        ) : null}
       </Card>
     </div>
   );
