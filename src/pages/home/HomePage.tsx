@@ -973,26 +973,44 @@ function FamilyLocationMap({
             }}
             type="button"
           >
-            <div className="relative grid w-12 justify-items-center pb-3 transition active:scale-95">
-              <div className="absolute bottom-[5px] size-[18px] rotate-45 rounded-br-[5px] bg-brand shadow-md shadow-emerald-900/20" />
-              <div className="relative grid size-12 place-items-center overflow-hidden rounded-full border-4 border-brand bg-brand text-[11px] font-semibold text-white shadow-md shadow-emerald-900/20">
-                {member.photoURL ? (
-                  <img
-                    alt={member.displayName ?? member.nickname}
-                    className="size-full rounded-full object-cover"
-                    src={member.photoURL}
-                  />
-                ) : (
-                  <span className="px-1 text-center leading-4">
-                    {getLocationPinLabel(member)}
-                  </span>
-                )}
-              </div>
-            </div>
+            <LocationMapPin member={member} />
           </button>
         );
       })}
     </div>
+  );
+}
+
+function LocationMapPin({ member }: { member: FamilyMemberProfile }) {
+  return (
+    <svg
+      aria-hidden="true"
+      className="block h-[62px] w-12 drop-shadow-[0_8px_14px_rgba(4,120,87,0.22)] transition active:scale-95"
+      fill="none"
+      viewBox="0 0 48 62"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path
+        d="M48 24C48 37.2548 24 62 24 62C24 62 0 37.2548 0 24C0 10.7452 10.7452 0 24 0C37.2548 0 48 10.7452 48 24Z"
+        fill="var(--color-brand)"
+      />
+      <circle cx="24" cy="24" fill="#F4F4F4" r="18" />
+      <foreignObject height="36" width="36" x="6" y="6">
+        <div className="grid size-9 place-items-center overflow-hidden rounded-full bg-[#F4F4F4] text-[11px] font-semibold text-brand">
+          {member.photoURL ? (
+            <img
+              alt={member.displayName ?? member.nickname}
+              className="size-full rounded-full object-cover"
+              src={member.photoURL}
+            />
+          ) : (
+            <span className="px-1 text-center leading-4">
+              {getLocationPinLabel(member)}
+            </span>
+          )}
+        </div>
+      </foreignObject>
+    </svg>
   );
 }
 
