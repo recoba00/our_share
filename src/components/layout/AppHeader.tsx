@@ -1,8 +1,8 @@
 import {
   Bell,
   CalendarCheck,
-  CaretDown,
   CaretLeft,
+  CaretRight,
   Check,
   ChatCircleDots,
   GearSix,
@@ -53,26 +53,27 @@ export function AppHeader() {
               <h1 className="hidden text-lg font-semibold leading-8 lg:block">채팅</h1>
             </>
           ) : isHome ? (
-            <>
+            <div className="flex min-w-0 items-center gap-3">
               <img
                 alt=""
                 className="size-8 rounded-xl object-cover"
                 src={`${import.meta.env.BASE_URL}brand-logo.svg`}
               />
               <h1 className="text-lg font-semibold leading-8">우리끼리</h1>
-            </>
+              {status === "authenticated" && families.length > 0 ? (
+                <GroupSwitcher
+                  activeFamilyId={activeFamily?.id ?? ""}
+                  compact
+                  families={families}
+                  onSelect={selectFamily}
+                />
+              ) : null}
+            </div>
           ) : (
             <h1 className="text-lg font-semibold leading-8">{title}</h1>
           )}
         </div>
         <div className="relative flex items-center gap-2">
-          {status === "authenticated" && !isChatRoom && !isProfile && !isSettings && families.length > 0 ? (
-            <GroupSwitcher
-              activeFamilyId={activeFamily?.id ?? ""}
-              families={families}
-              onSelect={selectFamily}
-            />
-          ) : null}
           {status === "authenticated" && (
             <Button className="hidden sm:inline-flex" onClick={signOut} variant="secondary">
               로그아웃
@@ -150,10 +151,12 @@ export function AppHeader() {
 
 function GroupSwitcher({
   activeFamilyId,
+  compact = false,
   families,
   onSelect,
 }: {
   activeFamilyId: string;
+  compact?: boolean;
   families: { id: string; name: string }[];
   onSelect: (familyId: string) => void;
 }) {
@@ -161,20 +164,24 @@ function GroupSwitcher({
   const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0];
 
   return (
-    <div className="relative max-w-[min(44vw,180px)]">
+    <div className={`relative min-w-0 ${compact ? "max-w-[min(46vw,190px)]" : "max-w-[min(44vw,180px)]"}`}>
       <button
         aria-expanded={isOpen}
         aria-haspopup="listbox"
-        className="flex h-8 max-w-full items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
+        className={
+          compact
+            ? "flex max-w-full min-w-0 items-center gap-1 text-lg font-semibold leading-8 transition hover:text-brand"
+            : "flex h-8 max-w-full items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
+        }
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="truncate">{activeFamily.name}</span>
-        <CaretDown className="shrink-0" size={14} weight="bold" />
+        {compact ? <CaretRight className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
+        <span className="truncate">{truncateFamilyName(activeFamily.name)}</span>
       </button>
       {isOpen ? (
         <div
-          className="absolute right-0 top-11 z-40 w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl"
+          className={`absolute top-11 z-40 w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl ${compact ? "left-0" : "right-0"}`}
           role="listbox"
         >
           <p className="px-3 pb-2 pt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
@@ -207,6 +214,12 @@ function GroupSwitcher({
       ) : null}
     </div>
   );
+}
+
+function truncateFamilyName(name: string) {
+  const characters = Array.from(name);
+
+  return characters.length > 8 ? `${characters.slice(0, 8).join("")}...` : name;
 }
 
 function NotificationLink({

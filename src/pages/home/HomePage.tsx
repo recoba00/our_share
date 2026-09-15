@@ -19,9 +19,15 @@ import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
+import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
-import { deleteFamilyMember, getFamilyMembers, updateFamilyMemberRole } from "../../features/family/services/familyService";
+import {
+  deleteFamilyMember,
+  getFamilyMembers,
+  joinFamilyByInviteCode,
+  updateFamilyMemberRole,
+} from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
 import type {
   FamilyMemberProfile,
@@ -114,7 +120,7 @@ declare global {
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
-  const { activeFamily } = useFamily();
+  const { activeFamily, refreshFamilies } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
@@ -130,6 +136,8 @@ export function HomePage() {
   const [pendingMemberRole, setPendingMemberRole] = useState<Exclude<FamilyRole, "OWNER"> | null>(null);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
+  const [inviteCode, setInviteCode] = useState("");
+  const [isJoiningFamily, setIsJoiningFamily] = useState(false);
   const locationShare = useMyLocationShare({
     familyId: activeFamily?.id ?? null,
     userId: user?.uid ?? null,
@@ -391,6 +399,26 @@ export function HomePage() {
     }
   }
 
+  async function handleJoinFamily() {
+    if (!user || !inviteCode.trim()) {
+      notify("초대 코드를 입력해주세요.", "info");
+      return;
+    }
+
+    setIsJoiningFamily(true);
+
+    try {
+      const result = await joinFamilyByInviteCode({ inviteCode, user });
+      await refreshFamilies(result.id);
+      setInviteCode("");
+      notify(`${result.name} 그룹에 참여했습니다.`, "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setIsJoiningFamily(false);
+    }
+  }
+
   function notify(message: string, variant: "error" | "info" | "success") {
     showToast({ message, variant });
   }
@@ -474,6 +502,25 @@ export function HomePage() {
             <MapPin size={18} weight="bold" />
             위치 공유하기
           </Button>
+          <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
+            <p className="text-sm font-semibold">초대 코드로 그룹 참여</p>
+            <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <Input
+                label="초대 코드"
+                onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+                placeholder="예: A1B2C3"
+                value={inviteCode}
+              />
+              <Button
+                className="sm:mb-0"
+                disabled={isJoiningFamily}
+                onClick={() => void handleJoinFamily()}
+                variant="secondary"
+              >
+                그룹 참여
+              </Button>
+            </div>
+          </div>
           <Link
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
             to="/profile"

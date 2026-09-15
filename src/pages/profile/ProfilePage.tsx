@@ -25,6 +25,7 @@ export function ProfilePage() {
   const [editingFamilyId, setEditingFamilyId] = useState("");
   const [editingFamilyName, setEditingFamilyName] = useState("");
   const [busyFamilyId, setBusyFamilyId] = useState("");
+  const [activeTab, setActiveTab] = useState<"MY" | "GROUP">("MY");
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -103,6 +104,36 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto grid max-w-2xl gap-4">
+      <div className="grid grid-cols-2 border-b border-[var(--color-border)]" role="tablist">
+        <button
+          aria-selected={activeTab === "MY"}
+          className={`h-12 border-b-2 text-sm font-semibold transition ${
+            activeTab === "MY"
+              ? "border-brand text-brand"
+              : "border-transparent text-[var(--color-text-secondary)] hover:text-brand"
+          }`}
+          onClick={() => setActiveTab("MY")}
+          role="tab"
+          type="button"
+        >
+          MY
+        </button>
+        <button
+          aria-selected={activeTab === "GROUP"}
+          className={`h-12 border-b-2 text-sm font-semibold transition ${
+            activeTab === "GROUP"
+              ? "border-brand text-brand"
+              : "border-transparent text-[var(--color-text-secondary)] hover:text-brand"
+          }`}
+          onClick={() => setActiveTab("GROUP")}
+          role="tab"
+          type="button"
+        >
+          그룹
+        </button>
+      </div>
+
+      {activeTab === "MY" ? (
       <Card>
         <div className="flex items-center gap-4">
           {photoURL ? (
@@ -149,7 +180,7 @@ export function ProfilePage() {
           </div>
         </form>
       </Card>
-
+      ) : (
       <Card>
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -265,6 +296,7 @@ export function ProfilePage() {
           )}
         </div>
       </Card>
+      )}
     </div>
   );
 }
