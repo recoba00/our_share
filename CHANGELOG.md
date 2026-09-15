@@ -4,6 +4,10 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 ## 2026-09-16
 
+- Admin SDK membership mirror 동기화용 Cloud Functions 코드베이스를 추가했다.
+- `familyMembers` 생성·수정·삭제 시 RTDB mirror를 생성·갱신·삭제하는 트리거를 추가했다.
+- Functions emulator에서 Firestore → RTDB 동기화를 검증하는 테스트를 추가했다.
+- Blaze 전환 전까지 클라이언트 mirror 쓰기를 유지하도록 운영 정책을 문서화했다.
 - 다중 그룹 환경에서 사용자가 그룹별 OWNER/MEMBER 역할에 따라 구성원 역할 변경·삭제·OWNER 승격을 분리할 수 있는지 Firestore 규칙 테스트를 추가했다.
 - Realtime Database membership mirror도 그룹별 OWNER 쓰기 권한이 서로 섞이지 않는지 규칙 테스트를 추가했다.
 - 모바일 채팅 상세를 `top: 64px / bottom: 0` fixed 쉘로 고정해 입력 영역 아래 빈 공간과 전체 페이지 스크롤을 제거했다.

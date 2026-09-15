@@ -290,9 +290,9 @@
 
 - [ ] Admin SDK Membership Mirror Sync
   - [ ] Blaze 요금제 전환 여부 결정
-  - [ ] Cloud Functions 코드베이스 추가
-  - [ ] Firestore `familyMembers` onCreate 트리거로 RTDB mirror 생성
-  - [ ] Firestore `familyMembers` onUpdate 트리거로 RTDB mirror role 갱신
-  - [ ] Firestore `familyMembers` onDelete 트리거로 RTDB mirror 삭제
+  - [x] Cloud Functions 코드베이스 추가
+  - [x] Firestore `familyMembers` onCreate 트리거로 RTDB mirror 생성
+  - [x] Firestore `familyMembers` onUpdate 트리거로 RTDB mirror role 갱신
+  - [x] Firestore `familyMembers` onDelete 트리거로 RTDB mirror 삭제
   - [ ] 클라이언트의 RTDB membership mirror 직접 쓰기 제거
-  - [ ] Functions emulator 기반 동기화 테스트 추가
+  - [x] Functions emulator 기반 동기화 테스트 추가

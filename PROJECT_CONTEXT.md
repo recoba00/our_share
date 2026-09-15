@@ -434,6 +434,12 @@ Post-MVP 서버 전환 정책:
 - 동기화 실패는 Cloud Logging에 기록하고 재시도 가능한 구조로 둔다.
 - 가족 구성원 권한의 최종 원본은 계속 Firestore로 유지한다.
 
+현재 상태:
+
+- `functions/`에 Admin SDK 기반 membership mirror 트리거와 에뮬레이터 테스트를 추가했다.
+- 실제 Functions 배포와 클라이언트 직접 mirror 쓰기 제거는 Blaze 요금제 전환을 결정한 뒤 진행한다.
+- 전환 전까지는 기존 클라이언트 mirror 쓰기를 유지해 위치공유가 중단되지 않도록 한다.
+
 이 전환은 Cloud Functions 사용을 전제로 하므로 Blaze 요금제 검토 후 진행한다.
 
 ## 민감정보 정책

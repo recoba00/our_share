@@ -26,3 +26,7 @@ Thumbs.db
 # local caches
 .firebase/
 .cache/
+
+# Firebase Functions build output
+functions/lib/
+functions/node_modules/
