@@ -63,7 +63,7 @@ export function BottomNavigation() {
                   ? "h-10 gap-0 rounded-xl"
                   : "h-14 gap-1 rounded-2xl",
                 isActive
-                  ? "bg-brand-soft/90 text-brand shadow-sm"
+                  ? "text-brand"
                   : "text-[var(--color-text-secondary)] hover:bg-white/70",
               ].join(" ")
             }

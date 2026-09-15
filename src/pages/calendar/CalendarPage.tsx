@@ -458,11 +458,14 @@ export function CalendarPage() {
             const dayEvents = monthEvents.filter((event) =>
               isEventVisibleOnDate(event, day.date)
             );
+            const hasDayOff = dayEvents.some((event) => event.isDayOff);
 
             return (
               <div
                 className={`aspect-square min-w-0 rounded-lg p-1 text-left text-xs font-semibold transition hover:bg-emerald-50 sm:rounded-xl sm:p-2 sm:text-sm ${
-                  day.isCurrentMonth
+                  hasDayOff
+                    ? "bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-200"
+                    : day.isCurrentMonth
                     ? "bg-[var(--color-surface-muted)]"
                     : "bg-slate-50 text-slate-300"
                 }`}

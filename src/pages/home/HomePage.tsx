@@ -512,7 +512,7 @@ export function HomePage() {
             </div>
           )}
           <Button
-            className={isLocationShared ? "bg-red-50 text-red-500 hover:bg-red-100" : ""}
+            className={isLocationShared ? "bg-red-600 text-white hover:bg-red-700" : ""}
             disabled={locationShare.isSharing}
             onClick={() =>
               void (isLocationShared
@@ -524,7 +524,7 @@ export function HomePage() {
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
-            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
               <Input
                 label=""
                 onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
@@ -532,7 +532,7 @@ export function HomePage() {
                 value={inviteCode}
               />
               <Button
-                className="w-full shrink-0 sm:w-auto"
+                className="shrink-0 whitespace-nowrap"
                 disabled={isJoiningFamily}
                 onClick={() => void handleJoinFamily()}
                 variant="secondary"
