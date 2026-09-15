@@ -1,7 +1,9 @@
 import {
   Bell,
   CalendarCheck,
+  CaretDown,
   CaretLeft,
+  Check,
   ChatCircleDots,
   GearSix,
   NotePencil,
@@ -10,6 +12,7 @@ import {
 import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
+import { useFamily } from "../../features/family/useFamily";
 import { Button } from "../common/Button";
 
 type LocationState = {
@@ -18,6 +21,7 @@ type LocationState = {
 
 export function AppHeader() {
   const { signOut, status, user } = useAuth();
+  const { activeFamily, families, selectFamily } = useFamily();
   const { pathname, state } = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const locationState = state as LocationState | null;
@@ -62,6 +66,13 @@ export function AppHeader() {
           )}
         </div>
         <div className="relative flex items-center gap-2">
+          {status === "authenticated" && !isChatRoom && !isProfile && !isSettings && families.length > 0 ? (
+            <GroupSwitcher
+              activeFamilyId={activeFamily?.id ?? ""}
+              families={families}
+              onSelect={selectFamily}
+            />
+          ) : null}
           {status === "authenticated" && (
             <Button className="hidden sm:inline-flex" onClick={signOut} variant="secondary">
               로그아웃
@@ -134,6 +145,67 @@ export function AppHeader() {
         </div>
       </div>
     </header>
+  );
+}
+
+function GroupSwitcher({
+  activeFamilyId,
+  families,
+  onSelect,
+}: {
+  activeFamilyId: string;
+  families: { id: string; name: string }[];
+  onSelect: (familyId: string) => void;
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0];
+
+  return (
+    <div className="relative max-w-[min(44vw,180px)]">
+      <button
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
+        className="flex h-8 max-w-full items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
+        onClick={() => setIsOpen((current) => !current)}
+        type="button"
+      >
+        <span className="truncate">{activeFamily.name}</span>
+        <CaretDown className="shrink-0" size={14} weight="bold" />
+      </button>
+      {isOpen ? (
+        <div
+          className="absolute right-0 top-11 z-40 w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl"
+          role="listbox"
+        >
+          <p className="px-3 pb-2 pt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
+            그룹 전환
+          </p>
+          {families.map((family) => (
+            <button
+              aria-selected={family.id === activeFamilyId}
+              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-[var(--color-surface-muted)]"
+              key={family.id}
+              onClick={() => {
+                onSelect(family.id);
+                setIsOpen(false);
+              }}
+              role="option"
+              type="button"
+            >
+              <span className="min-w-0 truncate">{family.name}</span>
+              {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
+            </button>
+          ))}
+          <Link
+            className="mt-1 block border-t border-[var(--color-border)] px-3 pt-3 text-xs font-semibold text-brand"
+            onClick={() => setIsOpen(false)}
+            to="/"
+          >
+            그룹 생성·참여
+          </Link>
+        </div>
+      ) : null}
+    </div>
   );
 }
 

@@ -5,7 +5,6 @@ import {
   doc,
   getDoc,
   getDocs,
-  limit,
   query,
   serverTimestamp,
   setDoc,
@@ -104,54 +103,63 @@ export async function joinFamilyByInviteCode({
   };
 }
 
-export async function getFirstFamilyForUser(userId: string) {
+export async function getFamiliesForUser(userId: string) {
   const membersQuery = query(
     collection(db, "familyMembers"),
-    where("userId", "==", userId),
-    limit(1)
+    where("userId", "==", userId)
   );
   const memberSnapshot = await getDocs(membersQuery);
-  const memberDoc = memberSnapshot.docs[0];
 
-  if (!memberDoc) {
-    return null;
-  }
+  const families = await Promise.all(
+    memberSnapshot.docs.map(async (memberDoc) => {
+      const member = memberDoc.data();
+      const familyId = member.familyId as string;
+      const role = member.role as FamilyRole;
+      const familySnapshot = await getDoc(doc(db, "families", familyId));
 
-  const familyId = memberDoc.data().familyId as string;
-  const role = memberDoc.data().role as FamilyRole;
-  const familySnapshot = await getDoc(doc(db, "families", familyId));
+      if (!familySnapshot.exists()) {
+        return null;
+      }
 
-  if (!familySnapshot.exists()) {
-    return null;
-  }
+      mirrorFamilyMemberRole({
+        familyId,
+        role,
+        userId,
+      }).catch(() => {
+        // RTDB mirror backfill is best-effort during MVP.
+      });
 
-  mirrorFamilyMemberRole({
-    familyId,
-    role,
-    userId,
-  }).catch(() => {
-    // RTDB mirror backfill is best-effort during MVP.
-  });
+      const family = familySnapshot.data();
+      const inviteCode = family.inviteCode as string;
 
-  const family = familySnapshot.data();
-  const inviteCode = family.inviteCode as string;
+      if (family.ownerId === userId && inviteCode) {
+        ensureFamilyInviteIndex({
+          familyId,
+          inviteCode,
+          name: family.name as string,
+          ownerId: userId,
+        }).catch(() => {
+          // Invite index backfill is best-effort for older family documents.
+        });
+      }
 
-  if (family.ownerId === userId && inviteCode) {
-    ensureFamilyInviteIndex({
-      familyId,
-      inviteCode,
-      name: family.name as string,
-      ownerId: userId,
-    }).catch(() => {
-      // Invite index backfill is best-effort for older family documents.
-    });
-  }
+      return {
+        id: familySnapshot.id,
+        name: family.name as string,
+        inviteCode,
+        ownerId: family.ownerId as string,
+        createdAt: family.createdAt,
+      };
+    })
+  );
 
-  return {
-    id: familySnapshot.id,
-    name: family.name as string,
-    inviteCode,
-  };
+  return families.filter((family): family is NonNullable<typeof family> => Boolean(family));
+}
+
+export async function getFirstFamilyForUser(userId: string) {
+  const families = await getFamiliesForUser(userId);
+
+  return families[0] ?? null;
 }
 
 export async function getFamilyMembers(

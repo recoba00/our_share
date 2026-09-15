@@ -16,18 +16,13 @@ import {
   subscribeMemos,
 } from "../../features/memo/services/memoService";
 import type { Memo, MemoType } from "../../features/memo/types/memoTypes";
-import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { useFamily } from "../../features/family/useFamily";
 
 export function MemoPage() {
   const { user } = useAuth();
+  const { activeFamily, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
-  const [activeFamily, setActiveFamily] = useState<{
-    id: string;
-    inviteCode: string;
-    name: string;
-  } | null>(null);
-  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [memos, setMemos] = useState<Memo[]>([]);
   const [selectedMemoId, setSelectedMemoId] = useState("");
   const [title, setTitle] = useState("");
@@ -42,34 +37,6 @@ export function MemoPage() {
     () => memos.find((memo) => memo.id === selectedMemoId) ?? memos[0],
     [memos, selectedMemoId]
   );
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    let active = true;
-    const userId = user.uid;
-
-    async function loadFamily() {
-      setIsFamilyLoading(true);
-      const family = await getFirstFamilyForUser(userId);
-
-      if (active) {
-        setActiveFamily(family);
-        setIsFamilyLoading(false);
-      }
-    }
-
-    loadFamily().catch((error: Error) => {
-      setIsFamilyLoading(false);
-      showToast({ message: error.message, variant: "error" });
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [showToast, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {

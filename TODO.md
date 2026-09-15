@@ -244,11 +244,11 @@
 
 ## Multi-Group Expansion
 
-- [ ] `getFirstFamilyForUser`를 사용자 소속 그룹 전체를 반환하는 조회로 확장
-- [ ] 그룹 목록과 현재 선택 그룹(`activeGroupId`) 상태 추가
-- [ ] 헤더 또는 홈 상단 그룹 전환 UI 추가
-- [ ] 그룹 생성/초대/탈퇴/삭제를 현재 선택 그룹 기준으로 분리
-- [ ] 그룹 전환 시 일정·메모·투표·채팅·위치 구독 재연결
+- [x] `getFirstFamilyForUser`를 사용자 소속 그룹 전체를 반환하는 조회로 확장
+- [x] 그룹 목록과 현재 선택 그룹(`activeGroupId`) 상태 추가
+- [x] 헤더 또는 홈 상단 그룹 전환 UI 추가
+- [x] 그룹 생성/초대/탈퇴/삭제를 현재 선택 그룹 기준으로 분리
+- [x] 그룹 전환 시 일정·메모·투표·채팅·위치 구독 재연결
 - [ ] 다중 그룹 권한과 그룹별 OWNER 관리 테스트 추가
 
 - [ ] Admin SDK Membership Mirror Sync

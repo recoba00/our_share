@@ -27,10 +27,10 @@ import {
   createFamily,
   deleteFamilyMember,
   getFamilyMembers,
-  getFirstFamilyForUser,
   joinFamilyByInviteCode,
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
+import { useFamily } from "../../features/family/useFamily";
 import type {
   FamilyMemberProfile,
   FamilyRole,
@@ -122,15 +122,11 @@ declare global {
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
+  const { activeFamily, refreshFamilies } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [familyName, setFamilyName] = useState("");
   const [inviteCode, setInviteCode] = useState("");
-  const [activeFamily, setActiveFamily] = useState<{
-    id: string;
-    inviteCode: string;
-    name: string;
-  } | null>(null);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
@@ -155,19 +151,40 @@ export function HomePage() {
   );
 
   useEffect(() => {
-    if (!user || activeFamily) {
+    if (!activeFamily || !user) {
       return;
     }
 
-    void getFirstFamilyForUser(user.uid).then(async (result) => {
-      if (!result) {
-        return;
-      }
+    let active = true;
 
-      setActiveFamily(result);
-      setMembers(await getFamilyMembers(result.id));
-    });
-  }, [activeFamily, user]);
+    getFamilyMembers(activeFamily.id)
+      .then((nextMembers) => {
+        if (active) {
+          setMembers(nextMembers);
+        }
+      })
+      .catch((error: Error) => {
+        if (active) {
+          handleDataError(error.message);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeFamily, handleDataError, user]);
+
+  useEffect(() => {
+    if (!activeFamily || !user) {
+      return;
+    }
+
+    const unsubscribe = subscribeFamilyLocations(activeFamily.id, setLiveLocations, handleDataError);
+
+    return () => {
+      unsubscribe();
+    };
+  }, [activeFamily, handleDataError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -198,7 +215,6 @@ export function HomePage() {
         onChange: setPolls,
         onError: handleDataError,
       }),
-      subscribeFamilyLocations(activeFamily.id, setLiveLocations, handleDataError),
     ];
 
     return () => {
@@ -239,11 +255,7 @@ export function HomePage() {
     setIsSubmitting(true);
     try {
       const result = await createFamily({ name: familyName.trim(), owner: user });
-      setActiveFamily({
-        id: result.id,
-        inviteCode: result.inviteCode,
-        name: familyName.trim(),
-      });
+      await refreshFamilies(result.id);
       setMembers(await getFamilyMembers(result.id));
       notify(`그룹이 생성되었습니다. 초대 코드: ${result.inviteCode}`, "success");
       setFamilyName("");
@@ -266,11 +278,7 @@ export function HomePage() {
         inviteCode,
         user,
       });
-      setActiveFamily({
-        id: result.id,
-        inviteCode: inviteCode.trim().toUpperCase(),
-        name: result.name,
-      });
+      await refreshFamilies(result.id);
       setMembers(await getFamilyMembers(result.id));
       notify(`${result.name} 그룹에 참여했습니다.`, "success");
       setInviteCode("");
@@ -329,14 +337,14 @@ export function HomePage() {
 
     setIsSubmitting(true);
     try {
-      const result = await getFirstFamilyForUser(user.uid);
+      const families = await refreshFamilies();
+      const result = families[0];
 
       if (!result) {
         notify("아직 참여한 그룹이 없습니다.", "info");
         return;
       }
 
-      setActiveFamily(result);
       setMembers(await getFamilyMembers(result.id));
       notify(`${result.name} 그룹 정보를 불러왔습니다.`, "success");
     } catch (error) {

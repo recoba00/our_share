@@ -37,8 +37,8 @@ import {
 import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
 import {
   getFamilyMembers,
-  getFirstFamilyForUser,
 } from "../../features/family/services/familyService";
+import { useFamily } from "../../features/family/useFamily";
 import type { FamilyMemberProfile } from "../../features/family/types/familyTypes";
 import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { PollOptionEditor } from "../../features/poll/components/PollOptionEditor";
@@ -52,17 +52,12 @@ import {
 
 export function ChatPage() {
   const { user } = useAuth();
+  const { activeFamily, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { roomId } = useParams();
-  const [activeFamily, setActiveFamily] = useState<{
-    id: string;
-    inviteCode: string;
-    name: string;
-  } | null>(null);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
-  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -107,65 +102,54 @@ export function ChatPage() {
   );
 
   useEffect(() => {
-    if (!user) {
+    if (!activeFamily || !user) {
       return;
     }
 
     let active = true;
     const userId = user.uid;
 
-    async function loadFamily() {
-      setIsFamilyLoading(true);
-      const family = await getFirstFamilyForUser(userId);
-
+    queueMicrotask(() => {
       if (!active) {
         return;
       }
 
-      setActiveFamily(family);
-
-      if (family) {
-        const [familyRoomResult, membersResult] = await Promise.allSettled([
-          getOrCreateFamilyRoom({
-            createdBy: userId,
-            familyId: family.id,
-          }),
-          getFamilyMembers(family.id),
-        ]);
-
-        if (!active) {
-          return;
-        }
-
-        if (membersResult.status === "fulfilled") {
-          setMembers(membersResult.value);
-        } else {
-          setMembers([]);
-          reportError(getErrorMessage(membersResult.reason));
-        }
-
-        if (familyRoomResult.status === "fulfilled") {
-          setSelectedRoomId(familyRoomResult.value);
-        } else {
-          setSelectedRoomId("");
-          reportError(
-            `그룹 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
-          );
-        }
+      setRooms([]);
+      setMessages([]);
+      setMembers([]);
+      setPolls([]);
+      setSelectedRoomId("");
+    });
+    Promise.allSettled([
+      getOrCreateFamilyRoom({
+        createdBy: userId,
+        familyId: activeFamily.id,
+      }),
+      getFamilyMembers(activeFamily.id),
+    ]).then(([familyRoomResult, membersResult]) => {
+      if (!active) {
+        return;
       }
 
-      setIsFamilyLoading(false);
-    }
+      if (membersResult.status === "fulfilled") {
+        setMembers(membersResult.value);
+      } else {
+        reportError(getErrorMessage(membersResult.reason));
+      }
 
-    loadFamily().catch((error: Error) => {
-      setIsFamilyLoading(false);
-      reportError(getErrorMessage(error));
+      if (familyRoomResult.status === "fulfilled") {
+        setSelectedRoomId(familyRoomResult.value);
+      } else {
+        reportError(
+          `그룹 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
+        );
+      }
     });
 
     return () => {
       active = false;
     };
-  }, [reportError, user]);
+  }, [activeFamily, reportError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {

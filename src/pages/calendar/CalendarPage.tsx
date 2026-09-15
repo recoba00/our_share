@@ -37,7 +37,7 @@ import {
   isEventVisibleOnDate,
   toDateInputValue,
 } from "../../features/calendar/utils/calendarEventUtils";
-import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { useFamily } from "../../features/family/useFamily";
 import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { createPoll } from "../../features/poll/services/pollService";
 
@@ -52,15 +52,10 @@ const categoryOptions: { label: string; value: CalendarEventCategory }[] = [
 
 export function CalendarPage() {
   const { user } = useAuth();
+  const { activeFamily, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const today = new Date();
-  const [activeFamily, setActiveFamily] = useState<{
-    id: string;
-    inviteCode: string;
-    name: string;
-  } | null>(null);
-  const [isFamilyLoading, setIsFamilyLoading] = useState(() => Boolean(user));
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [viewDate, setViewDate] = useState(
     () => new Date(today.getFullYear(), today.getMonth(), 1)
@@ -97,34 +92,6 @@ export function CalendarPage() {
     [detailEventId, events]
   );
   const canCreateDatePoll = voteTitle.trim().length > 0 && voteSelectedDates.length >= 2;
-
-  useEffect(() => {
-    if (!user) {
-      return;
-    }
-
-    let active = true;
-    const userId = user.uid;
-
-    async function loadFamily() {
-      setIsFamilyLoading(true);
-      const family = await getFirstFamilyForUser(userId);
-
-      if (active) {
-        setActiveFamily(family);
-        setIsFamilyLoading(false);
-      }
-    }
-
-    loadFamily().catch((error: Error) => {
-      setIsFamilyLoading(false);
-      reportError(error.message);
-    });
-
-    return () => {
-      active = false;
-    };
-  }, [reportError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {

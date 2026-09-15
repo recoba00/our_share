@@ -13,7 +13,7 @@ import {
   subscribeChatRooms,
 } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
-import { getFirstFamilyForUser } from "../../features/family/services/familyService";
+import { useFamily } from "../../features/family/useFamily";
 import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { PollOptionEditor } from "../../features/poll/components/PollOptionEditor";
 import {
@@ -31,9 +31,9 @@ import {
 
 export function PollPage() {
   const { user } = useAuth();
+  const { activeFamily: family, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
-  const [family, setFamily] = useState<{ id: string; name: string } | null>(null);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
@@ -70,27 +70,21 @@ export function PollPage() {
     setIsLoading(true);
 
     try {
-      const nextFamily = await getFirstFamilyForUser(userId);
-
-      if (!nextFamily) {
-        setFamily(null);
+      if (!family) {
         setPolls([]);
         setRooms([]);
         setSelectedRoomId("");
-        notify("투표를 만들려면 먼저 홈에서 그룹을 만들거나 초대 코드로 참여해주세요.", "info");
         return;
       }
 
-      setFamily({ id: nextFamily.id, name: nextFamily.name });
-
-      const nextPolls = await getPolls(nextFamily.id);
+      const nextPolls = await getPolls(family.id);
       setPolls(nextPolls);
-      setVotes(await getPollVotes(nextFamily.id, nextPolls.map((poll) => poll.id)));
+      setVotes(await getPollVotes(family.id, nextPolls.map((poll) => poll.id)));
 
       try {
         const familyRoomId = await getOrCreateFamilyRoom({
           createdBy: userId,
-          familyId: nextFamily.id,
+          familyId: family.id,
         });
         setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
       } catch (roomError) {
@@ -105,7 +99,7 @@ export function PollPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [notify]);
+  }, [family, notify]);
 
   useEffect(() => {
     if (!user) {
@@ -351,7 +345,7 @@ export function PollPage() {
               날짜 투표는 하나의 날짜만 선택할 수 있게 생성됩니다.
             </p>
           )}
-          <Button disabled={isLoading || !canCreatePoll} onClick={handleCreatePoll}>
+          <Button disabled={isFamilyLoading || isLoading || !canCreatePoll} onClick={handleCreatePoll}>
             <Plus size={18} weight="bold" />
             투표 만들기
           </Button>
