@@ -105,6 +105,11 @@
 - [x] Kakao-style chat list toolbar, filters, avatars, previews, and timestamps
 - [x] Calendar create tabs share the same content spacing
 - [x] Shared bottom sheet item styling and lightweight chat room selection state
+- [x] Shared button press microinteraction
+- [x] Animated checkbox check stroke
+- [x] Shared sliding segmented control indicator
+- [x] Bottom sheet, action layer, and toast entrance motion
+- [x] Calendar, poll, and chat touch feedback
 - [x] Role-aware owner/member group cards with owner-only invite code visibility
 - [x] Back buttons use the `ArrowLeft` icon consistently
 - [x] App / modal / bottom sheet header height fixed to 64px

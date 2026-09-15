@@ -94,7 +94,7 @@ function ToastViewport({
 
         return (
           <section
-            className={`flex items-start gap-3 rounded-card border p-4 shadow-lg ${style.ring}`}
+            className={`flex items-start gap-3 rounded-card border p-4 shadow-lg toast-enter ${style.ring}`}
             key={toast.id}
           >
             <div className="mt-0.5 shrink-0">{style.icon}</div>

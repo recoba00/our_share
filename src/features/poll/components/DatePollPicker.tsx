@@ -58,7 +58,7 @@ export function DatePollPicker({
 
           return (
             <button
-              className={`aspect-square rounded-lg text-sm font-semibold transition ${
+              className={`aspect-square rounded-lg text-sm font-semibold transition-[background-color,color,transform] duration-200 active:scale-95 ${
                 selected
                   ? "bg-brand text-white"
                   : day.isCurrentMonth
@@ -82,7 +82,7 @@ export function DatePollPicker({
         ) : (
           selectedDates.map((date) => (
             <button
-              className="rounded-full bg-brand-soft px-3 py-2 text-xs font-semibold text-brand"
+              className="rounded-full bg-brand-soft px-3 py-2 text-xs font-semibold text-brand transition-transform duration-200 active:scale-95"
               key={date}
               onClick={() => toggleDate(date)}
               type="button"

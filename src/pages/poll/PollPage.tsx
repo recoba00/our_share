@@ -9,6 +9,7 @@ import {
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { SectionHeading } from "../../components/common/SectionHeading";
@@ -342,11 +343,9 @@ export function PollPage() {
           )}
           {type === "GENERAL" ? (
             <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
-              <input
+              <AnimatedCheckbox
                 checked={multipleChoice}
-                className="size-4 accent-emerald-500"
                 onChange={(event) => setMultipleChoice(event.target.checked)}
-                type="checkbox"
               />
               복수 선택 허용
             </label>
@@ -509,7 +508,7 @@ function PollCard({
 
           return (
             <button
-              className={`rounded-2xl border p-4 text-left transition ${
+              className={`rounded-2xl border p-4 text-left transition-[background-color,border-color,transform] duration-200 active:scale-[0.99] ${
                 isSelected
                   ? "border-emerald-300 bg-brand-soft"
                   : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"

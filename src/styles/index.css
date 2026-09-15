@@ -59,6 +59,108 @@ textarea {
   font-size: 16px !important;
 }
 
+@keyframes sheet-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes layer-in {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes checkbox-check {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.sheet-backdrop-enter {
+  animation: sheet-backdrop-in 220ms ease-out both;
+}
+
+.sheet-backdrop-exit {
+  animation: sheet-backdrop-in 220ms ease-out reverse both;
+}
+
+.sheet-panel-enter {
+  animation: sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.sheet-panel-exit {
+  animation: sheet-in 220ms cubic-bezier(0.22, 1, 0.36, 1) reverse both;
+}
+
+.toast-enter {
+  animation: toast-in 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.animated-checkbox-check {
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 160ms ease-out, transform 180ms ease-out;
+}
+
+.animated-checkbox-check path {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+}
+
+.peer:checked + span .animated-checkbox-check {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.peer:checked + span .animated-checkbox-check path {
+  animation: checkbox-check 220ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
 #root {
   min-height: 100vh;
   overflow-x: hidden;

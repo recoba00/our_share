@@ -10,6 +10,7 @@ import {
   WarningCircle,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useAuth } from "../../features/auth/useAuth";
@@ -253,11 +254,9 @@ export function DiagnosticsPage() {
           {smokeChecklistItems.map((item) => (
             <li key={item}>
               <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold leading-5 transition hover:bg-slate-200">
-                <input
+                <AnimatedCheckbox
                   checked={checkedItems.has(item)}
-                  className="mt-0.5 size-4 shrink-0 accent-emerald-500"
                   onChange={() => toggleChecklistItem(item)}
-                  type="checkbox"
                 />
                 <span className="text-[var(--color-text-primary)]">{item}</span>
               </label>

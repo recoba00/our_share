@@ -17,6 +17,7 @@ import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer } from "../../components/common/ActionLayer";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -602,11 +603,9 @@ export function ChatPage() {
                 className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
                 key={member.userId}
               >
-                <input
+                <AnimatedCheckbox
                   checked={privateGroupMemberIds.includes(member.userId)}
-                  className="size-4 accent-emerald-500"
                   onChange={() => togglePrivateGroupMember(member.userId)}
-                  type="checkbox"
                 />
                 <span className="min-w-0 truncate">
                   {member.displayName ?? member.nickname}
@@ -701,11 +700,9 @@ export function ChatPage() {
           )}
           {pollType === "GENERAL" ? (
             <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm font-semibold">
-              <input
+              <AnimatedCheckbox
                 checked={pollMultipleChoice}
-                className="size-4 accent-emerald-500"
                 onChange={(event) => setPollMultipleChoice(event.target.checked)}
-                type="checkbox"
               />
               복수 선택 허용
             </label>
@@ -966,7 +963,7 @@ export function ChatPage() {
           />
           <button
             aria-label="투표 만들기"
-            className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-muted)] hover:text-brand"
+            className="grid size-11 shrink-0 place-items-center rounded-full border border-[var(--color-border)] bg-white text-[var(--color-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-90 hover:bg-[var(--color-surface-muted)] hover:text-brand"
             onClick={() => setIsPollCreateOpen(true)}
             type="button"
           >
@@ -974,7 +971,7 @@ export function ChatPage() {
           </button>
           <button
             aria-label="전송"
-            className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white transition hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
+            className="grid size-11 shrink-0 place-items-center rounded-full bg-brand text-white transition-[background-color,transform] duration-200 active:scale-90 hover:bg-brand-hover disabled:cursor-not-allowed disabled:opacity-50"
             disabled={!selectedRoom}
             type="submit"
           >

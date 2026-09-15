@@ -1,6 +1,6 @@
 import { X } from "@phosphor-icons/react";
 import type { PropsWithChildren, ReactNode } from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { IconButton } from "./IconButton";
 
@@ -22,6 +22,8 @@ export function BottomSheet({
   titleAction,
   title,
 }: BottomSheetProps) {
+  const [isVisible, setIsVisible] = useState(isOpen);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -37,19 +39,43 @@ export function BottomSheet({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  if (!isOpen) {
+  useEffect(() => {
+    if (isOpen || !isVisible) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setIsVisible(false);
+    }, 220);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [isOpen, isVisible]);
+
+  const isClosing = !isOpen && isVisible;
+
+  if (!isOpen && !isVisible) {
     return null;
   }
 
   return createPortal(
-    <div aria-modal="true" className="fixed inset-0 z-50 flex items-end bg-slate-950/45" role="dialog">
+    <div
+      aria-modal="true"
+      className={`fixed inset-0 z-50 flex items-end bg-slate-950/45 ${
+        isClosing ? "sheet-backdrop-exit" : "sheet-backdrop-enter"
+      }`}
+      role="dialog"
+    >
       <button
         aria-label={closeLabel}
         className="absolute inset-0 size-full cursor-default"
         onClick={onClose}
         type="button"
       />
-      <section className="relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] pb-[calc(16px+env(safe-area-inset-bottom))] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card">
+      <section
+        className={`relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] pb-[calc(16px+env(safe-area-inset-bottom))] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card ${
+          isClosing ? "sheet-panel-exit" : "sheet-panel-enter"
+        }`}
+      >
         <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-slate-300" />
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-2">

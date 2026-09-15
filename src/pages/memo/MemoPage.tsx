@@ -2,6 +2,7 @@ import { Eye, LockKey, NotePencil, Plus, Trash } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { SectionHeading } from "../../components/common/SectionHeading";
@@ -179,11 +180,9 @@ export function MemoPage() {
           />
         </label>
         <label className="flex items-center gap-3 text-sm font-semibold">
-          <input
+          <AnimatedCheckbox
             checked={memoType === "SENSITIVE"}
-            className="size-4 accent-emerald-500"
             onChange={(event) => setMemoType(event.target.checked ? "SENSITIVE" : "PUBLIC")}
-            type="checkbox"
           />
           민감정보 메모로 저장
         </label>

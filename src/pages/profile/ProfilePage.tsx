@@ -5,6 +5,7 @@ import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
+import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
@@ -135,34 +136,14 @@ export function ProfilePage() {
 
   return (
     <div className="mx-auto grid max-w-2xl gap-4">
-      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-surface-muted)] p-1" role="tablist">
-        <button
-          aria-selected={activeTab === "MY"}
-          className={`h-10 rounded-xl text-sm font-semibold transition ${
-            activeTab === "MY"
-              ? "bg-white text-brand shadow-sm"
-              : "text-[var(--color-text-secondary)]"
-          }`}
-          onClick={() => setActiveTab("MY")}
-          role="tab"
-          type="button"
-        >
-          MY
-        </button>
-        <button
-          aria-selected={activeTab === "GROUP"}
-          className={`h-10 rounded-xl text-sm font-semibold transition ${
-            activeTab === "GROUP"
-              ? "bg-white text-brand shadow-sm"
-              : "text-[var(--color-text-secondary)]"
-          }`}
-          onClick={() => setActiveTab("GROUP")}
-          role="tab"
-          type="button"
-        >
-          그룹
-        </button>
-      </div>
+      <SegmentedControl
+        onChange={setActiveTab}
+        options={[
+          { label: "MY", value: "MY" },
+          { label: "그룹", value: "GROUP" },
+        ]}
+        value={activeTab}
+      />
 
       {activeTab === "MY" ? (
       <Card>

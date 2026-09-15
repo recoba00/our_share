@@ -11,6 +11,7 @@ import {
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -19,6 +20,7 @@ import { Input } from "../../components/common/Input";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
 import { SectionHeading } from "../../components/common/SectionHeading";
+import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -463,7 +465,7 @@ export function CalendarPage() {
 
             return (
               <div
-                className={`aspect-square min-w-0 rounded-lg p-1 text-left text-xs font-semibold transition hover:bg-emerald-50 sm:rounded-xl sm:p-2 sm:text-sm ${
+                className={`aspect-square min-w-0 rounded-lg p-1 text-left text-xs font-semibold transition-[background-color,color,transform] duration-200 hover:bg-emerald-50 active:scale-95 sm:rounded-xl sm:p-2 sm:text-sm ${
                   hasDayOff
                     ? "bg-amber-50 text-amber-900 ring-1 ring-inset ring-amber-200"
                     : day.isCurrentMonth
@@ -485,7 +487,7 @@ export function CalendarPage() {
                   {dayEvents.slice(0, 5).map((event) => (
                     <button
                       aria-label={event.title}
-                      className={`grid size-4 place-items-center rounded-full sm:size-5 ${
+                      className={`grid size-4 place-items-center rounded-full transition-transform duration-200 active:scale-110 sm:size-5 ${
                         event.isDayOff
                           ? "bg-amber-100"
                           : event.repeat === "YEARLY"
@@ -632,28 +634,14 @@ function CalendarTools({
   const [activeTab, setActiveTab] = useState<"event" | "poll">("event");
   return (
     <>
-      <div className="grid grid-cols-2 gap-1 rounded-2xl bg-[var(--color-surface-muted)] p-1">
-        <button
-          className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
-            activeTab === "event" ? "bg-white text-brand shadow-sm" : "text-[var(--color-text-secondary)]"
-          }`}
-          onClick={() => setActiveTab("event")}
-          type="button"
-        >
-          <CalendarPlus size={16} weight="bold" />
-          일정 등록
-        </button>
-        <button
-          className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-semibold transition ${
-            activeTab === "poll" ? "bg-white text-brand shadow-sm" : "text-[var(--color-text-secondary)]"
-          }`}
-          onClick={() => setActiveTab("poll")}
-          type="button"
-        >
-          <SealQuestion size={16} weight="bold" />
-          날짜 투표
-        </button>
-      </div>
+      <SegmentedControl
+        onChange={setActiveTab}
+        options={[
+          { icon: <CalendarPlus size={16} weight="bold" />, label: "일정 등록", value: "event" },
+          { icon: <SealQuestion size={16} weight="bold" />, label: "날짜 투표", value: "poll" },
+        ]}
+        value={activeTab}
+      />
 
       {activeTab === "event" ? (
         <div className="mt-4">
@@ -713,31 +701,25 @@ function CalendarTools({
             </label>
             <div className="space-y-3 text-sm">
               <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-                <input
+                <AnimatedCheckbox
                   checked={repeat === "YEARLY"}
-                  className="size-4 accent-emerald-500"
                   onChange={(event) => setRepeat(event.target.checked ? "YEARLY" : "NONE")}
-                  type="checkbox"
                 />
                 <Repeat size={18} />
                 매년 보여짐
               </label>
               <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-                <input
+                <AnimatedCheckbox
                   checked={isDayOff}
-                  className="size-4 accent-emerald-500"
                   onChange={(event) => setIsDayOff(event.target.checked)}
-                  type="checkbox"
                 />
                 <Sun size={18} />
                 휴무일 체크
               </label>
               <label className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4">
-                <input
+                <AnimatedCheckbox
                   checked={allDay}
-                  className="size-4 accent-emerald-500"
                   onChange={(event) => setAllDay(event.target.checked)}
-                  type="checkbox"
                 />
                 종일 일정
               </label>

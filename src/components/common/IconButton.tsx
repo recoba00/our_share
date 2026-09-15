@@ -22,7 +22,7 @@ export function IconButton({
     <button
       aria-label={label}
       title={label}
-      className={`grid size-11 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:text-[var(--color-text-primary)] ${variants[variant]} ${className}`}
+      className={`grid size-11 place-items-center rounded-full text-[var(--color-text-secondary)] transition-[background-color,color,transform] duration-200 active:scale-90 hover:text-[var(--color-text-primary)] ${variants[variant]} ${className}`}
       {...props}
     >
       {children}

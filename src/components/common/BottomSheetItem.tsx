@@ -23,7 +23,7 @@ export function BottomSheetItem({
 
   return (
     <button
-      className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50 ${stateClassName} ${className}`}
+      className={`flex min-h-12 w-full items-center justify-between gap-3 rounded-2xl px-4 py-3 text-left text-sm font-semibold transition-[background-color,color,transform] duration-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50 ${stateClassName} ${className}`}
       {...props}
     >
       {children}

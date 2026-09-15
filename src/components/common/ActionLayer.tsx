@@ -16,7 +16,7 @@ export function ActionLayer({ children, isOpen, onClose, title }: ActionLayerPro
 
   return (
     <div className="fixed inset-0 z-40 bg-[var(--color-background)] lg:hidden">
-      <div className="flex h-dvh flex-col">
+      <div className="flex h-dvh flex-col sheet-panel-enter">
         <header className="flex h-16 shrink-0 items-center justify-between bg-[var(--color-surface)] px-4">
           <h2 className="text-lg font-semibold leading-none">{title}</h2>
           <IconButton label="닫기" onClick={onClose} variant="ghost">
