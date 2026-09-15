@@ -1,4 +1,4 @@
-const CACHE_NAME = "our-share-v5";
+const CACHE_NAME = "our-share-v6";
 const SCOPE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [
   SCOPE_PATH,

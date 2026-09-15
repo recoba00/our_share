@@ -442,18 +442,18 @@ export function HomePage() {
         <h2 className="mt-2 text-3xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
-        <div className="mt-6 grid min-w-0 gap-3 sm:grid-cols-3">
-          {members.slice(0, 3).map((member) => (
-            <div key={member.userId} className="min-w-0 rounded-2xl bg-[var(--color-surface-muted)] p-4">
+        <div className="mt-4 grid min-w-0 grid-cols-2 gap-2">
+          {members.slice(0, 4).map((member) => (
+            <div key={member.userId} className="min-w-0 rounded-2xl bg-[var(--color-surface-muted)] p-3">
               <div className="flex min-w-0 items-center justify-between gap-2">
-                <strong className="min-w-0 truncate">{member.displayName ?? member.nickname}</strong>
+                <strong className="min-w-0 truncate text-sm">{member.displayName ?? member.nickname}</strong>
                 <BatteryHigh
                   className={`shrink-0 ${liveLocations[member.userId]?.charging ? "text-brand" : "text-[var(--color-text-secondary)]"}`}
-                  size={18}
+                  size={16}
                 />
               </div>
-              <p className="mt-3 flex min-w-0 items-center gap-1 text-sm">
-                <MapPin className="shrink-0" size={16} weight="fill" />
+              <p className="mt-2 flex min-w-0 items-center gap-1 text-xs">
+                <MapPin className="shrink-0" size={14} weight="fill" />
                 <span className="min-w-0 truncate">
                   {liveLocations[member.userId]
                     ? formatLocationPreview(liveLocations[member.userId])
@@ -468,7 +468,7 @@ export function HomePage() {
             </div>
           ))}
           {members.length === 0 && (
-            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)] sm:col-span-3">
+            <div className="col-span-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
               가족을 만들거나 초대 코드로 참여하면 가족 상황이 표시됩니다.
             </div>
           )}
@@ -476,31 +476,18 @@ export function HomePage() {
       </section>
 
       <Card>
-        <div className="flex items-center gap-3">
-          {user?.photoURL && (
-            <img
-              alt={user.displayName ?? "사용자"}
-              className="size-12 rounded-2xl"
-              src={user.photoURL}
-            />
-          )}
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-              로그인됨
-            </p>
-            <h3 className="truncate text-lg font-semibold">{user?.displayName ?? "가족 구성원"}</h3>
-          </div>
-        </div>
-        <div className="mt-5 grid gap-4">
+        <div className="grid gap-3">
           {activeFamily && (
-            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-                현재 가족
-              </p>
-              <strong className="mt-1 block">{activeFamily.name}</strong>
-              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-                초대 코드: {activeFamily.inviteCode}
-              </p>
+            <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                  현재 가족
+                </p>
+                <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
+              </div>
+              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand">
+                {activeFamily.inviteCode}
+              </span>
             </div>
           )}
           <Input
@@ -509,28 +496,32 @@ export function HomePage() {
             placeholder="예: 우리 가족"
             value={familyName}
           />
-          <Button disabled={isSubmitting} onClick={handleCreateFamily}>
-            <Plus size={18} weight="bold" />
-            가족 생성
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button disabled={isSubmitting} onClick={handleCreateFamily}>
+              <Plus size={18} weight="bold" />
+              가족 생성
+            </Button>
+            <Button disabled={isSubmitting} onClick={handleLoadFamily} variant="secondary">
+              <UsersThree size={18} weight="bold" />
+              불러오기
+            </Button>
+          </div>
           <Input
             label="초대 코드"
             onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
             placeholder="예: A1B2C3"
             value={inviteCode}
           />
-          <Button disabled={isSubmitting} onClick={handleJoinFamily} variant="secondary">
-            <LinkSimple size={18} weight="bold" />
-            초대 코드로 참여
-          </Button>
-          <Button disabled={isSubmitting} onClick={handleLoadFamily} variant="secondary">
-            <UsersThree size={18} weight="bold" />
-            내 가족 불러오기
-          </Button>
-          <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
-            <MapPin size={18} weight="bold" />
-            현재 위치 공유
-          </Button>
+          <div className="grid grid-cols-2 gap-2">
+            <Button disabled={isSubmitting} onClick={handleJoinFamily} variant="secondary">
+              <LinkSimple size={18} weight="bold" />
+              참여
+            </Button>
+            <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
+              <MapPin size={18} weight="bold" />
+              위치 공유
+            </Button>
+          </div>
           <Button onClick={() => void handleEnableNotifications()} variant="secondary">
             <BellRinging size={18} weight="bold" />
             오늘 알림 켜기
@@ -732,7 +723,7 @@ function FamilyLocationMap({
   const bounds = getLocationBounds(pins.map((pin) => pin.location));
 
   return (
-    <div className="relative min-h-[260px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
+    <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
       <div className="absolute inset-0 opacity-70">
         <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
@@ -760,10 +751,9 @@ function FamilyLocationMap({
             }}
             type="button"
           >
-            <div className="relative grid w-20 justify-items-center pb-4 transition active:scale-95">
-              <div className="absolute bottom-2 size-7 rotate-45 rounded-br-[6px] bg-emerald-500 shadow-lg shadow-emerald-900/20" />
-              <div className="relative grid size-16 place-items-center rounded-full bg-emerald-500 p-1.5 shadow-lg shadow-emerald-900/20">
-                <div className="grid size-full place-items-center overflow-hidden rounded-full bg-slate-950 text-[11px] font-semibold text-white ring-2 ring-slate-950">
+            <div className="relative grid w-12 justify-items-center pb-2 transition active:scale-95">
+              <div className="absolute bottom-1 size-5 rotate-45 rounded-br bg-brand shadow-md shadow-emerald-900/20" />
+              <div className="relative grid size-12 place-items-center overflow-hidden rounded-full bg-brand text-[11px] font-semibold text-white shadow-md shadow-emerald-900/20">
                   {member.photoURL ? (
                     <img
                       alt={member.displayName ?? member.nickname}
@@ -775,7 +765,6 @@ function FamilyLocationMap({
                       {getLocationPinLabel(member)}
                     </span>
                   )}
-                </div>
               </div>
             </div>
           </button>
