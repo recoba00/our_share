@@ -140,6 +140,9 @@
 - [x] Recent Memo Summary
 - [x] Active Poll Summary
 - [x] Recent Chat Summary
+- [x] Location Share Toggle / Stop
+- [x] Invite Code Placeholder Join Form
+- [x] Home Group Action and Status Order
 
 ## Location
 
@@ -254,7 +257,7 @@
 - [x] 내 정보 탭을 `MY | 그룹`으로 분리
 - [x] 내 정보 탭 UI를 캘린더 등록 탭과 동일한 세그먼트 스타일로 통일
 - [x] 홈에서 초대 코드로 그룹 참여 제공
-- [x] 홈 헤더에 `우리끼리 > 그룹명...` 형태의 그룹 전환 표시
+- [x] 홈 헤더에 그룹명과 아래 방향 아이콘 형태의 그룹 전환 표시
 - [ ] 다중 그룹 권한과 그룹별 OWNER 관리 테스트 추가
 
 - [ ] Admin SDK Membership Mirror Sync

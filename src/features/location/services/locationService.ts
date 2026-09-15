@@ -1,4 +1,4 @@
-import { onValue, ref, set } from "firebase/database";
+import { onValue, ref, remove, set } from "firebase/database";
 import { realtimeDb } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { LiveLocation } from "../types/locationTypes";
@@ -31,6 +31,16 @@ export async function updateMyLiveLocation({
   userId: string;
 }) {
   await set(ref(realtimeDb, `liveLocations/${familyId}/${userId}`), location);
+}
+
+export async function stopMyLiveLocationShare({
+  familyId,
+  userId,
+}: {
+  familyId: string;
+  userId: string;
+}) {
+  await remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`));
 }
 
 export function getCurrentPosition() {

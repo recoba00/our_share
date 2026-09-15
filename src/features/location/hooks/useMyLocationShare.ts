@@ -2,6 +2,7 @@ import { useState } from "react";
 import {
   getCurrentPosition,
   readBatteryStatus,
+  stopMyLiveLocationShare,
   updateMyLiveLocation,
 } from "../services/locationService";
 
@@ -16,6 +17,7 @@ export function useMyLocationShare({
 }) {
   const [status, setStatus] = useState<LocationShareStatus>("idle");
   const [message, setMessage] = useState("");
+  const [sharedFamilyId, setSharedFamilyId] = useState<string | null>(null);
 
   async function shareCurrentLocation() {
     if (!familyId || !userId) {
@@ -46,6 +48,7 @@ export function useMyLocationShare({
         },
       });
 
+      setSharedFamilyId(familyId);
       setStatus("success");
       setMessage("현재 위치를 Realtime Database에 공유했습니다.");
     } catch (error) {
@@ -54,10 +57,33 @@ export function useMyLocationShare({
     }
   }
 
+  async function stopCurrentLocationShare() {
+    if (!familyId || !userId) {
+      setStatus("error");
+      setMessage("그룹 생성 또는 참여 후 위치 공유를 끊을 수 있습니다.");
+      return;
+    }
+
+    setStatus("loading");
+    setMessage("");
+
+    try {
+      await stopMyLiveLocationShare({ familyId, userId });
+      setSharedFamilyId(null);
+      setStatus("idle");
+      setMessage("위치 공유를 끊었습니다.");
+    } catch (error) {
+      setStatus("error");
+      setMessage(error instanceof Error ? error.message : "위치 공유 해제에 실패했습니다.");
+    }
+  }
+
   return {
+    isShared: sharedFamilyId === familyId,
     isSharing: status === "loading",
     message,
     shareCurrentLocation,
+    stopCurrentLocationShare,
     status,
   };
 }

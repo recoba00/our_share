@@ -2,7 +2,7 @@ import {
   Bell,
   CalendarCheck,
   CaretLeft,
-  CaretRight,
+  CaretDown,
   Check,
   ChatCircleDots,
   GearSix,
@@ -59,7 +59,6 @@ export function AppHeader() {
                 className="size-8 rounded-xl object-cover"
                 src={`${import.meta.env.BASE_URL}brand-logo.svg`}
               />
-              <h1 className="text-lg font-semibold leading-8">우리끼리</h1>
               {status === "authenticated" && families.length > 0 ? (
                 <GroupSwitcher
                   activeFamilyId={activeFamily?.id ?? ""}
@@ -176,8 +175,8 @@ function GroupSwitcher({
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        {compact ? <CaretRight className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
         <span className="truncate">{truncateFamilyName(activeFamily.name)}</span>
+        {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
       </button>
       {isOpen ? (
         <div

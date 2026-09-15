@@ -10,6 +10,8 @@ import {
   MapPin,
   Note,
   Trash,
+  GearSix,
+  UserPlus,
   UsersThree,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -437,7 +439,7 @@ export function HomePage() {
   return (
     <>
     <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+      <section className="order-2 min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">
           오늘의 그룹 상황 &gt; {activeFamily?.name ?? "현재"} 그룹
         </p>
@@ -477,7 +479,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <Card>
+      <Card className="order-1">
         <div className="grid gap-3">
           {activeFamily && (
             <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
@@ -498,17 +500,25 @@ export function HomePage() {
               </button>
             </div>
           )}
-          <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
+          <Button
+            disabled={locationShare.isSharing}
+            onClick={() =>
+              void (locationShare.isShared
+                ? locationShare.stopCurrentLocationShare()
+                : locationShare.shareCurrentLocation())
+            }
+          >
             <MapPin size={18} weight="bold" />
-            위치 공유하기
+            {locationShare.isShared || Boolean(user?.uid && liveLocations[user.uid])
+              ? "위치 공유 끊기"
+              : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
-            <p className="text-sm font-semibold">초대 코드로 그룹 참여</p>
             <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <Input
-                label="초대 코드"
+                label=""
                 onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
-                placeholder="예: A1B2C3"
+                placeholder="초대코드를 입력해주세요"
                 value={inviteCode}
               />
               <Button
@@ -517,6 +527,7 @@ export function HomePage() {
                 onClick={() => void handleJoinFamily()}
                 variant="secondary"
               >
+                <UserPlus size={18} weight="bold" />
                 그룹 참여
               </Button>
             </div>
@@ -525,13 +536,13 @@ export function HomePage() {
             className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
             to="/profile"
           >
-            <UsersThree size={18} weight="bold" />
+            <GearSix size={18} weight="bold" />
             그룹 관리하기
           </Link>
         </div>
       </Card>
 
-      <div className="grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+      <div className="order-3 grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <Card>
           {members.length === 0 ? (
             <>
@@ -800,11 +811,6 @@ function DashboardSwipeSection({
         ))}
       </div>
       <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
-      <div className="pointer-events-none absolute bottom-0 right-4 flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm backdrop-blur">
-        <span className="size-1.5 animate-pulse rounded-full bg-brand" />
-        <span className="size-1.5 animate-pulse rounded-full bg-brand/50 [animation-delay:150ms]" />
-        <span className="size-1.5 animate-pulse rounded-full bg-brand/30 [animation-delay:300ms]" />
-      </div>
     </section>
   );
 }
