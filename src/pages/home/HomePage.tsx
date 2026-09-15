@@ -575,22 +575,22 @@ export function HomePage() {
 
       <div className="grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <Card>
-          <div className="flex items-center gap-2">
-            <MapPin className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-semibold">가족 위치</h3>
-          </div>
           {members.length === 0 ? (
-            <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-              가족 구성원이 있으면 위치 핀이 표시됩니다.
-            </p>
+            <>
+              <div className="flex items-center gap-2">
+                <MapPin className="text-brand" size={22} weight="bold" />
+                <h3 className="text-base font-semibold">가족 위치</h3>
+              </div>
+              <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+                가족 구성원이 있으면 위치 핀이 표시됩니다.
+              </p>
+            </>
           ) : (
-            <div className="mt-4 grid gap-3">
               <FamilyLocationMap
                 locations={liveLocations}
                 members={members}
                 onSelectMember={setSelectedLocationMemberId}
               />
-            </div>
           )}
         </Card>
         <DashboardSwipeSection
@@ -863,6 +863,33 @@ function FamilyLocationMap({
       : []
   );
 
+  function resetMapView() {
+    const map = mapRef.current;
+
+    if (!map || pins.length === 0) {
+      return;
+    }
+
+    const kakao = getKakaoMaps();
+    const center = getAverageLocation(pins.map((pin) => pin.location));
+    const kakaoBounds = new kakao.LatLngBounds();
+
+    pins.forEach(({ location }) => {
+      kakaoBounds.extend(new kakao.LatLng(location.latitude, location.longitude));
+    });
+
+    if (pins.length > 1) {
+      map.setBounds(kakaoBounds, 44, 44, 44, 44);
+    } else {
+      map.setCenter(new kakao.LatLng(center.latitude, center.longitude));
+    }
+
+    window.setTimeout(() => {
+      map.relayout();
+      setProjectedPositions(projectKakaoPinPositions(map, pins));
+    }, 100);
+  }
+
   useEffect(() => {
     let active = true;
 
@@ -945,38 +972,53 @@ function FamilyLocationMap({
   }
 
   return (
-    <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
-      <div
-        className={`absolute inset-0 z-0 ${mapStatus === "READY" ? "opacity-100" : "opacity-0"}`}
-        ref={mapContainerRef}
-      />
-      <div className={`absolute inset-0 z-0 opacity-70 ${mapStatus === "READY" ? "hidden" : ""}`}>
-        <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
-        <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
-        <div className="absolute left-0 top-3/4 h-px w-full bg-white/80" />
-        <div className="absolute left-1/4 top-0 h-full w-px bg-white/80" />
-        <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
-        <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
+    <div className="grid gap-4">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-2">
+          <MapPin className="shrink-0 text-brand" size={22} weight="bold" />
+          <h3 className="min-w-0 truncate text-base font-semibold">가족 위치</h3>
+        </div>
+        <button
+          className="shrink-0 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:text-brand"
+          onClick={resetMapView}
+          type="button"
+        >
+          초기화
+        </button>
       </div>
-      {pins.map(({ member }) => {
-        const position = projectedPositions[member.userId] ?? fallbackPositions[member.userId];
+      <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
+        <div
+          className={`absolute inset-0 z-0 ${mapStatus === "READY" ? "opacity-100" : "opacity-0"}`}
+          ref={mapContainerRef}
+        />
+        <div className={`absolute inset-0 z-0 opacity-70 ${mapStatus === "READY" ? "hidden" : ""}`}>
+          <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
+          <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
+          <div className="absolute left-0 top-3/4 h-px w-full bg-white/80" />
+          <div className="absolute left-1/4 top-0 h-full w-px bg-white/80" />
+          <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
+          <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
+        </div>
+        {pins.map(({ member }) => {
+          const position = projectedPositions[member.userId] ?? fallbackPositions[member.userId];
 
-        return (
-          <button
-            aria-label={`${member.displayName ?? member.nickname} 위치 보기`}
-            className="absolute z-20 -translate-x-1/2 -translate-y-full"
-            key={member.userId}
-            onClick={() => onSelectMember(member.userId)}
-            style={{
-              left: `${position.x}${position.unit}`,
-              top: `${position.y}${position.unit}`,
-            }}
-            type="button"
-          >
-            <LocationMapPin member={member} />
-          </button>
-        );
-      })}
+          return (
+            <button
+              aria-label={`${member.displayName ?? member.nickname} 위치 보기`}
+              className="absolute z-20 -translate-x-1/2 -translate-y-full"
+              key={member.userId}
+              onClick={() => onSelectMember(member.userId)}
+              style={{
+                left: `${position.x}${position.unit}`,
+                top: `${position.y}${position.unit}`,
+              }}
+              type="button"
+            >
+              <LocationMapPin member={member} />
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
