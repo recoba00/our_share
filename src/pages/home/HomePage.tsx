@@ -435,6 +435,8 @@ export function HomePage() {
     : undefined;
   const selectedManageMember =
     members.find((member) => member.userId === selectedManageMemberId) ?? null;
+  const isLocationShared =
+    locationShare.isShared || Boolean(user?.uid && liveLocations[user.uid]);
 
   return (
     <>
@@ -489,32 +491,40 @@ export function HomePage() {
                 </p>
                 <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
               </div>
-              <button
-                aria-label="그룹 초대 코드 복사"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
-                onClick={() => void handleCopyInviteCode()}
-                type="button"
-              >
-                {activeFamily.inviteCode}
-                <CopySimple size={14} weight="bold" />
-              </button>
+              <div className="flex shrink-0 items-center gap-1">
+                <button
+                  aria-label="그룹 초대 코드 복사"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
+                  onClick={() => void handleCopyInviteCode()}
+                  type="button"
+                >
+                  {activeFamily.inviteCode}
+                  <CopySimple size={14} weight="bold" />
+                </button>
+                <Link
+                  aria-label="그룹 관리하기"
+                  className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                  to="/profile"
+                >
+                  <GearSix size={18} weight="bold" />
+                </Link>
+              </div>
             </div>
           )}
           <Button
+            className={isLocationShared ? "bg-red-50 text-red-500 hover:bg-red-100" : ""}
             disabled={locationShare.isSharing}
             onClick={() =>
-              void (locationShare.isShared
+              void (isLocationShared
                 ? locationShare.stopCurrentLocationShare()
                 : locationShare.shareCurrentLocation())
             }
           >
             <MapPin size={18} weight="bold" />
-            {locationShare.isShared || Boolean(user?.uid && liveLocations[user.uid])
-              ? "위치 공유 끊기"
-              : "위치 공유하기"}
+            {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
-            <div className="grid items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
               <Input
                 label=""
                 onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
@@ -522,7 +532,7 @@ export function HomePage() {
                 value={inviteCode}
               />
               <Button
-                className="sm:mb-0"
+                className="shrink-0"
                 disabled={isJoiningFamily}
                 onClick={() => void handleJoinFamily()}
                 variant="secondary"
@@ -532,13 +542,6 @@ export function HomePage() {
               </Button>
             </div>
           </div>
-          <Link
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
-            to="/profile"
-          >
-            <GearSix size={18} weight="bold" />
-            그룹 관리하기
-          </Link>
         </div>
       </Card>
 
@@ -570,7 +573,7 @@ export function HomePage() {
         />
       </div>
 
-      <Card className="lg:col-span-2">
+      <Card className="order-4 lg:col-span-2">
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
           <h3 className="text-base font-semibold">그룹 구성원</h3>

@@ -13,6 +13,7 @@ import { useState, type ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { useFamily } from "../../features/family/useFamily";
+import { BottomSheet } from "../common/BottomSheet";
 import { Button } from "../common/Button";
 
 type LocationState = {
@@ -178,18 +179,12 @@ function GroupSwitcher({
         <span className="truncate">{truncateFamilyName(activeFamily.name)}</span>
         {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
       </button>
-      {isOpen ? (
-        <div
-          className={`absolute top-11 z-40 w-[min(260px,calc(100vw-32px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl ${compact ? "left-0" : "right-0"}`}
-          role="listbox"
-        >
-          <p className="px-3 pb-2 pt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
-            그룹 전환
-          </p>
+      <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="그룹 전환">
+        <div className="grid gap-2" role="listbox">
           {families.map((family) => (
             <button
               aria-selected={family.id === activeFamilyId}
-              className="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-[var(--color-surface-muted)]"
+              className="flex min-h-12 w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-semibold transition hover:bg-[var(--color-surface-muted)]"
               key={family.id}
               onClick={() => {
                 onSelect(family.id);
@@ -202,15 +197,8 @@ function GroupSwitcher({
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </button>
           ))}
-          <Link
-            className="mt-1 block border-t border-[var(--color-border)] px-3 pt-3 text-xs font-semibold text-brand"
-            onClick={() => setIsOpen(false)}
-            to="/profile"
-          >
-            그룹 관리하기
-          </Link>
         </div>
-      ) : null}
+      </BottomSheet>
     </div>
   );
 }

@@ -99,6 +99,7 @@
 - [x] Header profile entry opens My Info
 - [x] Header profile black 4% inside border
 - [x] Header icon actions support unboxed ghost style
+- [x] Header group switcher uses shared Bottom Sheet with immediate selection
 - [x] Fixed glass header
 - [x] Glass bottom navigation with safe area
 - [x] Bottom Navigation Scroll To Top
