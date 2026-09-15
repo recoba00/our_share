@@ -2,7 +2,9 @@ import {
   CalendarDots,
   ChartBar,
   ChatCircleDots,
+  GearSix,
   LockKey,
+  MagnifyingGlass,
   PaperPlaneTilt,
   PencilSimple,
   SealQuestion,
@@ -14,11 +16,12 @@ import {
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
+import { ActionLayer } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
+import { IconButton } from "../../components/common/IconButton";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
 import { SectionHeading } from "../../components/common/SectionHeading";
@@ -54,6 +57,15 @@ import {
   hasDuplicatePollOptions,
 } from "../../features/poll/utils/pollDraft";
 
+type ChatRoomFilter = "ALL" | "DIRECT" | "PRIVATE_GROUP" | "FAMILY";
+
+const chatRoomFilters: { label: string; value: ChatRoomFilter }[] = [
+  { label: "전체", value: "ALL" },
+  { label: "그룹", value: "FAMILY" },
+  { label: "1:1", value: "DIRECT" },
+  { label: "비밀방", value: "PRIVATE_GROUP" },
+];
+
 export function ChatPage() {
   const { user } = useAuth();
   const { activeFamily, isLoading: isFamilyLoading } = useFamily();
@@ -72,6 +84,9 @@ export function ChatPage() {
   const [secretRoomName, setSecretRoomName] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPollCreateOpen, setIsPollCreateOpen] = useState(false);
+  const [isRoomSearchOpen, setIsRoomSearchOpen] = useState(false);
+  const [roomFilter, setRoomFilter] = useState<ChatRoomFilter>("ALL");
+  const [roomQuery, setRoomQuery] = useState("");
   const [busyMessageId, setBusyMessageId] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
   const [editingMessageText, setEditingMessageText] = useState("");
@@ -92,6 +107,25 @@ export function ChatPage() {
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
   );
+  const visibleRooms = useMemo(() => {
+    const normalizedQuery = roomQuery.trim().toLocaleLowerCase();
+
+    return rooms.filter((room) => {
+      if (roomFilter !== "ALL" && room.type !== roomFilter) {
+        return false;
+      }
+
+      if (!normalizedQuery) {
+        return true;
+      }
+
+      const searchableText = `${getRoomDisplayName(room, members, user?.uid)} ${
+        room.lastMessageText ?? ""
+      }`.toLocaleLowerCase();
+
+      return searchableText.includes(normalizedQuery);
+    });
+  }, [members, roomFilter, roomQuery, rooms, user?.uid]);
   const normalizedPollOptions = getNormalizedPollOptions(pollOptions);
   const hasDuplicatePollDraftOptions = hasDuplicatePollOptions(pollOptions);
   const canCreateRoomPoll =
@@ -520,15 +554,17 @@ export function ChatPage() {
 
   const chatCreateTools = (
     <>
-      <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-        <div className="flex items-center gap-2 text-sm font-semibold">
-          <UserPlus size={18} weight="bold" />
-          그룹 초대 코드
+      {activeFamily.role === "OWNER" ? (
+        <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold">
+            <UserPlus size={18} weight="bold" />
+            그룹 초대 코드
+          </div>
+          <p className="mt-2 font-mono text-2xl font-semibold text-brand">
+            {activeFamily.inviteCode}
+          </p>
         </div>
-        <p className="mt-2 font-mono text-2xl font-semibold text-brand">
-          {activeFamily.inviteCode}
-        </p>
-      </div>
+      ) : null}
 
       <form className="mt-4 grid gap-2" onSubmit={handleCreateSecretRoom}>
         <Input
@@ -594,9 +630,6 @@ export function ChatPage() {
 
   return (
     <>
-      {!roomId ? (
-        <MobileCreateButton label="+ 채팅방" onClick={() => setIsCreateOpen(true)} />
-      ) : null}
       <ActionLayer
         isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
@@ -730,7 +763,60 @@ export function ChatPage() {
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-hidden`}>
-        <SectionHeading icon={<ChatCircleDots size={20} weight="bold" />} title="채팅" />
+        <SectionHeading
+          action={
+            <div className="flex items-center gap-1">
+              <IconButton
+                label="채팅방 검색"
+                onClick={() => setIsRoomSearchOpen((current) => !current)}
+                variant="ghost"
+              >
+                <MagnifyingGlass size={21} />
+              </IconButton>
+              <IconButton label="채팅방 만들기" onClick={() => setIsCreateOpen(true)} variant="ghost">
+                <ChatCircleDots size={21} />
+              </IconButton>
+              <Link
+                aria-label="설정"
+                className="grid size-11 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text-primary)]"
+                to="/settings"
+              >
+                <GearSix size={21} />
+              </Link>
+            </div>
+          }
+          icon={<ChatCircleDots size={20} weight="bold" />}
+          title="채팅"
+        />
+        {isRoomSearchOpen ? (
+          <label className="mt-3 flex h-11 items-center gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3">
+            <MagnifyingGlass className="shrink-0 text-[var(--color-text-secondary)]" size={18} />
+            <span className="sr-only">채팅방 검색</span>
+            <input
+              autoFocus
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400"
+              onChange={(event) => setRoomQuery(event.target.value)}
+              placeholder="채팅방 검색"
+              value={roomQuery}
+            />
+          </label>
+        ) : null}
+        <div className="mt-4 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+          {chatRoomFilters.map((filter) => (
+            <button
+              className={`shrink-0 rounded-full px-4 py-2 text-sm font-semibold transition ${
+                roomFilter === filter.value
+                  ? "bg-[var(--color-text-primary)] text-[var(--color-surface)]"
+                  : "bg-[var(--color-surface-muted)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+              }`}
+              key={filter.value}
+              onClick={() => setRoomFilter(filter.value)}
+              type="button"
+            >
+              {filter.label}
+            </button>
+          ))}
+        </div>
         <div className="hidden lg:block">{chatCreateTools}</div>
 
         <div className="mt-6">
@@ -770,39 +856,60 @@ export function ChatPage() {
         <div className="mt-6">
           <SectionHeading icon={<ChatCircleDots size={20} weight="bold" />} level="h3" title="채팅방" />
           <div className="mt-3 grid gap-3">
-          {rooms.map((room) => (
-            <div
-              className={`w-full min-w-0 rounded-2xl p-4 text-left transition ${
-                selectedRoom?.id === room.id
-                  ? "bg-emerald-50 ring-2 ring-brand"
-                  : "bg-[var(--color-surface-muted)] hover:bg-slate-200"
-              }`}
-              key={room.id}
-            >
-              <button
-                className="w-full min-w-0 text-left"
-                onClick={() => openRoom(room.id)}
-                type="button"
-              >
-                <strong className="block truncate">{getRoomDisplayName(room, members, user?.uid)}</strong>
-                <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
-                  {getRoomTypeLabel(room)} · {room.lastMessageText ?? "아직 대화가 없습니다."}
-                </p>
-              </button>
-              {room.type !== "FAMILY" && room.createdBy === user?.uid ? (
-                <div className="mt-3 flex justify-end">
-                  <Button
-                    onClick={() => void handleDeleteRoom(room)}
+            {visibleRooms.length === 0 ? (
+              <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
+                {roomQuery || roomFilter !== "ALL"
+                  ? "조건에 맞는 채팅방이 없습니다."
+                  : "아직 채팅방이 없습니다."}
+              </p>
+            ) : (
+              visibleRooms.map((room) => (
+                <div
+                  className={`flex min-w-0 items-center gap-3 px-1 py-3 transition ${
+                    selectedRoom?.id === room.id
+                      ? "rounded-xl bg-brand-soft px-3 ring-2 ring-brand"
+                      : "hover:bg-[var(--color-surface-muted)]"
+                  }`}
+                  key={room.id}
+                >
+                  <button
+                    className="flex min-w-0 flex-1 items-center gap-3 text-left"
+                    onClick={() => openRoom(room.id)}
                     type="button"
-                    variant="secondary"
                   >
-                    <Trash size={18} weight="bold" />
-                    삭제
-                  </Button>
+                    <RoomAvatar currentUserId={user?.uid} members={members} room={room} />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex min-w-0 items-center justify-between gap-3">
+                        <strong className="min-w-0 truncate text-sm">
+                          {getRoomDisplayName(room, members, user?.uid)}
+                        </strong>
+                        {formatRoomTime(room.lastMessageAt) ? (
+                          <time className="shrink-0 text-[11px] text-[var(--color-text-secondary)]">
+                            {formatRoomTime(room.lastMessageAt)}
+                          </time>
+                        ) : null}
+                      </span>
+                      <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
+                        {room.lastMessageText ?? `${getRoomTypeLabel(room)} 채팅방`}
+                      </span>
+                    </span>
+                  </button>
+                  {room.type !== "FAMILY" && room.createdBy === user?.uid ? (
+                    <IconButton
+                      className="size-8 shrink-0"
+                      label="채팅방 삭제"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleDeleteRoom(room);
+                      }}
+                      variant="ghost"
+                    >
+                      <Trash size={17} />
+                    </IconButton>
+                  ) : null}
                 </div>
-              ) : null}
-            </div>
-          ))}
+              ))
+            )}
           </div>
         </div>
 
@@ -907,6 +1014,87 @@ function getRoomDisplayName(
   return targetMember
     ? `${targetMember.displayName ?? targetMember.nickname}님과의 대화`
     : room.name;
+}
+
+function RoomAvatar({
+  currentUserId,
+  members,
+  room,
+}: {
+  currentUserId: string | undefined;
+  members: FamilyMemberProfile[];
+  room: ChatRoom;
+}) {
+  const targetUserId = room.memberIds.find((memberId) => memberId !== currentUserId);
+  const targetMember = members.find((member) => member.userId === targetUserId);
+
+  if (room.type === "DIRECT" && targetMember?.photoURL) {
+    return (
+      <img
+        alt={targetMember.displayName ?? targetMember.nickname}
+        className="size-12 shrink-0 rounded-2xl object-cover"
+        src={targetMember.photoURL}
+      />
+    );
+  }
+
+  return (
+    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand">
+      {room.type === "DIRECT" ? (
+        <User size={26} weight="fill" />
+      ) : room.type === "PRIVATE_GROUP" ? (
+        <LockKey size={24} weight="fill" />
+      ) : (
+        <Users size={26} weight="fill" />
+      )}
+    </span>
+  );
+}
+
+function formatRoomTime(value: unknown) {
+  const milliseconds = getTimestampMilliseconds(value);
+
+  if (!milliseconds) {
+    return "";
+  }
+
+  const date = new Date(milliseconds);
+  const now = new Date();
+  const isToday = date.toDateString() === now.toDateString();
+
+  if (isToday) {
+    return new Intl.DateTimeFormat("ko-KR", {
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  return new Intl.DateTimeFormat("ko-KR", {
+    day: "numeric",
+    month: "numeric",
+  }).format(date);
+}
+
+function getTimestampMilliseconds(value: unknown) {
+  if (value instanceof Date) {
+    return value.getTime();
+  }
+
+  if (typeof value === "number") {
+    return value;
+  }
+
+  if (value && typeof value === "object") {
+    if ("toMillis" in value && typeof value.toMillis === "function") {
+      return value.toMillis();
+    }
+
+    if ("seconds" in value && typeof value.seconds === "number") {
+      return value.seconds * 1000;
+    }
+  }
+
+  return 0;
 }
 
 function MessageRow({

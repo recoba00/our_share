@@ -656,7 +656,7 @@ function CalendarTools({
       </div>
 
       {activeTab === "event" ? (
-        <>
+        <div className="mt-4">
           <SectionHeading
             icon={<CalendarPlus size={20} weight="bold" />}
             level="h3"
@@ -758,7 +758,7 @@ function CalendarTools({
               </div>
             ) : null}
           </form>
-        </>
+        </div>
       ) : (
         <div className="mt-4">
         <SectionHeading

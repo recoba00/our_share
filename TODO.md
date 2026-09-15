@@ -102,6 +102,8 @@
 - [x] Header group switcher uses shared Bottom Sheet with immediate selection
 - [x] Shared card section heading typography, icon, and spacing
 - [x] Remove inconsistent chat and action-layer title separators
+- [x] Kakao-style chat list toolbar, filters, avatars, previews, and timestamps
+- [x] Calendar create tabs share the same content spacing
 - [x] Role-aware owner/member group cards with owner-only invite code visibility
 - [x] Back buttons use the `ArrowLeft` icon consistently
 - [x] App / modal / bottom sheet header height fixed to 64px
