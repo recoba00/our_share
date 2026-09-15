@@ -3,6 +3,7 @@ import {
   CalendarDots,
   CaretLeft,
   ChatCircleDots,
+  CopySimple,
   DotsThreeVertical,
   GoogleLogo,
   LinkSimple,
@@ -385,6 +386,25 @@ export function HomePage() {
     }
   }
 
+  async function handleCopyInviteCode() {
+    if (!activeFamily) {
+      notify("복사할 초대 코드가 없습니다.", "info");
+      return;
+    }
+
+    if (!navigator.clipboard || !window.isSecureContext) {
+      notify("현재 브라우저에서는 클립보드 복사를 사용할 수 없습니다.", "error");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(activeFamily.inviteCode);
+      notify("초대 코드를 복사했습니다.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    }
+  }
+
   function notify(message: string, variant: "error" | "info" | "success") {
     setFeedback(message);
     showToast({ message, variant });
@@ -452,9 +472,15 @@ export function HomePage() {
                 </p>
                 <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
               </div>
-              <span className="shrink-0 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand">
+              <button
+                aria-label="초대 코드 복사"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
+                onClick={() => void handleCopyInviteCode()}
+                type="button"
+              >
                 {activeFamily.inviteCode}
-              </span>
+                <CopySimple size={14} weight="bold" />
+              </button>
             </div>
           )}
           <Input
