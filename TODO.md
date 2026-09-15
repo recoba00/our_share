@@ -146,6 +146,8 @@
 - [x] Location Share Toggle / Stop
 - [x] Invite Code Placeholder Join Form
 - [x] Home Group Action and Status Order
+- [x] Home Status Before Invite Section
+- [x] Invite Code Input and Join Button Spacing
 
 ## Location
 

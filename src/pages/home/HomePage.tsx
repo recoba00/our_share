@@ -441,7 +441,7 @@ export function HomePage() {
   return (
     <>
     <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <section className="order-2 min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+      <section className="order-1 min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">
           오늘의 그룹 상황 &gt; {activeFamily?.name ?? "현재"} 그룹
         </p>
@@ -481,7 +481,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <Card className="order-1">
+      <Card className="order-2">
         <div className="grid gap-3">
           {activeFamily && (
             <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
@@ -524,7 +524,7 @@ export function HomePage() {
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
+            <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
               <Input
                 label=""
                 onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
@@ -532,7 +532,7 @@ export function HomePage() {
                 value={inviteCode}
               />
               <Button
-                className="shrink-0"
+                className="w-full shrink-0 sm:w-auto"
                 disabled={isJoiningFamily}
                 onClick={() => void handleJoinFamily()}
                 variant="secondary"
