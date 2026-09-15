@@ -1,4 +1,5 @@
-const CACHE_NAME = "our-share-v15";
+// This marker is replaced with the build commit/time in dist during every production build.
+const CACHE_NAME = "our-share-__OUR_SHARE_BUILD_ID__";
 const SCOPE_PATH = new URL(self.registration.scope).pathname;
 const APP_SHELL = [
   SCOPE_PATH,

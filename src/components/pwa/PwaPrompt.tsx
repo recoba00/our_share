@@ -63,8 +63,10 @@ export function PwaPrompt() {
   }
 
   function reloadForUpdate() {
-    navigator.serviceWorker.controller?.postMessage({ type: "SKIP_WAITING" });
-    window.setTimeout(() => window.location.reload(), 500);
+    void navigator.serviceWorker.getRegistration().then((registration) => {
+      registration?.waiting?.postMessage({ type: "SKIP_WAITING" });
+      window.setTimeout(() => window.location.reload(), 800);
+    });
   }
 
   if (!shouldShowInstall && !isUpdateReady) {

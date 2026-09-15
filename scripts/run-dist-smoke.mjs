@@ -125,6 +125,10 @@ function validateServiceWorker() {
   if (serviceWorker.includes("/our_share/")) {
     failures.push("service worker should not hardcode /our_share/.");
   }
+
+  if (serviceWorker.includes("__OUR_SHARE_BUILD_ID__")) {
+    failures.push("service worker build marker was not stamped.");
+  }
 }
 
 function toDistFilePath(assetPath) {

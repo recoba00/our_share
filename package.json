@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
-    "build:firebase": "tsc -b && vite build --base=/",
+    "build": "tsc -b && vite build && node scripts/stamp-service-worker.mjs",
+    "build:firebase": "tsc -b && vite build --base=/ && node scripts/stamp-service-worker.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
     "test:unit": "vitest run tests/pollDraft.test.ts",
