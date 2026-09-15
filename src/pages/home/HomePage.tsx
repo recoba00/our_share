@@ -13,6 +13,7 @@ import {
 } from "@phosphor-icons/react";
 import { useEffect, useState } from "react";
 import { Avatar } from "../../components/common/Avatar";
+import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -90,6 +91,7 @@ export function HomePage() {
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
   const [deletingMemberId, setDeletingMemberId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
+  const [selectedLocationMemberId, setSelectedLocationMemberId] = useState("");
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const locationShare = useMyLocationShare({
@@ -426,8 +428,14 @@ export function HomePage() {
   const isFamilyOwner = members.some(
     (member) => member.userId === user?.uid && member.role === "OWNER"
   );
+  const selectedLocationMember =
+    members.find((member) => member.userId === selectedLocationMemberId) ?? null;
+  const selectedLocation = selectedLocationMember
+    ? liveLocations[selectedLocationMember.userId]
+    : undefined;
 
   return (
+    <>
     <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
       <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">오늘의 가족 상황</p>
@@ -553,16 +561,8 @@ export function HomePage() {
               <FamilyLocationMap
                 locations={liveLocations}
                 members={members}
+                onSelectMember={setSelectedLocationMemberId}
               />
-              {members.map((member) => (
-                <FamilyLocationPin
-                  key={member.userId}
-                  location={liveLocations[member.userId]}
-                  member={member}
-                  onQuickMessage={handleSendQuickMessage}
-                  sendingMessageKey={sendingQuickMessageTo}
-                />
-              ))}
             </div>
           )}
         </Card>
@@ -677,15 +677,32 @@ export function HomePage() {
         )}
       </Card>
     </div>
+    <BottomSheet
+      isOpen={Boolean(selectedLocationMember)}
+      onClose={() => setSelectedLocationMemberId("")}
+      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "가족 위치"}
+    >
+      {selectedLocationMember ? (
+        <FamilyLocationPin
+          location={selectedLocation}
+          member={selectedLocationMember}
+          onQuickMessage={handleSendQuickMessage}
+          sendingMessageKey={sendingQuickMessageTo}
+        />
+      ) : null}
+    </BottomSheet>
+    </>
   );
 }
 
 function FamilyLocationMap({
   locations,
   members,
+  onSelectMember,
 }: {
   locations: Record<string, LiveLocation>;
   members: FamilyMemberProfile[];
+  onSelectMember: (memberId: string) => void;
 }) {
   const pins = members
     .map((member) => {
@@ -730,29 +747,34 @@ function FamilyLocationMap({
         const position = getLocationPinPosition(location, bounds);
 
         return (
-          <div
+          <button
+            aria-label={`${member.displayName ?? member.nickname} 위치 보기`}
             className="absolute -translate-x-1/2 -translate-y-full"
             key={member.userId}
+            onClick={() => onSelectMember(member.userId)}
             style={{
               left: `${position.x}%`,
               top: `${position.y}%`,
             }}
+            type="button"
           >
-            <div className="relative flex min-w-[120px] flex-col items-center">
-              <div className="rounded-full border border-black/5 bg-white p-1 shadow-lg">
+            <div className="relative flex min-w-[88px] flex-col items-center transition active:scale-95">
+              <div className="rounded-full bg-emerald-500 p-1.5 shadow-lg shadow-emerald-900/20">
+                <div className="rounded-full bg-slate-950 p-1">
                 <Avatar
                   alt={member.displayName ?? member.nickname}
                   src={member.photoURL}
                 />
+                </div>
               </div>
-              <div className="mt-1 max-w-[136px] rounded-full bg-slate-950/85 px-3 py-1 text-center text-xs font-semibold text-white shadow-sm">
+              <div className="mt-1 max-w-[116px] rounded-full bg-slate-950 px-3 py-1 text-center text-xs font-semibold text-white shadow-sm">
                 <span className="block truncate">
                   {member.displayName ?? member.nickname}
                 </span>
               </div>
-              <div className="mt-[-1px] size-3 rotate-45 bg-slate-950/85" />
+              <div className="mt-[-1px] size-4 rotate-45 rounded-br-sm bg-emerald-500" />
             </div>
-          </div>
+          </button>
         );
       })}
     </div>
@@ -777,9 +799,9 @@ function DashboardList({
   return (
     <ul className="mt-4 space-y-3 text-sm">
       {items.map((item) => (
-        <li className="flex justify-between gap-3" key={`${item.label}-${item.meta}`}>
-          <span className="truncate">{item.label}</span>
-          <strong className="shrink-0 text-[var(--color-text-secondary)]">
+        <li className="flex min-w-0 justify-between gap-3" key={`${item.label}-${item.meta}`}>
+          <span className="min-w-0 truncate">{item.label}</span>
+          <strong className="min-w-0 max-w-[58%] shrink truncate text-right text-[var(--color-text-secondary)]">
             {item.meta}
           </strong>
         </li>
