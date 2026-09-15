@@ -33,25 +33,25 @@ export function AppHeader() {
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
 
   return (
-    <header className="fixed inset-x-0 top-0 z-30 border-b border-white/60 bg-white/75 px-4 py-3 shadow-sm backdrop-blur-xl sm:px-6">
-      <div className="mx-auto flex max-w-screen-2xl items-center justify-between">
+    <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 px-4 shadow-sm backdrop-blur-xl sm:px-6">
+      <div className="mx-auto flex h-full max-w-screen-2xl items-center justify-between">
         <div className="flex min-w-0 items-center gap-3">
           {isSettings ? (
             <>
               <Link aria-label="내 정보로 돌아가기" className="grid size-8 place-items-center" to="/profile">
                 <CaretLeft size={22} />
               </Link>
-              <h1 className="text-lg font-semibold leading-8">{title}</h1>
+              <h1 className="text-lg font-semibold leading-none">{title}</h1>
             </>
           ) : isChatRoom ? (
             <>
               <Link aria-label="채팅 목록으로 돌아가기" className="grid size-8 place-items-center lg:hidden" to="/chat">
                 <CaretLeft size={22} />
               </Link>
-              <h1 className="min-w-0 truncate text-lg font-semibold leading-8 lg:hidden">
+              <h1 className="min-w-0 truncate text-lg font-semibold leading-none lg:hidden">
                 {locationState?.chatRoomName ?? "채팅방"}
               </h1>
-              <h1 className="hidden text-lg font-semibold leading-8 lg:block">채팅</h1>
+              <h1 className="hidden text-lg font-semibold leading-none lg:block">채팅</h1>
             </>
           ) : isHome ? (
             <div className="flex min-w-0 items-center gap-3">
@@ -70,7 +70,7 @@ export function AppHeader() {
               ) : null}
             </div>
           ) : (
-            <h1 className="text-lg font-semibold leading-8">{title}</h1>
+            <h1 className="text-lg font-semibold leading-none">{title}</h1>
           )}
         </div>
         <div className="relative flex items-center gap-2">
@@ -170,7 +170,7 @@ function GroupSwitcher({
         aria-haspopup="listbox"
         className={
           compact
-            ? "flex max-w-full min-w-0 items-center gap-1 text-lg font-semibold leading-8 transition hover:text-brand"
+            ? "flex max-w-full min-w-0 items-center gap-1 text-lg font-semibold leading-none transition hover:text-brand"
             : "flex h-8 max-w-full items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
         }
         onClick={() => setIsOpen((current) => !current)}

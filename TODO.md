@@ -100,6 +100,8 @@
 - [x] Header profile black 4% inside border
 - [x] Header icon actions support unboxed ghost style
 - [x] Header group switcher uses shared Bottom Sheet with immediate selection
+- [x] App / modal / bottom sheet header height fixed to 64px
+- [x] App / modal / bottom sheet header title typography unified
 - [x] Fixed glass header
 - [x] Glass bottom navigation with safe area
 - [x] Bottom Navigation Scroll To Top

@@ -53,7 +53,7 @@ export function Modal({
       />
       <section className="relative grid max-h-[calc(100vh-32px)] w-full max-w-lg overflow-hidden rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl">
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
-          <h2 className="min-w-0 truncate text-lg font-semibold">{title}</h2>
+          <h2 className="min-w-0 truncate text-lg font-semibold leading-none">{title}</h2>
           <IconButton label={closeLabel} onClick={onClose} variant="ghost">
             <X size={18} weight="bold" />
           </IconButton>

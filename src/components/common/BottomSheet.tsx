@@ -54,7 +54,7 @@ export function BottomSheet({
         <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
           <div className="flex min-w-0 items-center gap-2">
             {titleAction}
-            <h2 className="min-w-0 truncate text-lg font-semibold">{title}</h2>
+            <h2 className="min-w-0 truncate text-lg font-semibold leading-none">{title}</h2>
           </div>
           <IconButton
             className="bg-transparent hover:bg-transparent"
