@@ -890,8 +890,8 @@ function FamilyLocationMap({
           });
 
         mapRef.current = map;
-        map.setDraggable(false);
-        map.setZoomable(false);
+        map.setDraggable(true);
+        map.setZoomable(true);
 
         const kakaoBounds = new kakao.LatLngBounds();
         pins.forEach(({ location }) => {
@@ -973,20 +973,20 @@ function FamilyLocationMap({
             }}
             type="button"
           >
-            <div className="relative grid w-12 justify-items-center pb-2 transition active:scale-95">
-              <div className="absolute bottom-1 size-5 rotate-45 rounded-br bg-brand shadow-md shadow-emerald-900/20" />
-              <div className="relative grid size-12 place-items-center overflow-hidden rounded-full bg-brand text-[11px] font-semibold text-white shadow-md shadow-emerald-900/20">
-                  {member.photoURL ? (
-                    <img
-                      alt={member.displayName ?? member.nickname}
-                      className="size-full rounded-full object-cover"
-                      src={member.photoURL}
-                    />
-                  ) : (
-                    <span className="px-1 text-center leading-4">
-                      {getLocationPinLabel(member)}
-                    </span>
-                  )}
+            <div className="relative grid w-12 justify-items-center pb-3 transition active:scale-95">
+              <div className="absolute bottom-[5px] size-[18px] rotate-45 rounded-br-[5px] bg-brand shadow-md shadow-emerald-900/20" />
+              <div className="relative grid size-12 place-items-center overflow-hidden rounded-full border-4 border-brand bg-brand text-[11px] font-semibold text-white shadow-md shadow-emerald-900/20">
+                {member.photoURL ? (
+                  <img
+                    alt={member.displayName ?? member.nickname}
+                    className="size-full rounded-full object-cover"
+                    src={member.photoURL}
+                  />
+                ) : (
+                  <span className="px-1 text-center leading-4">
+                    {getLocationPinLabel(member)}
+                  </span>
+                )}
               </div>
             </div>
           </button>
