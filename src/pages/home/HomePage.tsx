@@ -7,29 +7,21 @@ import {
   CopySimple,
   DotsThreeVertical,
   GoogleLogo,
-  LinkSimple,
   MapPin,
   Note,
-  Plus,
   Trash,
   UsersThree,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Avatar } from "../../components/common/Avatar";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
-import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
-import {
-  createFamily,
-  deleteFamilyMember,
-  getFamilyMembers,
-  joinFamilyByInviteCode,
-  updateFamilyMemberRole,
-} from "../../features/family/services/familyService";
+import { deleteFamilyMember, getFamilyMembers, updateFamilyMemberRole } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
 import type {
   FamilyMemberProfile,
@@ -122,15 +114,12 @@ declare global {
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
-  const { activeFamily, refreshFamilies } = useFamily();
+  const { activeFamily } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
-  const [familyName, setFamilyName] = useState("");
-  const [inviteCode, setInviteCode] = useState("");
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
   const [deletingMemberId, setDeletingMemberId] = useState("");
@@ -246,49 +235,6 @@ export function HomePage() {
     });
   }, [locationShare.message, locationShare.status, showToast]);
 
-  async function handleCreateFamily() {
-    if (!user || !familyName.trim()) {
-      notify("그룹 이름을 입력해주세요.", "info");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await createFamily({ name: familyName.trim(), owner: user });
-      await refreshFamilies(result.id);
-      setMembers(await getFamilyMembers(result.id));
-      notify(`그룹이 생성되었습니다. 초대 코드: ${result.inviteCode}`, "success");
-      setFamilyName("");
-    } catch (error) {
-      notify(getErrorMessage(error), "error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
-  async function handleJoinFamily() {
-    if (!user || !inviteCode.trim()) {
-      notify("초대 코드를 입력해주세요.", "info");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const result = await joinFamilyByInviteCode({
-        inviteCode,
-        user,
-      });
-      await refreshFamilies(result.id);
-      setMembers(await getFamilyMembers(result.id));
-      notify(`${result.name} 그룹에 참여했습니다.`, "success");
-      setInviteCode("");
-    } catch (error) {
-      notify(getErrorMessage(error), "error");
-    } finally {
-      setIsSubmitting(false);
-    }
-  }
-
   if (status === "loading") {
     return (
       <Card>
@@ -328,30 +274,6 @@ export function HomePage() {
         </Card>
       </div>
     );
-  }
-
-  async function handleLoadFamily() {
-    if (!user) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const families = await refreshFamilies();
-      const result = families[0];
-
-      if (!result) {
-        notify("아직 참여한 그룹이 없습니다.", "info");
-        return;
-      }
-
-      setMembers(await getFamilyMembers(result.id));
-      notify(`${result.name} 그룹 정보를 불러왔습니다.`, "success");
-    } catch (error) {
-      notify(getErrorMessage(error), "error");
-    } finally {
-      setIsSubmitting(false);
-    }
   }
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
@@ -546,36 +468,17 @@ export function HomePage() {
               </button>
             </div>
           )}
-          <Input
-            label="새 그룹 이름"
-            onChange={(event) => setFamilyName(event.target.value)}
-            placeholder="예: 우리 그룹"
-            value={familyName}
-          />
-          <div className="grid grid-cols-2 gap-2">
-            <Button disabled={isSubmitting} onClick={handleCreateFamily}>
-              <Plus size={18} weight="bold" />
-              그룹 생성
-            </Button>
-            <Button disabled={isSubmitting} onClick={handleLoadFamily} variant="secondary">
-              <UsersThree size={18} weight="bold" />
-              불러오기
-            </Button>
-          </div>
-          <Input
-            label="초대 코드"
-            onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
-            placeholder="예: A1B2C3"
-            value={inviteCode}
-          />
-          <Button disabled={isSubmitting} onClick={handleJoinFamily} variant="secondary">
-            <LinkSimple size={18} weight="bold" />
-            참여
-          </Button>
           <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
             <MapPin size={18} weight="bold" />
             위치 공유하기
           </Button>
+          <Link
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-button border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
+            to="/profile"
+          >
+            <UsersThree size={18} weight="bold" />
+            그룹 관리하기
+          </Link>
         </div>
       </Card>
 

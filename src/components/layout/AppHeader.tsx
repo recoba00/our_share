@@ -199,9 +199,9 @@ function GroupSwitcher({
           <Link
             className="mt-1 block border-t border-[var(--color-border)] px-3 pt-3 text-xs font-semibold text-brand"
             onClick={() => setIsOpen(false)}
-            to="/"
+            to="/profile"
           >
-            그룹 생성·참여
+            그룹 관리하기
           </Link>
         </div>
       ) : null}

@@ -10,6 +10,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { ref, remove, set } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
@@ -36,6 +37,21 @@ type DeleteFamilyMemberInput = {
   actorUserId: string;
   familyId: string;
   targetUserId: string;
+};
+
+type UpdateFamilyInput = {
+  familyId: string;
+  name: string;
+};
+
+type DeleteFamilyInput = {
+  familyId: string;
+  ownerId: string;
+};
+
+type LeaveFamilyInput = {
+  familyId: string;
+  userId: string;
 };
 
 export async function createFamily({ name, owner }: CreateFamilyInput) {
@@ -84,6 +100,11 @@ export async function joinFamilyByInviteCode({
 
   const invite = inviteSnapshot.data();
   const familyId = invite.familyId as string;
+  const familySnapshot = await getDoc(doc(db, "families", familyId));
+
+  if (!familySnapshot.exists()) {
+    throw new Error("더 이상 참여할 수 없는 그룹입니다.");
+  }
 
   await upsertFamilyMember({
     familyId,
@@ -93,14 +114,61 @@ export async function joinFamilyByInviteCode({
     relation: "member",
   });
 
-  const familySnapshot = await getDoc(doc(db, "families", familyId));
-
   return {
     id: familyId,
     name: familySnapshot.exists()
       ? (familySnapshot.data().name as string)
       : (invite.name as string),
   };
+}
+
+export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
+  const normalizedName = name.trim();
+
+  if (!normalizedName) {
+    throw new Error("그룹 이름을 입력해주세요.");
+  }
+
+  await updateDoc(doc(db, "families", familyId), {
+    name: normalizedName,
+    updatedAt: serverTimestamp(),
+  });
+}
+
+export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
+  const memberSnapshot = await getDocs(
+    query(collection(db, "familyMembers"), where("familyId", "==", familyId))
+  );
+  const ownerMember = memberSnapshot.docs.find(
+    (memberDoc) => memberDoc.data().userId === ownerId && memberDoc.data().role === "OWNER"
+  );
+
+  if (!ownerMember) {
+    throw new Error("그룹 삭제는 오너만 할 수 있습니다.");
+  }
+
+  const batch = writeBatch(db);
+  memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
+  batch.delete(doc(db, "families", familyId));
+  await batch.commit();
+
+  await remove(ref(realtimeDb, `familyMembers/${familyId}/${ownerId}`));
+}
+
+export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
+  const memberRef = doc(db, "familyMembers", `${familyId}_${userId}`);
+  const memberSnapshot = await getDoc(memberRef);
+
+  if (!memberSnapshot.exists()) {
+    throw new Error("이미 참여하지 않은 그룹입니다.");
+  }
+
+  if (memberSnapshot.data().role === "OWNER") {
+    throw new Error("오너는 그룹을 나갈 수 없습니다. 그룹을 삭제하거나 오너 권한을 넘겨주세요.");
+  }
+
+  await deleteDoc(memberRef);
+  await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
 }
 
 export async function getFamiliesForUser(userId: string) {
