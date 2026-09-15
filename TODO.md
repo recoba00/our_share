@@ -152,6 +152,8 @@
 - [x] Invite Code Input and Join Button Spacing
 - [x] Responsive Inline Invite Input and Join Button
 - [x] Create Group from My Info Group Tab
+- [x] Group Create Button Below Group List
+- [x] Separate Invite Input Field and Join Button
 
 ## Location
 

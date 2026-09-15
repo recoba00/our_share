@@ -524,13 +524,16 @@ export function HomePage() {
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="grid gap-2 border-t border-[var(--color-border)] pt-3">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-2">
-              <Input
-                label=""
-                onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
-                placeholder="초대코드를 입력해주세요"
-                value={inviteCode}
-              />
+            <div className="flex min-w-0 items-end gap-2">
+              <div className="min-w-0 flex-1">
+                <Input
+                  className="w-full"
+                  label=""
+                  onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+                  placeholder="초대코드를 입력해주세요"
+                  value={inviteCode}
+                />
+              </div>
               <Button
                 className="shrink-0 whitespace-nowrap"
                 disabled={isJoiningFamily}

@@ -223,15 +223,6 @@ export function ProfilePage() {
               그룹을 선택하고 이름을 수정하거나 삭제할 수 있습니다.
             </p>
           </div>
-          <Button
-            className="shrink-0"
-            onClick={() => setIsCreatingFamily((current) => !current)}
-            type="button"
-            variant="secondary"
-          >
-            <Plus size={18} weight="bold" />
-            그룹 생성
-          </Button>
         </div>
 
         {isCreatingFamily ? (
@@ -362,6 +353,15 @@ export function ProfilePage() {
             </p>
           )}
         </div>
+        <Button
+          className="mt-4 w-full"
+          onClick={() => setIsCreatingFamily((current) => !current)}
+          type="button"
+          variant="secondary"
+        >
+          <Plus size={18} weight="bold" />
+          그룹 생성
+        </Button>
       </Card>
       )}
     </div>
