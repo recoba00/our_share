@@ -13,7 +13,7 @@ import {
   Trash,
   UsersThree,
 } from "@phosphor-icons/react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar } from "../../components/common/Avatar";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
@@ -70,6 +70,53 @@ const roleLabels: Record<FamilyRole, string> = {
   OWNER: "오너",
   PARENT: "부모",
 };
+const kakaoMapJavaScriptKey =
+  import.meta.env.VITE_KAKAO_MAP_JAVASCRIPT_KEY ||
+  "3e1f4432739a5ee8beee56c08369ab72";
+let kakaoMapScriptPromise: Promise<void> | null = null;
+
+type KakaoMap = {
+  getProjection: () => {
+    containerPointFromCoords: (latLng: unknown) => { x: number; y: number };
+  };
+  relayout: () => void;
+  setBounds: (
+    bounds: { extend: (latLng: unknown) => void },
+    top?: number,
+    right?: number,
+    bottom?: number,
+    left?: number
+  ) => void;
+  setCenter: (latLng: unknown) => void;
+  setDraggable: (draggable: boolean) => void;
+  setZoomable: (zoomable: boolean) => void;
+};
+
+type KakaoMaps = {
+  event: {
+    addListener: (target: unknown, type: string, handler: () => void) => void;
+  };
+  LatLng: new (latitude: number, longitude: number) => unknown;
+  LatLngBounds: new () => { extend: (latLng: unknown) => void };
+  load: (callback: () => void) => void;
+  Map: new (
+    container: HTMLElement,
+    options: { center: unknown; level: number }
+  ) => KakaoMap;
+};
+type MapPinPosition = {
+  unit: "px" | "%";
+  x: number;
+  y: number;
+};
+
+declare global {
+  interface Window {
+    kakao?: {
+      maps: KakaoMaps;
+    };
+  }
+}
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
@@ -789,15 +836,100 @@ function FamilyLocationMap({
   members: FamilyMemberProfile[];
   onSelectMember: (memberId: string) => void;
 }) {
-  const pins = members
-    .map((member) => {
-      const location = locations[member.userId];
+  const pins = useMemo(
+    () =>
+      members
+        .map((member) => {
+          const location = locations[member.userId];
 
-      return location ? { location, member } : null;
-    })
-    .filter((pin): pin is { location: LiveLocation; member: FamilyMemberProfile } =>
-      Boolean(pin)
-    );
+          return location ? { location, member } : null;
+        })
+        .filter((pin): pin is { location: LiveLocation; member: FamilyMemberProfile } =>
+          Boolean(pin)
+        ),
+    [locations, members]
+  );
+  const mapContainerRef = useRef<HTMLDivElement | null>(null);
+  const mapRef = useRef<KakaoMap | null>(null);
+  const [mapStatus, setMapStatus] = useState<"FALLBACK" | "READY">("FALLBACK");
+  const [projectedPositions, setProjectedPositions] = useState<Record<string, MapPinPosition>>({});
+  const bounds = pins.length > 0 ? getLocationBounds(pins.map((pin) => pin.location)) : null;
+  const fallbackPositions = Object.fromEntries(
+    bounds
+      ? pins.map(({ location, member }) => [
+          member.userId,
+          { ...getLocationPinPosition(location, bounds), unit: "%" as const },
+        ])
+      : []
+  );
+
+  useEffect(() => {
+    let active = true;
+
+    async function initializeMap() {
+      const container = mapContainerRef.current;
+
+      if (!container || pins.length === 0) {
+        return;
+      }
+
+      try {
+        await loadKakaoMapScript();
+
+        if (!active) {
+          return;
+        }
+
+        const kakao = getKakaoMaps();
+        const center = getAverageLocation(pins.map((pin) => pin.location));
+        const map =
+          mapRef.current ??
+          new kakao.Map(container, {
+            center: new kakao.LatLng(center.latitude, center.longitude),
+            level: 5,
+          });
+
+        mapRef.current = map;
+        map.setDraggable(false);
+        map.setZoomable(false);
+
+        const kakaoBounds = new kakao.LatLngBounds();
+        pins.forEach(({ location }) => {
+          kakaoBounds.extend(new kakao.LatLng(location.latitude, location.longitude));
+        });
+
+        if (pins.length > 1) {
+          map.setBounds(kakaoBounds, 44, 44, 44, 44);
+        } else {
+          map.setCenter(new kakao.LatLng(center.latitude, center.longitude));
+        }
+
+        kakao.event.addListener(map, "idle", () => {
+          if (active) {
+            setProjectedPositions(projectKakaoPinPositions(map, pins));
+          }
+        });
+
+        window.setTimeout(() => {
+          if (active) {
+            map.relayout();
+            setProjectedPositions(projectKakaoPinPositions(map, pins));
+            setMapStatus("READY");
+          }
+        }, 100);
+      } catch {
+        if (active) {
+          setMapStatus("FALLBACK");
+        }
+      }
+    }
+
+    void initializeMap();
+
+    return () => {
+      active = false;
+    };
+  }, [pins]);
 
   if (pins.length === 0) {
     return (
@@ -812,11 +944,10 @@ function FamilyLocationMap({
     );
   }
 
-  const bounds = getLocationBounds(pins.map((pin) => pin.location));
-
   return (
     <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
-      <div className="absolute inset-0 opacity-70">
+      <div className={`absolute inset-0 ${mapStatus === "READY" ? "opacity-100" : "opacity-0"}`} ref={mapContainerRef} />
+      <div className={`absolute inset-0 opacity-70 ${mapStatus === "READY" ? "hidden" : ""}`}>
         <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-3/4 h-px w-full bg-white/80" />
@@ -824,8 +955,8 @@ function FamilyLocationMap({
         <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
         <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
       </div>
-      {pins.map(({ location, member }) => {
-        const position = getLocationPinPosition(location, bounds);
+      {pins.map(({ member }) => {
+        const position = projectedPositions[member.userId] ?? fallbackPositions[member.userId];
 
         return (
           <button
@@ -834,8 +965,8 @@ function FamilyLocationMap({
             key={member.userId}
             onClick={() => onSelectMember(member.userId)}
             style={{
-              left: `${position.x}%`,
-              top: `${position.y}%`,
+              left: `${position.x}${position.unit}`,
+              top: `${position.y}${position.unit}`,
             }}
             type="button"
           >
@@ -967,6 +1098,81 @@ function getLocationPinLabel(member: FamilyMemberProfile) {
   const name = member.displayName ?? member.nickname;
 
   return name.length > 3 ? name.slice(0, 2) : name;
+}
+
+function loadKakaoMapScript() {
+  if (window.kakao?.maps) {
+    return new Promise<void>((resolve) => window.kakao?.maps.load(resolve));
+  }
+
+  if (kakaoMapScriptPromise) {
+    return kakaoMapScriptPromise;
+  }
+
+  kakaoMapScriptPromise = new Promise((resolve, reject) => {
+    const existingScript = document.getElementById("kakao-map-sdk");
+
+    if (existingScript) {
+      existingScript.addEventListener("load", () => window.kakao?.maps.load(resolve), {
+        once: true,
+      });
+      existingScript.addEventListener("error", reject, { once: true });
+      return;
+    }
+
+    const script = document.createElement("script");
+    script.async = true;
+    script.id = "kakao-map-sdk";
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoMapJavaScriptKey}&autoload=false`;
+    script.addEventListener("load", () => window.kakao?.maps.load(resolve), {
+      once: true,
+    });
+    script.addEventListener("error", reject, { once: true });
+    document.head.appendChild(script);
+  });
+
+  return kakaoMapScriptPromise;
+}
+
+function getKakaoMaps() {
+  if (!window.kakao?.maps) {
+    throw new Error("Kakao Map SDK를 불러오지 못했습니다.");
+  }
+
+  return window.kakao.maps;
+}
+
+function getAverageLocation(locations: LiveLocation[]) {
+  const total = locations.reduce(
+    (sum, location) => ({
+      latitude: sum.latitude + location.latitude,
+      longitude: sum.longitude + location.longitude,
+    }),
+    { latitude: 0, longitude: 0 }
+  );
+
+  return {
+    latitude: total.latitude / locations.length,
+    longitude: total.longitude / locations.length,
+  };
+}
+
+function projectKakaoPinPositions(
+  map: KakaoMap,
+  pins: { location: LiveLocation; member: FamilyMemberProfile }[]
+): Record<string, MapPinPosition> {
+  const kakao = getKakaoMaps();
+  const projection = map.getProjection();
+
+  return Object.fromEntries(
+    pins.map(({ location, member }) => {
+      const point = projection.containerPointFromCoords(
+        new kakao.LatLng(location.latitude, location.longitude)
+      );
+
+      return [member.userId, { unit: "px", x: point.x, y: point.y }];
+    })
+  );
 }
 
 function getLocationBounds(locations: LiveLocation[]) {
