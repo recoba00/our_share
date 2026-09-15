@@ -154,6 +154,9 @@
 - [x] Create Group from My Info Group Tab
 - [x] Group Create Button Below Group List
 - [x] Separate Invite Input Field and Join Button
+- [x] OS-aware Dark Mode Theme
+- [x] Manual Light / Dark Theme Override
+- [x] Account Withdrawal UI and Auth Cleanup
 
 ## Location
 

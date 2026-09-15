@@ -1,14 +1,27 @@
 import {
+  deleteUser,
   getRedirectResult,
   onAuthStateChanged,
+  reauthenticateWithPopup,
   signInWithPopup,
   signInWithRedirect,
   signOut,
   updateProfile,
   type User,
 } from "firebase/auth";
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
-import { auth, db, googleProvider } from "../../../lib/firebase/app";
+import { remove, ref } from "firebase/database";
+import {
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  query,
+  serverTimestamp,
+  setDoc,
+  where,
+  writeBatch,
+} from "firebase/firestore";
+import { auth, db, googleProvider, realtimeDb } from "../../../lib/firebase/app";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -42,6 +55,35 @@ export async function syncRedirectLoginResult() {
 
 export async function logout() {
   await signOut(auth);
+}
+
+export async function deleteAccount({
+  ownedFamilyIds = [],
+  user,
+}: {
+  ownedFamilyIds?: string[];
+  user: User;
+}) {
+  if (ownedFamilyIds.length > 0) {
+    throw new Error("그룹 오너인 계정은 먼저 그룹을 삭제한 뒤 탈퇴할 수 있습니다.");
+  }
+
+  await reauthenticateWithPopup(user, googleProvider);
+
+  const memberSnapshot = await getDocs(
+    query(collection(db, "familyMembers"), where("userId", "==", user.uid))
+  );
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "users", user.uid));
+  memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
+  await batch.commit();
+
+  await Promise.all(
+    memberSnapshot.docs.map((memberDoc) =>
+      remove(ref(realtimeDb, `familyMembers/${memberDoc.data().familyId}/${user.uid}`))
+    )
+  );
+  await deleteUser(user);
 }
 
 export async function syncUserProfile(user: User) {
@@ -113,6 +155,10 @@ export function getAuthErrorMessage(error: unknown) {
 
   if (code === "auth/popup-blocked") {
     return "브라우저가 로그인 팝업을 차단했습니다. redirect 로그인으로 다시 시도합니다.";
+  }
+
+  if (code === "auth/requires-recent-login") {
+    return "보안을 위해 Google 로그인을 다시 인증해주세요.";
   }
 
   if (error instanceof Error) {

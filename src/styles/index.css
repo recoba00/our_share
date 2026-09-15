@@ -21,6 +21,23 @@
   --color-error: #ef4444;
 }
 
+:root[data-theme="dark"] {
+  --color-primary: #34d399;
+  --color-primary-hover: #6ee7b7;
+  --color-primary-soft: #064e3b;
+  --color-secondary: #e2e8f0;
+  --color-accent: #2dd4bf;
+  --color-background: #020617;
+  --color-surface: #0f172a;
+  --color-surface-muted: #1e293b;
+  --color-text-primary: #f8fafc;
+  --color-text-secondary: #94a3b8;
+  --color-border: #334155;
+  --color-success: #34d399;
+  --color-warning: #fbbf24;
+  --color-error: #f87171;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -45,4 +62,54 @@ textarea {
 #root {
   min-height: 100vh;
   overflow-x: hidden;
+}
+
+html[data-theme="dark"] [class~="bg-white"] {
+  background-color: var(--color-surface) !important;
+}
+
+html[data-theme="dark"] [class~="bg-white/60"],
+html[data-theme="dark"] [class~="bg-white/70"],
+html[data-theme="dark"] [class~="bg-white/75"],
+html[data-theme="dark"] [class~="bg-white/80"],
+html[data-theme="dark"] [class~="bg-white/85"],
+html[data-theme="dark"] [class~="bg-white/95"] {
+  background-color: rgb(15 23 42 / 0.82) !important;
+}
+
+html[data-theme="dark"] [class~="bg-slate-50"],
+html[data-theme="dark"] [class~="bg-slate-100"] {
+  background-color: var(--color-surface-muted) !important;
+}
+
+html[data-theme="dark"] [class~="bg-slate-200"] {
+  background-color: #475569 !important;
+}
+
+html[data-theme="dark"] [class~="text-slate-300"],
+html[data-theme="dark"] [class~="text-slate-400"],
+html[data-theme="dark"] [class~="text-slate-500"] {
+  color: var(--color-text-secondary) !important;
+}
+
+html[data-theme="dark"] [class~="text-slate-700"] {
+  color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] [class~="border-white"],
+html[data-theme="dark"] [class~="border-white/60"],
+html[data-theme="dark"] [class~="border-white/70"] {
+  border-color: rgb(71 85 105 / 0.7) !important;
+}
+
+html[data-theme="dark"] [class~="bg-red-50"] {
+  background-color: #450a0a !important;
+}
+
+html[data-theme="dark"] [class~="bg-red-100"] {
+  background-color: #7f1d1d !important;
+}
+
+html[data-theme="dark"] [class~="bg-amber-50"] {
+  background-color: #451a03 !important;
 }
