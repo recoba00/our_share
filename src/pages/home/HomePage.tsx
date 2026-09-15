@@ -410,8 +410,10 @@ export function HomePage() {
     <>
     <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-        <p className="text-sm font-semibold text-brand">오늘의 그룹 상황</p>
-        <h2 className="mt-2 text-3xl font-semibold leading-tight">
+        <p className="text-sm font-semibold text-brand">
+          오늘의 그룹 상황 &gt; {activeFamily?.name ?? "현재"} 그룹
+        </p>
+        <h2 className="mt-2 text-2xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
         </h2>
         <div className="mt-4 grid min-w-0 grid-cols-2 gap-2">
@@ -453,12 +455,12 @@ export function HomePage() {
             <div className="flex min-w-0 items-center justify-between gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                  현재 그룹
+                  그룹 초대하기
                 </p>
                 <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
               </div>
               <button
-                aria-label="초대 코드 복사"
+                aria-label="그룹 초대 코드 복사"
                 className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
                 onClick={() => void handleCopyInviteCode()}
                 type="button"
@@ -473,7 +475,7 @@ export function HomePage() {
             위치 공유하기
           </Button>
           <Link
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-button border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:border-brand hover:text-brand"
             to="/profile"
           >
             <UsersThree size={18} weight="bold" />
