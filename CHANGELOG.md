@@ -297,3 +297,5 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 홈 가족 위치 미니맵을 Kakao Map SDK 기반 실제 지도 배경으로 교체하고, 가족 위치 핀을 지도 좌표 위에 표시하도록 연결했다.
 - Kakao Map JavaScript 키를 `VITE_KAKAO_MAP_JAVASCRIPT_KEY`로 교체 가능하게 `.env.example`에 추가하고 기본 키를 반영했다.
 - Kakao Map 적용 사항이 설치된 PWA에 반영되도록 서비스워커 캐시 버전을 `our-share-v11`로 올렸다.
+- Kakao Map 위 가족 위치 핀이 지도 타일 레이어에 가려지지 않도록 지도와 핀의 z-index 레이어를 명확히 분리했다.
+- Kakao Map 핀 표시 수정 사항이 설치된 PWA에 반영되도록 서비스워커 캐시 버전을 `our-share-v12`로 올렸다.

@@ -946,8 +946,11 @@ function FamilyLocationMap({
 
   return (
     <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
-      <div className={`absolute inset-0 ${mapStatus === "READY" ? "opacity-100" : "opacity-0"}`} ref={mapContainerRef} />
-      <div className={`absolute inset-0 opacity-70 ${mapStatus === "READY" ? "hidden" : ""}`}>
+      <div
+        className={`absolute inset-0 z-0 ${mapStatus === "READY" ? "opacity-100" : "opacity-0"}`}
+        ref={mapContainerRef}
+      />
+      <div className={`absolute inset-0 z-0 opacity-70 ${mapStatus === "READY" ? "hidden" : ""}`}>
         <div className="absolute left-0 top-1/4 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-1/2 h-px w-full bg-white/80" />
         <div className="absolute left-0 top-3/4 h-px w-full bg-white/80" />
@@ -961,7 +964,7 @@ function FamilyLocationMap({
         return (
           <button
             aria-label={`${member.displayName ?? member.nickname} 위치 보기`}
-            className="absolute -translate-x-1/2 -translate-y-full"
+            className="absolute z-20 -translate-x-1/2 -translate-y-full"
             key={member.userId}
             onClick={() => onSelectMember(member.userId)}
             style={{
