@@ -1,4 +1,4 @@
-import { Check, PencilSimple, SignOut, Trash, UsersThree } from "@phosphor-icons/react";
+import { Check, PencilSimple, Plus, SignOut, Trash, UsersThree } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 import { Button } from "../../components/common/Button";
@@ -9,6 +9,7 @@ import { useToast } from "../../components/common/toastContext";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
 import {
+  createFamily,
   deleteFamily,
   updateFamily,
 } from "../../features/family/services/familyService";
@@ -26,6 +27,9 @@ export function ProfilePage() {
   const [editingFamilyName, setEditingFamilyName] = useState("");
   const [busyFamilyId, setBusyFamilyId] = useState("");
   const [activeTab, setActiveTab] = useState<"MY" | "GROUP">("MY");
+  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
+  const [newFamilyName, setNewFamilyName] = useState("");
+  const [isCreating, setIsCreating] = useState(false);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -66,6 +70,33 @@ export function ProfilePage() {
       notify(getErrorMessage(error), "error");
     } finally {
       setBusyFamilyId("");
+    }
+  }
+
+  async function handleCreateFamily(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!user) {
+      return;
+    }
+
+    if (!newFamilyName.trim()) {
+      notify("그룹 이름을 입력해주세요.", "info");
+      return;
+    }
+
+    setIsCreating(true);
+
+    try {
+      const result = await createFamily({ name: newFamilyName, owner: user });
+      await refreshFamilies(result.id);
+      setNewFamilyName("");
+      setIsCreatingFamily(false);
+      notify("그룹을 생성했습니다.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setIsCreating(false);
     }
   }
 
@@ -192,10 +223,46 @@ export function ProfilePage() {
               그룹을 선택하고 이름을 수정하거나 삭제할 수 있습니다.
             </p>
           </div>
-          <span className="shrink-0 text-xs font-semibold text-[var(--color-text-secondary)]">
-            {families.length}개
-          </span>
+          <Button
+            className="shrink-0"
+            onClick={() => setIsCreatingFamily((current) => !current)}
+            type="button"
+            variant="secondary"
+          >
+            <Plus size={18} weight="bold" />
+            그룹 생성
+          </Button>
         </div>
+
+        {isCreatingFamily ? (
+          <form
+            className="mt-4 grid gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4"
+            onSubmit={handleCreateFamily}
+          >
+            <Input
+              label="그룹 이름"
+              onChange={(event) => setNewFamilyName(event.target.value)}
+              placeholder="새 그룹 이름을 입력해주세요"
+              value={newFamilyName}
+            />
+            <div className="grid grid-cols-2 gap-2">
+              <Button disabled={isCreating} type="submit">
+                <Check size={18} weight="bold" />
+                생성하기
+              </Button>
+              <Button
+                onClick={() => {
+                  setIsCreatingFamily(false);
+                  setNewFamilyName("");
+                }}
+                type="button"
+                variant="secondary"
+              >
+                취소
+              </Button>
+            </div>
+          </form>
+        ) : null}
 
         <div className="mt-4 grid gap-2">
           {isFamilyLoading ? (

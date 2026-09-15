@@ -104,6 +104,7 @@
 - [x] App / modal / bottom sheet header title typography unified
 - [x] Fixed glass header
 - [x] Glass bottom navigation with safe area
+- [x] Compact bottom navigation with safe-area offset on scroll
 - [x] Bottom Navigation Scroll To Top
 - [x] Hide bottom navigation on second-depth screens
 - [x] Scroll-aware compact floating action buttons
@@ -148,6 +149,7 @@
 - [x] Home Group Action and Status Order
 - [x] Home Status Before Invite Section
 - [x] Invite Code Input and Join Button Spacing
+- [x] Create Group from My Info Group Tab
 
 ## Location
 

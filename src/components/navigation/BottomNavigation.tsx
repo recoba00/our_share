@@ -43,8 +43,14 @@ export function BottomNavigation() {
   }, []);
 
   return (
-    <nav className="fixed inset-x-3 bottom-3 z-30 rounded-[28px] border border-white/70 bg-white/75 px-2 pb-[max(env(safe-area-inset-bottom),8px)] pt-2 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all duration-300 lg:left-1/2 lg:right-auto lg:w-[720px] lg:-translate-x-1/2">
-      <div className="grid grid-cols-5 gap-1">
+    <nav
+      className={`fixed bottom-[max(env(safe-area-inset-bottom),12px)] z-30 border border-white/70 bg-white/75 shadow-[0_18px_48px_rgba(15,23,42,0.18)] backdrop-blur-xl transition-all duration-300 lg:left-1/2 lg:right-auto lg:-translate-x-1/2 ${
+        isScrolling
+          ? "left-[15%] right-[15%] rounded-[20px] px-1 py-1 lg:w-[504px]"
+          : "left-3 right-3 rounded-[28px] px-2 py-2 lg:w-[720px]"
+      }`}
+    >
+      <div className={`grid grid-cols-5 ${isScrolling ? "gap-0" : "gap-1"}`}>
         {navItems.map(({ to, label, icon: Icon }) => (
           <NavLink
             key={to}
@@ -52,7 +58,10 @@ export function BottomNavigation() {
             to={to}
             className={({ isActive }) =>
               [
-                "flex h-14 flex-col items-center justify-center gap-1 rounded-2xl text-xs font-semibold transition-all duration-300 active:scale-95",
+                "flex flex-col items-center justify-center text-xs font-semibold transition-all duration-300 active:scale-95",
+                isScrolling
+                  ? "h-10 gap-0 rounded-xl"
+                  : "h-14 gap-1 rounded-2xl",
                 isActive
                   ? "bg-brand-soft/90 text-brand shadow-sm"
                   : "text-[var(--color-text-secondary)] hover:bg-white/70",
@@ -63,7 +72,7 @@ export function BottomNavigation() {
               <>
                 <Icon
                   className="transition-all duration-300"
-                  size={22}
+                  size={isScrolling ? 18 : 22}
                   weight={isActive ? "fill" : "regular"}
                 />
                 <span
