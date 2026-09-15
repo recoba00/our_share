@@ -14,6 +14,7 @@ import { ActionLayer, MobileCreateButton } from "../../components/common/ActionL
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
@@ -388,8 +389,7 @@ export function CalendarPage() {
         />
       </ActionLayer>
 
-    <div className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className="hidden self-start lg:block">
+    <DesktopWorkspace sidebar={<Card className="hidden self-start lg:block">
         <CalendarTools
           allDay={allDay}
           canCreateDatePoll={canCreateDatePoll}
@@ -422,7 +422,7 @@ export function CalendarPage() {
           voteViewDate={voteViewDate}
           voteTitle={voteTitle}
         />
-      </Card>
+      </Card>}>
 
       <Card className="min-w-0">
         <SectionHeading
@@ -563,7 +563,7 @@ export function CalendarPage() {
         </div>
       </Card>
 
-    </div>
+    </DesktopWorkspace>
     </>
   );
 }

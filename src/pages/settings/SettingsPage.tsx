@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { useToast } from "../../components/common/toastContext";
 import { deleteAccount, getAuthErrorMessage } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
@@ -51,7 +52,17 @@ export function SettingsPage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-2xl gap-4">
+    <DesktopWorkspace
+      sidebar={
+        <Card>
+          <p className="text-xs font-semibold text-brand">앱 설정</p>
+          <h2 className="mt-1 text-xl font-semibold">설정</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+            화면 테마와 계정 보안 설정을 관리합니다.
+          </p>
+        </Card>
+      }
+    >
       <Card>
         <h2 className="text-2xl font-semibold">설정</h2>
         <div className="mt-5 grid gap-3">
@@ -124,7 +135,7 @@ export function SettingsPage() {
           </Button>
         </section>
       </Card>
-    </div>
+    </DesktopWorkspace>
   );
 }
 

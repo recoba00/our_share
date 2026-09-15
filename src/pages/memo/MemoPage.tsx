@@ -5,6 +5,7 @@ import { ActionLayer, MobileCreateButton } from "../../components/common/ActionL
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { SectionHeading } from "../../components/common/SectionHeading";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
@@ -214,11 +215,7 @@ export function MemoPage() {
         {createMemoForm}
       </ActionLayer>
 
-    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-      <Card className="hidden self-start lg:block">
-        {createMemoForm}
-      </Card>
-
+    <DesktopWorkspace sidebar={<Card className="hidden lg:block">{createMemoForm}</Card>}>
       <Card>
         <SectionHeading
           action={
@@ -322,7 +319,7 @@ export function MemoPage() {
         ) : null}
 
       </Card>
-    </div>
+    </DesktopWorkspace>
     </>
   );
 }

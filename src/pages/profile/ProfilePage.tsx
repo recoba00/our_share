@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { Input } from "../../components/common/Input";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
@@ -135,17 +136,36 @@ export function ProfilePage() {
   }
 
   return (
-    <div className="mx-auto grid max-w-2xl gap-4">
-      <SegmentedControl
-        onChange={setActiveTab}
-        options={[
-          { label: "MY", value: "MY" },
-          { label: "그룹", value: "GROUP" },
-        ]}
-        value={activeTab}
-      />
+    <DesktopWorkspace
+      sidebar={
+        <Card className="grid gap-4">
+          <div>
+            <p className="text-xs font-semibold text-brand">내 정보</p>
+            <h2 className="mt-1 text-xl font-semibold">프로필과 그룹 관리</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+              내 정보와 참여 중인 그룹을 한곳에서 관리합니다.
+            </p>
+          </div>
+          {activeFamily ? (
+            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-3">
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">현재 그룹</p>
+              <strong className="mt-1 block truncate">{activeFamily.name}</strong>
+            </div>
+          ) : null}
+        </Card>
+      }
+    >
+      <div className="grid gap-4">
+        <SegmentedControl
+          onChange={setActiveTab}
+          options={[
+            { label: "MY", value: "MY" },
+            { label: "그룹", value: "GROUP" },
+          ]}
+          value={activeTab}
+        />
 
-      {activeTab === "MY" ? (
+        {activeTab === "MY" ? (
       <Card>
         <div className="flex items-center gap-4">
           {photoURL ? (
@@ -359,8 +379,9 @@ export function ProfilePage() {
           그룹 생성
         </Button>
       </Card>
-      )}
-    </div>
+        )}
+      </div>
+    </DesktopWorkspace>
   );
 }
 

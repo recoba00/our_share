@@ -12,7 +12,7 @@ export function AppLayout({ children }: PropsWithChildren) {
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-2xl flex-col">
         <AppHeader />
         <main
-          className={`min-w-0 flex-1 overflow-x-hidden px-4 pt-20 sm:px-6 lg:px-8 ${
+          className={`mx-auto min-w-0 w-full flex-1 overflow-x-hidden px-4 pt-20 sm:px-6 lg:px-8 ${
             isSecondDepth
               ? "h-[100dvh] min-h-0 overflow-y-hidden pb-4 lg:h-auto lg:overflow-y-visible lg:pb-8"
               : "pb-36 lg:pb-8"

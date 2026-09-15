@@ -12,6 +12,7 @@ import { ActionLayer, MobileCreateButton } from "../../components/common/ActionL
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { SectionHeading } from "../../components/common/SectionHeading";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
@@ -396,11 +397,7 @@ export function PollPage() {
         {createPollForm}
       </ActionLayer>
 
-    <div className="grid gap-4 lg:grid-cols-[380px_1fr]">
-      <Card className="hidden self-start lg:block">
-        {createPollForm}
-      </Card>
-
+    <DesktopWorkspace sidebar={<Card className="hidden lg:block">{createPollForm}</Card>}>
       <section className="grid gap-4">
       <Card>
         <SectionHeading
@@ -441,7 +438,7 @@ export function PollPage() {
           ))
         )}
       </section>
-    </div>
+    </DesktopWorkspace>
     </>
   );
 }

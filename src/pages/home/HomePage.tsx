@@ -24,6 +24,7 @@ import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
+import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { useAuth } from "../../features/auth/useAuth";
 import {
   deleteFamilyMember,
@@ -439,10 +440,9 @@ export function HomePage() {
   const isLocationShared =
     locationShare.isShared || Boolean(user?.uid && liveLocations[user.uid]);
 
-  return (
-    <>
-    <div className="grid min-w-0 gap-4 overflow-x-hidden lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-      <section className="order-1 min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
+  const homeSidebar = (
+    <div className="grid gap-4">
+      <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">
           오늘의 그룹 상황 &gt; {activeFamily?.name ?? "현재"} 그룹
         </p>
@@ -482,7 +482,7 @@ export function HomePage() {
         </div>
       </section>
 
-      <Card className="order-2">
+      <Card>
         <div className="grid gap-3">
           {activeFamily ? (
             <div
@@ -575,8 +575,14 @@ export function HomePage() {
           </div>
         </div>
       </Card>
+    </div>
+  );
 
-      <div className="order-3 grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+  return (
+    <>
+    <DesktopWorkspace sidebar={homeSidebar}>
+
+      <div className="grid min-w-0 gap-4">
         <Card>
           {members.length === 0 ? (
             <>
@@ -602,9 +608,8 @@ export function HomePage() {
           memos={memos}
           polls={polls}
         />
-      </div>
 
-      <Card className="order-4 lg:col-span-2">
+      <Card>
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
           <h3 className="text-base font-semibold">그룹 구성원</h3>
@@ -651,7 +656,8 @@ export function HomePage() {
           </p>
         )}
       </Card>
-    </div>
+      </div>
+    </DesktopWorkspace>
     <BottomSheet
       isOpen={Boolean(selectedLocationMember)}
       onClose={() => setSelectedLocationMemberId("")}
@@ -828,9 +834,9 @@ function DashboardSwipeSection({
 
   return (
     <section className="relative min-w-0 overflow-hidden">
-      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:grid lg:grid-cols-3 lg:overflow-visible">
         {cards.map((card) => (
-          <Card className="min-h-[178px] min-w-[82%] snap-start sm:min-w-[46%] lg:min-w-[58%]" key={card.title}>
+          <Card className="min-h-[178px] min-w-[82%] snap-start sm:min-w-[46%] lg:min-w-0" key={card.title}>
             <div className="flex items-center gap-2">
               {card.icon}
               <h3 className="text-base font-semibold">{card.title}</h3>
@@ -839,7 +845,7 @@ function DashboardSwipeSection({
           </Card>
         ))}
       </div>
-      <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent lg:hidden" />
     </section>
   );
 }
