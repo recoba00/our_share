@@ -10,12 +10,13 @@ import {
   SealQuestion,
 } from "@phosphor-icons/react";
 import { useState, type ReactNode } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { useFamily } from "../../features/family/useFamily";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
+import { mainNavigationItems } from "../navigation/navigationItems";
 
 type LocationState = {
   chatRoomName?: string;
@@ -74,6 +75,29 @@ export function AppHeader() {
             <h1 className="text-lg font-semibold leading-none">{title}</h1>
           )}
         </div>
+        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-end gap-1 lg:flex lg:pr-6">
+          {mainNavigationItems.map(({ to, label, icon: Icon }) => (
+            <NavLink
+              className={({ isActive }) =>
+                `inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold transition-colors ${
+                  isActive
+                    ? "text-brand"
+                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                }`
+              }
+              key={to}
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              to={to}
+            >
+              {({ isActive }) => (
+                <>
+                  <Icon size={19} weight={isActive ? "fill" : "regular"} />
+                  <span>{label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </nav>
         <div className="relative flex items-center gap-2">
           {status === "authenticated" && (
             <Button className="hidden sm:inline-flex" onClick={signOut} variant="secondary">
