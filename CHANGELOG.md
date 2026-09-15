@@ -4,6 +4,10 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 ## 2026-09-16
 
+- Kakao Map 핀의 잘못된 `--color-brand` 토큰을 `--color-primary`로 수정해 핀이 보이지 않던 문제를 해결했다.
+- Realtime Database 위치값을 좌표 범위와 숫자 형식 기준으로 검증해 잘못된 위치 한 건이 전체 지도를 깨뜨리지 않도록 했다.
+- Kakao Map SDK 로딩 실패를 기본 위치 영역과 안내 문구로 표시하고, 실패 후 재시도 가능한 로딩 구조로 보완했다.
+- GitHub Actions Hosting 빌드에 `VITE_KAKAO_MAP_JAVASCRIPT_KEY` Secret 주입을 추가했다.
 - Admin SDK membership mirror 동기화용 Cloud Functions 코드베이스를 추가했다.
 - `familyMembers` 생성·수정·삭제 시 RTDB mirror를 생성·갱신·삭제하는 트리거를 추가했다.
 - Functions emulator에서 Firestore → RTDB 동기화를 검증하는 테스트를 추가했다.

@@ -13,11 +13,37 @@ export function subscribeFamilyLocations(
   return onValue(
     locationsRef,
     (snapshot) => {
-      callback((snapshot.val() ?? {}) as Record<string, LiveLocation>);
+      const rawLocations = snapshot.val() ?? {};
+      const validLocations = Object.fromEntries(
+        Object.entries(rawLocations).filter(([, location]) => isValidLiveLocation(location))
+      ) as Record<string, LiveLocation>;
+
+      callback(validLocations);
     },
     (error) => {
       onError?.(getFirebaseErrorMessage(error));
     }
+  );
+}
+
+function isValidLiveLocation(value: unknown): value is LiveLocation {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const location = value as Partial<LiveLocation>;
+
+  return (
+    typeof location.latitude === "number" &&
+    Number.isFinite(location.latitude) &&
+    location.latitude >= -90 &&
+    location.latitude <= 90 &&
+    typeof location.longitude === "number" &&
+    Number.isFinite(location.longitude) &&
+    location.longitude >= -180 &&
+    location.longitude <= 180 &&
+    typeof location.updatedAt === "number" &&
+    Number.isFinite(location.updatedAt)
   );
 }
 

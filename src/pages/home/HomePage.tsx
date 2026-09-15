@@ -868,7 +868,8 @@ function FamilyLocationMap({
   );
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<KakaoMap | null>(null);
-  const [mapStatus, setMapStatus] = useState<"FALLBACK" | "READY">("FALLBACK");
+  const [mapStatus, setMapStatus] = useState<"FALLBACK" | "LOADING" | "READY">("FALLBACK");
+  const [mapError, setMapError] = useState("");
   const [projectedPositions, setProjectedPositions] = useState<Record<string, MapPinPosition>>({});
   const [focusedMemberId, setFocusedMemberId] = useState("");
   const bounds = pins.length > 0 ? getLocationBounds(pins.map((pin) => pin.location)) : null;
@@ -942,6 +943,9 @@ function FamilyLocationMap({
         return;
       }
 
+      setMapStatus("LOADING");
+      setMapError("");
+
       try {
         await loadKakaoMapScript();
 
@@ -989,6 +993,7 @@ function FamilyLocationMap({
       } catch {
         if (active) {
           setMapStatus("FALLBACK");
+          setMapError("카카오 지도를 불러오지 못해 기본 위치 영역을 표시합니다.");
         }
       }
     }
@@ -1040,6 +1045,11 @@ function FamilyLocationMap({
           <div className="absolute left-1/4 top-0 h-full w-px bg-white/80" />
           <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
           <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
+          {mapError ? (
+            <p className="absolute inset-x-4 bottom-4 rounded-xl bg-white/90 p-3 text-center text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm">
+              {mapError}
+            </p>
+          ) : null}
         </div>
         {pins.map(({ member }) => {
           const position = projectedPositions[member.userId] ?? fallbackPositions[member.userId];
@@ -1108,7 +1118,7 @@ function LocationMapPin({ member }: { member: FamilyMemberProfile }) {
     >
       <path
         d="M48 24C48 37.2548 24 62 24 62C24 62 0 37.2548 0 24C0 10.7452 10.7452 0 24 0C37.2548 0 48 10.7452 48 24Z"
-        fill="var(--color-brand)"
+        fill="var(--color-primary)"
       />
       <circle cx="24" cy="24" fill="#F4F4F4" r="18" />
       <foreignObject height="36" width="36" x="6" y="6">
@@ -1246,13 +1256,19 @@ function loadKakaoMapScript() {
     return kakaoMapScriptPromise;
   }
 
-  kakaoMapScriptPromise = new Promise((resolve, reject) => {
+  const scriptPromise = new Promise<void>((resolve, reject) => {
+    const handleScriptReady = () => {
+      if (!window.kakao?.maps?.load) {
+        reject(new Error("Kakao Map SDK가 현재 도메인을 허용하지 않았습니다."));
+        return;
+      }
+
+      window.kakao.maps.load(resolve);
+    };
     const existingScript = document.getElementById("kakao-map-sdk");
 
     if (existingScript) {
-      existingScript.addEventListener("load", () => window.kakao?.maps.load(resolve), {
-        once: true,
-      });
+      existingScript.addEventListener("load", handleScriptReady, { once: true });
       existingScript.addEventListener("error", reject, { once: true });
       return;
     }
@@ -1260,12 +1276,15 @@ function loadKakaoMapScript() {
     const script = document.createElement("script");
     script.async = true;
     script.id = "kakao-map-sdk";
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${kakaoMapJavaScriptKey}&autoload=false`;
-    script.addEventListener("load", () => window.kakao?.maps.load(resolve), {
-      once: true,
-    });
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(kakaoMapJavaScriptKey)}&autoload=false`;
+    script.addEventListener("load", handleScriptReady, { once: true });
     script.addEventListener("error", reject, { once: true });
     document.head.appendChild(script);
+  });
+
+  kakaoMapScriptPromise = scriptPromise.catch((error) => {
+    kakaoMapScriptPromise = null;
+    throw error;
   });
 
   return kakaoMapScriptPromise;

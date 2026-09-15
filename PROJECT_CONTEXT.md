@@ -80,6 +80,14 @@ Firebase 사용.
 - Realtime Database: 싱가포르 리전, `https://our-share-6baf5-default-rtdb.asia-southeast1.firebasedatabase.app`
 - Firebase Storage: Spark 요금제에서는 보류
 - Firebase Web App: 생성 완료
+- Kakao Map JavaScript API: `VITE_KAKAO_MAP_JAVASCRIPT_KEY` 사용
+- Kakao 플랫폼 허용 도메인: `http://localhost:5173`, `https://our-share-6baf5.web.app`
+
+Kakao Map 배포 주의:
+
+- GitHub Actions Repository Secret `VITE_KAKAO_MAP_JAVASCRIPT_KEY`를 Hosting 빌드에 주입한다.
+- Kakao Developers의 Web 플랫폼에 로컬·Firebase Hosting 도메인을 모두 등록해야 한다.
+- SDK 또는 위치값이 유효하지 않으면 기본 위치 영역과 안내 문구를 표시한다.
 
 ## 호스팅 전략
 
