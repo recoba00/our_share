@@ -156,6 +156,7 @@
 - [x] Separate Invite Input Field and Join Button
 - [x] OS-aware Dark Mode Theme
 - [x] Manual Light / Dark Theme Override
+- [x] Black / Charcoal Dark Theme Palette
 - [x] Account Withdrawal UI and Auth Cleanup
 
 ## Location
