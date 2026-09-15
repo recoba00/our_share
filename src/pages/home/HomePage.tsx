@@ -2,7 +2,9 @@ import {
   BatteryHigh,
   BellRinging,
   CalendarDots,
+  CaretLeft,
   ChatCircleDots,
+  DotsThreeVertical,
   GoogleLogo,
   LinkSimple,
   MapPin,
@@ -92,6 +94,8 @@ export function HomePage() {
   const [deletingMemberId, setDeletingMemberId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [selectedLocationMemberId, setSelectedLocationMemberId] = useState("");
+  const [selectedManageMemberId, setSelectedManageMemberId] = useState("");
+  const [memberManageView, setMemberManageView] = useState<"ACTIONS" | "ROLE">("ACTIONS");
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const locationShare = useMyLocationShare({
@@ -337,6 +341,8 @@ export function HomePage() {
       });
 
       setMembers(await getFamilyMembers(activeFamily.id));
+      setSelectedManageMemberId("");
+      setMemberManageView("ACTIONS");
       notify(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`, "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -372,6 +378,8 @@ export function HomePage() {
         targetUserId: member.userId,
       });
       setMembers(await getFamilyMembers(activeFamily.id));
+      setSelectedManageMemberId("");
+      setMemberManageView("ACTIONS");
       notify("가족 구성원을 삭제했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
@@ -433,6 +441,8 @@ export function HomePage() {
   const selectedLocation = selectedLocationMember
     ? liveLocations[selectedLocationMember.userId]
     : undefined;
+  const selectedManageMember =
+    members.find((member) => member.userId === selectedManageMemberId) ?? null;
 
   return (
     <>
@@ -612,54 +622,37 @@ export function HomePage() {
           <h3 className="text-base font-semibold">가족 구성원</h3>
         </div>
         {members.length > 0 ? (
-          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {members.map((member) => (
               <div
-                className="flex items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4"
+                className="flex min-w-0 items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3"
                 key={member.userId}
               >
                 <Avatar
                   alt={member.displayName ?? member.nickname}
                   src={member.photoURL}
                 />
-                <div className="min-w-0">
+                <div className="min-w-0 flex-1">
                   <strong className="block truncate">
                     {member.displayName ?? member.nickname}
                   </strong>
                   <p className="mt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {roleLabels[member.role]} · {member.email ?? "이메일 없음"}
+                    {roleLabels[member.role]}
                   </p>
-                  {isFamilyOwner && member.role !== "OWNER" ? (
-                    <div className="mt-3 grid grid-cols-[1fr_auto] gap-2">
-                      <select
-                        className="h-9 w-full rounded-xl border border-[var(--color-border)] bg-white px-3 text-xs font-semibold outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
-                        disabled={updatingMemberRoleId === member.userId}
-                        onChange={(event) =>
-                          void handleUpdateMemberRole(
-                            member,
-                            event.target.value as Exclude<FamilyRole, "OWNER">
-                          )
-                        }
-                        value={member.role}
-                      >
-                        {editableRoleOptions.map((role) => (
-                          <option key={role} value={role}>
-                            {roleLabels[role]}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        aria-label="가족 구성원 삭제"
-                        className="grid size-9 place-items-center rounded-full bg-white text-slate-500 transition hover:text-red-500 disabled:opacity-40"
-                        disabled={deletingMemberId === member.userId}
-                        onClick={() => void handleDeleteMember(member)}
-                        type="button"
-                      >
-                        <Trash size={17} />
-                      </button>
-                    </div>
-                  ) : null}
                 </div>
+                {isFamilyOwner && member.role !== "OWNER" ? (
+                  <button
+                    aria-label={`${member.displayName ?? member.nickname} 관리`}
+                    className="grid size-9 shrink-0 place-items-center rounded-full bg-white text-slate-500 transition hover:text-brand"
+                    onClick={() => {
+                      setSelectedManageMemberId(member.userId);
+                      setMemberManageView("ACTIONS");
+                    }}
+                    type="button"
+                  >
+                    <DotsThreeVertical size={20} weight="bold" />
+                  </button>
+                ) : null}
               </div>
             ))}
           </div>
@@ -684,7 +677,94 @@ export function HomePage() {
         />
       ) : null}
     </BottomSheet>
+    <BottomSheet
+      isOpen={Boolean(selectedManageMember)}
+      onClose={() => {
+        setSelectedManageMemberId("");
+        setMemberManageView("ACTIONS");
+      }}
+      title={
+        memberManageView === "ROLE"
+          ? "구성원 역할 변경"
+          : selectedManageMember?.displayName ?? selectedManageMember?.nickname ?? "구성원 관리"
+      }
+    >
+      {selectedManageMember && memberManageView === "ACTIONS" ? (
+        <div className="grid gap-3">
+          <MemberSheetProfile member={selectedManageMember} />
+          <button
+            className="flex h-12 items-center justify-between rounded-2xl bg-[var(--color-surface-muted)] px-4 text-sm font-semibold text-[var(--color-text-primary)] transition hover:text-brand"
+            onClick={() => setMemberManageView("ROLE")}
+            type="button"
+          >
+            <span>구성원 역할 변경</span>
+            <span className="text-xs text-[var(--color-text-secondary)]">
+              {roleLabels[selectedManageMember.role]}
+            </span>
+          </button>
+          <button
+            className="flex h-12 items-center justify-between rounded-2xl bg-red-50 px-4 text-sm font-semibold text-red-600 transition hover:bg-red-100 disabled:opacity-50"
+            disabled={deletingMemberId === selectedManageMember.userId}
+            onClick={() => void handleDeleteMember(selectedManageMember)}
+            type="button"
+          >
+            <span>삭제</span>
+            <Trash size={18} />
+          </button>
+        </div>
+      ) : null}
+      {selectedManageMember && memberManageView === "ROLE" ? (
+        <div className="grid gap-3">
+          <button
+            className="flex h-10 w-fit items-center gap-1 text-sm font-semibold text-[var(--color-text-secondary)]"
+            onClick={() => setMemberManageView("ACTIONS")}
+            type="button"
+          >
+            <CaretLeft size={18} />
+            뒤로
+          </button>
+          <MemberSheetProfile member={selectedManageMember} />
+          <div className="grid gap-2">
+            {editableRoleOptions.map((role) => (
+              <button
+                className={`flex h-12 items-center justify-between rounded-2xl px-4 text-sm font-semibold transition ${
+                  selectedManageMember.role === role
+                    ? "bg-brand text-white"
+                    : "bg-[var(--color-surface-muted)] text-[var(--color-text-primary)] hover:text-brand"
+                }`}
+                disabled={
+                  updatingMemberRoleId === selectedManageMember.userId ||
+                  selectedManageMember.role === role
+                }
+                key={role}
+                onClick={() => void handleUpdateMemberRole(selectedManageMember, role)}
+                type="button"
+              >
+                <span>{roleLabels[role]}</span>
+                {selectedManageMember.role === role ? (
+                  <span className="text-xs">현재 역할</span>
+                ) : null}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+    </BottomSheet>
     </>
+  );
+}
+
+function MemberSheetProfile({ member }: { member: FamilyMemberProfile }) {
+  return (
+    <div className="flex min-w-0 items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
+      <Avatar alt={member.displayName ?? member.nickname} src={member.photoURL} />
+      <div className="min-w-0">
+        <strong className="block truncate">{member.displayName ?? member.nickname}</strong>
+        <p className="mt-1 truncate text-xs font-semibold text-[var(--color-text-secondary)]">
+          {roleLabels[member.role]} · {member.email ?? "이메일 없음"}
+        </p>
+      </div>
+    </div>
   );
 }
 
