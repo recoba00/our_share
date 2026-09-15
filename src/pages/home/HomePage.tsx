@@ -1,6 +1,5 @@
 import {
   BatteryHigh,
-  BellRinging,
   CalendarDots,
   CaretLeft,
   ChatCircleDots,
@@ -52,10 +51,8 @@ import type { LiveLocation } from "../../features/location/types/locationTypes";
 import { subscribeMemos } from "../../features/memo/services/memoService";
 import type { Memo } from "../../features/memo/types/memoTypes";
 import {
-  getNotificationAvailability,
   getNotificationPermission,
   notifyDashboardReminders,
-  requestNotificationPermission,
 } from "../../features/notification/services/notificationService";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
@@ -388,46 +385,6 @@ export function HomePage() {
     }
   }
 
-  async function handleEnableNotifications() {
-    if (!activeFamily || !user) {
-      notify("가족 정보를 먼저 불러와주세요.", "info");
-      return;
-    }
-
-    const availability = getNotificationAvailability();
-
-    if (availability === "UNSUPPORTED") {
-      notify("이 브라우저는 알림을 지원하지 않습니다.", "info");
-      return;
-    }
-
-    if (availability === "INSECURE_CONTEXT") {
-      notify("브라우저 알림은 HTTPS 또는 localhost 환경에서 사용할 수 있습니다.", "info");
-      return;
-    }
-
-    const permission = await requestNotificationPermission();
-
-    if (permission !== "granted") {
-      notify("브라우저 알림 권한이 허용되지 않았습니다.", "info");
-      return;
-    }
-
-    const sentCount = notifyDashboardReminders({
-      events: calendarEvents,
-      familyId: activeFamily.id,
-      polls,
-      userId: user.uid,
-    });
-
-    notify(
-      sentCount > 0
-        ? `오늘 확인할 알림 ${sentCount}개를 보냈습니다.`
-        : "알림을 켰습니다. 오늘 일정이나 24시간 내 마감 투표가 생기면 알려드릴게요.",
-      "success"
-    );
-  }
-
   function notify(message: string, variant: "error" | "info" | "success") {
     setFeedback(message);
     showToast({ message, variant });
@@ -522,19 +479,13 @@ export function HomePage() {
             placeholder="예: A1B2C3"
             value={inviteCode}
           />
-          <div className="grid grid-cols-2 gap-2">
-            <Button disabled={isSubmitting} onClick={handleJoinFamily} variant="secondary">
-              <LinkSimple size={18} weight="bold" />
-              참여
-            </Button>
-            <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
-              <MapPin size={18} weight="bold" />
-              위치 공유
-            </Button>
-          </div>
-          <Button onClick={() => void handleEnableNotifications()} variant="secondary">
-            <BellRinging size={18} weight="bold" />
-            오늘 알림 켜기
+          <Button disabled={isSubmitting} onClick={handleJoinFamily} variant="secondary">
+            <LinkSimple size={18} weight="bold" />
+            참여
+          </Button>
+          <Button disabled={locationShare.isSharing} onClick={locationShare.shareCurrentLocation}>
+            <MapPin size={18} weight="bold" />
+            위치 공유하기
           </Button>
           {feedback && (
             <p className="rounded-xl bg-brand-soft p-3 text-sm font-semibold text-emerald-900">
@@ -549,7 +500,7 @@ export function HomePage() {
         </div>
       </Card>
 
-      <div className="grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:col-span-2 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
         <Card>
           <div className="flex items-center gap-2">
             <MapPin className="text-brand" size={22} weight="bold" />
@@ -569,51 +520,12 @@ export function HomePage() {
             </div>
           )}
         </Card>
-        <Card>
-          <div className="flex items-center gap-2">
-            <CalendarDots className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-semibold">이달의 일정</h3>
-          </div>
-          <DashboardList
-            emptyText="이번 달 일정이 없습니다."
-            items={getThisMonthEvents(calendarEvents).slice(0, 4).map((event) => ({
-              label: event.title,
-              meta: formatEventMeta(event),
-            }))}
-          />
-        </Card>
-        <Card>
-          <div className="flex items-center gap-2">
-            <Note className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-semibold">최근 메모와 투표</h3>
-          </div>
-          <DashboardList
-            emptyText="최근 메모나 투표가 없습니다."
-            items={[
-              ...memos.slice(0, 2).map((memo) => ({
-                label: memo.title,
-                meta: memo.type === "SENSITIVE" ? "민감 메모" : "일반 메모",
-              })),
-              ...polls.slice(0, 2).map((poll) => ({
-                label: poll.title,
-                meta: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
-              })),
-            ].slice(0, 4)}
-          />
-        </Card>
-        <Card>
-          <div className="flex items-center gap-2">
-            <ChatCircleDots className="text-brand" size={22} weight="bold" />
-            <h3 className="text-base font-semibold">최근 채팅</h3>
-          </div>
-          <DashboardList
-            emptyText="최근 채팅이 없습니다."
-            items={chatRooms.slice(0, 4).map((room) => ({
-              label: room.name,
-              meta: room.lastMessageText ?? "아직 대화가 없습니다.",
-            }))}
-          />
-        </Card>
+        <DashboardSwipeSection
+          calendarEvents={calendarEvents}
+          chatRooms={chatRooms}
+          memos={memos}
+          polls={polls}
+        />
       </div>
 
       <Card className="lg:col-span-2">
@@ -772,6 +684,76 @@ function MemberSheetProfile({ member }: { member: FamilyMemberProfile }) {
   );
 }
 
+function DashboardSwipeSection({
+  calendarEvents,
+  chatRooms,
+  memos,
+  polls,
+}: {
+  calendarEvents: CalendarEvent[];
+  chatRooms: ChatRoom[];
+  memos: Memo[];
+  polls: Poll[];
+}) {
+  const cards = [
+    {
+      emptyText: "이번 달 일정이 없습니다.",
+      icon: <CalendarDots className="text-brand" size={22} weight="bold" />,
+      items: getThisMonthEvents(calendarEvents).slice(0, 4).map((event) => ({
+        label: event.title,
+        meta: formatEventMeta(event),
+      })),
+      title: "이달의 일정",
+    },
+    {
+      emptyText: "최근 메모나 투표가 없습니다.",
+      icon: <Note className="text-brand" size={22} weight="bold" />,
+      items: [
+        ...memos.slice(0, 2).map((memo) => ({
+          label: memo.title,
+          meta: memo.type === "SENSITIVE" ? "민감 메모" : "일반 메모",
+        })),
+        ...polls.slice(0, 2).map((poll) => ({
+          label: poll.title,
+          meta: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
+        })),
+      ].slice(0, 4),
+      title: "최근 메모와 투표",
+    },
+    {
+      emptyText: "최근 채팅이 없습니다.",
+      icon: <ChatCircleDots className="text-brand" size={22} weight="bold" />,
+      items: chatRooms.slice(0, 4).map((room) => ({
+        label: room.name,
+        meta: room.lastMessageText ?? "아직 대화가 없습니다.",
+      })),
+      title: "최근 채팅",
+    },
+  ];
+
+  return (
+    <section className="relative min-w-0 overflow-hidden">
+      <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {cards.map((card) => (
+          <Card className="min-h-[178px] min-w-[82%] snap-start sm:min-w-[46%] lg:min-w-[58%]" key={card.title}>
+            <div className="flex items-center gap-2">
+              {card.icon}
+              <h3 className="text-base font-semibold">{card.title}</h3>
+            </div>
+            <DashboardList emptyText={card.emptyText} items={card.items} />
+          </Card>
+        ))}
+      </div>
+      <div className="pointer-events-none absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
+      <div className="pointer-events-none absolute bottom-0 right-4 flex items-center gap-1 rounded-full bg-white/80 px-2 py-1 shadow-sm backdrop-blur">
+        <span className="size-1.5 animate-pulse rounded-full bg-brand" />
+        <span className="size-1.5 animate-pulse rounded-full bg-brand/50 [animation-delay:150ms]" />
+        <span className="size-1.5 animate-pulse rounded-full bg-brand/30 [animation-delay:300ms]" />
+      </div>
+    </section>
+  );
+}
+
 function FamilyLocationMap({
   locations,
   members,
@@ -815,10 +797,6 @@ function FamilyLocationMap({
         <div className="absolute left-1/4 top-0 h-full w-px bg-white/80" />
         <div className="absolute left-1/2 top-0 h-full w-px bg-white/80" />
         <div className="absolute left-3/4 top-0 h-full w-px bg-white/80" />
-      </div>
-      <div className="absolute inset-x-4 top-4 flex min-w-0 items-center justify-between gap-3 rounded-full border border-white/70 bg-white/70 px-4 py-2 text-xs font-semibold text-[var(--color-text-secondary)] shadow-sm backdrop-blur">
-        <span className="shrink-0">{pins.length}명 위치 공유중</span>
-        <span className="min-w-0 truncate text-right">{formatLocationPreview(getLocationCenter(pins.map((pin) => pin.location)))}</span>
       </div>
       {pins.map(({ location, member }) => {
         const position = getLocationPinPosition(location, bounds);
@@ -978,25 +956,6 @@ function getLocationBounds(locations: LiveLocation[]) {
     maxLongitude,
     minLatitude,
     minLongitude,
-  };
-}
-
-function getLocationCenter(locations: LiveLocation[]): LiveLocation {
-  const total = locations.reduce(
-    (sum, location) => ({
-      latitude: sum.latitude + location.latitude,
-      longitude: sum.longitude + location.longitude,
-    }),
-    { latitude: 0, longitude: 0 }
-  );
-
-  return {
-    accuracy: null,
-    battery: null,
-    charging: null,
-    latitude: total.latitude / locations.length,
-    longitude: total.longitude / locations.length,
-    updatedAt: Date.now(),
   };
 }
 
