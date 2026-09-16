@@ -207,26 +207,6 @@ export function ChatPage() {
     };
   }, [activeFamily, reportError, user]);
 
-  useEffect(() => {
-    if (!activeFamily || !user) {
-      return;
-    }
-
-    let active = true;
-
-    getFamilyMembers(activeFamily.id)
-      .then((nextMembers) => {
-        if (active) {
-          setMembers(nextMembers);
-        }
-      })
-      .catch((error: Error) => reportError(error.message));
-
-    return () => {
-      active = false;
-    };
-  }, [activeFamily, reportError, user]);
-
   function openRoom(nextRoomId: string) {
     setSelectedRoomId(nextRoomId);
     const nextRoom = rooms.find((room) => room.id === nextRoomId);
