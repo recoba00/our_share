@@ -46,6 +46,7 @@
 
 html {
   font-family: Pretendard, system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -59,6 +60,13 @@ input,
 select,
 textarea {
   font-size: 16px !important;
+  color: var(--color-text-primary);
+  touch-action: manipulation;
+}
+
+button,
+a {
+  touch-action: manipulation;
 }
 
 @keyframes sheet-backdrop-in {

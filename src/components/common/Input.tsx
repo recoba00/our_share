@@ -12,7 +12,7 @@ export function Input({ className = "", id, label, ...props }: InputProps) {
       {label ? label : null}
       <input
         id={inputId}
-        className={`h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100 ${className}`}
+        className={`h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100 ${className}`}
         {...props}
       />
     </label>

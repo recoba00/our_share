@@ -25,6 +25,7 @@ import {
 } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { useFamily } from "../../features/family/useFamily";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { PollOptionEditor } from "../../features/poll/components/PollOptionEditor";
 import {
@@ -322,7 +323,7 @@ export function PollPage() {
   const createPollForm = (
     <>
         <SectionHeading
-          description={family ? `${family.name} 그룹 투표` : "그룹 정보가 필요합니다"}
+          description={family ? `${truncateFamilyName(family.name)} 그룹 투표` : "그룹 정보가 필요합니다"}
           icon={<ChartBar size={20} weight="bold" />}
           title="투표 만들기"
         />
@@ -398,7 +399,7 @@ export function PollPage() {
             <label className="grid gap-2 text-sm font-semibold">
               전송할 채팅방
               <select
-                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setSelectedRoomId(event.target.value)}
                 value={selectedRoomId}
               >

@@ -16,6 +16,7 @@ import { Input } from "../common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import { createFamily } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
@@ -277,13 +278,13 @@ function GroupSwitcher({
         aria-haspopup="listbox"
         className={
           compact
-            ? "flex max-w-full min-w-0 items-center gap-1 text-lg font-semibold leading-none transition hover:text-brand"
-            : "flex h-8 max-w-full items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
+            ? "flex h-8 w-full max-w-full min-w-0 items-center gap-1 text-lg font-semibold leading-none transition hover:text-brand"
+            : "flex h-8 w-full max-w-full min-w-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-white/70 px-3 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:border-brand hover:text-brand"
         }
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="truncate">
+        <span className="min-w-0 max-w-full truncate">
           {activeFamily ? truncateFamilyName(activeFamily.name) : "그룹 선택"}
         </span>
         {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
@@ -322,7 +323,7 @@ function GroupSwitcher({
               role="option"
               type="button"
             >
-              <span className="min-w-0 truncate">{family.name}</span>
+              <span className="min-w-0 flex-1 truncate">{truncateFamilyName(family.name)}</span>
               <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--color-text-secondary)]">
                 {visibleGroupTab === "OWNER" ? "오너" : "그룹원"}
               </span>
@@ -346,12 +347,6 @@ function GroupSwitcher({
       </BottomSheet>
     </div>
   );
-}
-
-function truncateFamilyName(name: string) {
-  const characters = Array.from(name);
-
-  return characters.length > 8 ? `${characters.slice(0, 8).join("")}...` : name;
 }
 
 function NotificationLink({

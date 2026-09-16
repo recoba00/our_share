@@ -20,6 +20,7 @@ import {
 } from "../../features/memo/services/memoService";
 import type { Memo, MemoType } from "../../features/memo/types/memoTypes";
 import { useFamily } from "../../features/family/useFamily";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 
 export function MemoPage() {
   const { user } = useAuth();
@@ -174,7 +175,7 @@ export function MemoPage() {
         <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
           내용
           <textarea
-            className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
             onChange={(event) => setContent(event.target.value)}
             placeholder="그룹과 공유할 내용을 적어주세요."
             value={content}
@@ -219,8 +220,8 @@ export function MemoPage() {
       <Card>
         <SectionHeading
           action={
-            <span className="rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
-              {activeFamily.name}
+            <span className="block max-w-[min(40vw,180px)] truncate rounded-full bg-brand-soft px-3 py-1 text-xs font-semibold text-brand">
+              {truncateFamilyName(activeFamily.name)}
             </span>
           }
           icon={<NotePencil size={20} weight="bold" />}

@@ -39,6 +39,7 @@ import {
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import type {
   FamilyMemberProfile,
   FamilyRole,
@@ -560,7 +561,7 @@ export function HomePage() {
     <div className="grid gap-4">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">
-          오늘의 그룹 상황 &gt; {activeFamily?.name ?? "현재"} 그룹
+          오늘의 그룹 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} 그룹
         </p>
         <h2 className="mt-2 text-2xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
@@ -617,7 +618,7 @@ export function HomePage() {
                       <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
                         {isFamilyOwner ? "그룹 오너" : "그룹원"}
                       </p>
-                      <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
+                      <strong className="mt-0.5 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
                     </div>
                     {isFamilyOwner ? (
                       <div className="flex shrink-0 items-center gap-1">

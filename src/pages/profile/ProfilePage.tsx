@@ -11,6 +11,7 @@ import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import {
   createFamily,
   deleteFamily,
@@ -208,7 +209,7 @@ export function ProfilePage() {
           {activeFamily ? (
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-3">
               <p className="text-xs font-semibold text-[var(--color-text-secondary)]">현재 그룹</p>
-              <strong className="mt-1 block truncate">{activeFamily.name}</strong>
+              <strong className="mt-1 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
             </div>
           ) : null}
         </Card>
@@ -377,14 +378,16 @@ export function ProfilePage() {
                   ) : (
                     <div className="flex min-w-0 items-start gap-3">
                       <button
-                        className="min-w-0 flex-1 text-left"
+                        className="min-w-0 flex-1 basis-0 text-left"
                         onClick={() => selectFamily(family.id)}
                         type="button"
                       >
-                        <span className="flex min-w-0 items-center gap-2">
-                          <strong className="min-w-0 truncate text-base">{family.name}</strong>
+                        <span className="flex w-full min-w-0 items-center gap-2">
+                          <strong className="min-w-0 flex-1 truncate text-base">
+                            {truncateFamilyName(family.name)}
+                          </strong>
                           <span
-                            className={`shrink-0 rounded-full px-2 py-1 text-[11px] font-semibold ${
+                            className={`shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold ${
                               isOwner
                                 ? "bg-brand text-white"
                                 : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
@@ -401,7 +404,7 @@ export function ProfilePage() {
                       </button>
                       <div className="flex shrink-0 items-center gap-1">
                         {isActive ? (
-                          <span className="mr-1 rounded-full bg-brand px-2 py-1 text-[11px] font-semibold text-white">
+                            <span className="mr-1 shrink-0 whitespace-nowrap rounded-full bg-brand px-2 py-1 text-[11px] font-semibold text-white">
                             사용중
                           </span>
                         ) : null}

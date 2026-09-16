@@ -43,6 +43,7 @@ import {
   toDateInputValue,
 } from "../../features/calendar/utils/calendarEventUtils";
 import { useFamily } from "../../features/family/useFamily";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import { DatePollPicker } from "../../features/poll/components/DatePollPicker";
 import { createPoll } from "../../features/poll/services/pollService";
 
@@ -447,7 +448,7 @@ export function CalendarPage() {
             </IconButton>
             </div>
           }
-          description={activeFamily.name}
+          description={truncateFamilyName(activeFamily.name)}
           icon={<CalendarCheck size={20} weight="bold" />}
           title="이번 달 캘린더"
         />
@@ -671,7 +672,7 @@ function CalendarTools({
             <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
               설명
               <textarea
-                className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="일정 메모를 적어주세요."
                 value={description}
@@ -699,7 +700,7 @@ function CalendarTools({
             <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
               분류
               <select
-                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
                 onChange={(event) => setCategory(event.target.value as CalendarEventCategory)}
                 value={category}
               >
