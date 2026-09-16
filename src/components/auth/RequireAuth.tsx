@@ -1,10 +1,10 @@
 import type { PropsWithChildren } from "react";
-import { Button } from "../common/Button";
+import { SignInConsentButton } from "../compliance/SignInConsentButton";
 import { Card } from "../common/Card";
 import { useAuth } from "../../features/auth/useAuth";
 
 export function RequireAuth({ children }: PropsWithChildren) {
-  const { authError, signIn, status } = useAuth();
+  const { authError, status } = useAuth();
 
   if (status === "loading") {
     return (
@@ -23,9 +23,7 @@ export function RequireAuth({ children }: PropsWithChildren) {
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
           크루 정보와 개인 데이터를 보호하기 위해 Google 로그인 후 이용할 수 있어요.
         </p>
-        <Button className="mt-5 w-full" onClick={signIn}>
-          Google로 로그인
-        </Button>
+        <SignInConsentButton className="mt-5 w-full" />
         {authError ? (
           <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
             {authError}

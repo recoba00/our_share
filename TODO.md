@@ -142,6 +142,8 @@
 - [x] Settings Page Entry
 - [x] Logout
 - [x] Auth Guard
+- [x] 로그인 전 서비스 이용약관·개인정보 처리방침 필수 동의
+- [x] 기존 로그인 사용자의 최신 약관 동의 게이트
 
 ## Family
 
@@ -184,6 +186,7 @@
 - [x] Quick Message
 - [x] 이동 감지 기반 위치 업데이트
 - [x] 위치 업데이트 최소 주기 10초 제한
+- [x] 위치 공유 시작 전 권한 안내 바텀시트
 - [x] 화면 전환 중에도 위치 공유 추적 유지
 - [x] OS가 브라우저를 강제 정지한 상태의 백그라운드 위치 추적 검토
   > PWA 웹에서는 OS 강제 종료 후 GPS와 `watchPosition` 실행을 보장할 수 없다. 현재는 활성 앱·백그라운드 탭에서 이동 감지와 화면 재진입 동기화를 제공하고, 지속 추적이 필요하면 React Native·Capacitor·Native 앱 전환을 검토한다.
@@ -262,6 +265,18 @@
 - [x] Poll Closing Soon Reminder
 - [x] Duplicate Reminder Guard
 - [ ] Push Notification with Cloud Functions Later
+
+## Compliance / Operations
+
+- [x] 설정 내 공지사항 진입점
+- [x] 설정 내 서비스 이용약관 초안
+- [x] 설정 내 개인정보 처리방침 초안
+- [x] 설정 내 위치정보 이용 안내 초안
+- [x] 설정 내 앱 버전·배포 커밋 정보
+- [ ] 정식 공개 전 운영자명·사업자 정보·문의 이메일 입력
+- [ ] 개인정보 처리방침·위치정보 이용약관 법률 검토
+- [ ] 실제 보유기간·파기 절차·개인정보 보호책임자 정보 확정
+- [ ] 공지사항을 Firestore 또는 운영자 도구에서 관리
 
 ## Security
 

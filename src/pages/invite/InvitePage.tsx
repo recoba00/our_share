@@ -1,6 +1,7 @@
-import { ArrowRight, GoogleLogo, UsersThree } from "@phosphor-icons/react";
+import { ArrowRight, UsersThree } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { SignInConsentButton } from "../../components/compliance/SignInConsentButton";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useToast } from "../../components/common/toastContext";
@@ -14,7 +15,7 @@ import { useFamily } from "../../features/family/useFamily";
 
 export function InvitePage() {
   const { inviteCode: routeInviteCode = "" } = useParams();
-  const { authError, signIn, status, user } = useAuth();
+  const { authError, status, user } = useAuth();
   const { refreshFamilies } = useFamily();
   const { showToast } = useToast();
   const navigate = useNavigate();
@@ -116,11 +117,7 @@ export function InvitePage() {
           <ArrowRight className="ml-auto" size={18} weight="bold" />
         </Button>
       ) : (
-        <Button className="mt-6 w-full" onClick={() => void signIn()}>
-          <GoogleLogo size={18} weight="bold" />
-          Google로 가입하고 참여하기
-          <ArrowRight className="ml-auto" size={18} weight="bold" />
-        </Button>
+        <SignInConsentButton className="mt-6 w-full" label="Google로 가입하고 참여하기" />
       )}
       {authError || joinError ? (
         <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">

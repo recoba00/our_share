@@ -7,7 +7,6 @@ import {
   ChatCircleDots,
   CopySimple,
   DotsThreeVertical,
-  GoogleLogo,
   LinkSimple,
   MapPin,
   Note,
@@ -25,6 +24,7 @@ import { BottomSheet } from "../../components/common/BottomSheet";
 import { BottomSheetItem } from "../../components/common/BottomSheetItem";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { SignInConsentButton } from "../../components/compliance/SignInConsentButton";
 import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
@@ -32,6 +32,10 @@ import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
 import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { useAuth } from "../../features/auth/useAuth";
+import {
+  hasLocationShareConsent,
+  saveLocationShareConsent,
+} from "../../features/compliance/consentStorage";
 import {
   deleteFamilyMember,
   getFamilyMembers,
@@ -147,7 +151,7 @@ declare global {
 }
 
 export function HomePage() {
-  const { authError, signIn, status, user } = useAuth();
+  const { authError, status, user } = useAuth();
   const { activeFamily, locationShare, refreshFamilies } = useFamily();
   const {
     clearMessage: clearLocationMessage,
@@ -173,6 +177,8 @@ export function HomePage() {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
   const [isLeavingFamily, setIsLeavingFamily] = useState(false);
+  const [isLocationConsentOpen, setIsLocationConsentOpen] = useState(false);
+  const [locationConsentUserId, setLocationConsentUserId] = useState("");
   const handleDataError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
@@ -305,10 +311,7 @@ export function HomePage() {
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
             프로필 이미지는 Google 계정의 photoURL을 사용합니다.
           </p>
-          <Button className="mt-5 w-full" onClick={signIn}>
-            <GoogleLogo size={20} weight="bold" />
-            Google로 로그인
-          </Button>
+          <SignInConsentButton className="mt-5 w-full" />
           {authError ? (
             <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
               {authError}
@@ -541,6 +544,31 @@ export function HomePage() {
     }
   }
 
+  function handleLocationShareToggle() {
+    if (isLocationShared) {
+      void locationShare.stopCurrentLocationShare();
+      return;
+    }
+
+    if (!user || hasLocationConsent) {
+      void locationShare.shareCurrentLocation();
+      return;
+    }
+
+    setIsLocationConsentOpen(true);
+  }
+
+  function acceptLocationConsent() {
+    if (!user) {
+      return;
+    }
+
+    saveLocationShareConsent(user.uid);
+    setLocationConsentUserId(user.uid);
+    setIsLocationConsentOpen(false);
+    void locationShare.shareCurrentLocation();
+  }
+
   function notify(message: string, variant: "error" | "info" | "success") {
     showToast({ message, variant });
   }
@@ -555,6 +583,10 @@ export function HomePage() {
     : undefined;
   const selectedManageMember =
     members.find((member) => member.userId === selectedManageMemberId) ?? null;
+  const hasLocationConsent = Boolean(
+    user?.uid &&
+      (locationConsentUserId === user.uid || hasLocationShareConsent(user.uid))
+  );
   const isLocationShared =
     locationShare.isShared || Boolean(user?.uid && liveLocations[user.uid]);
 
@@ -670,11 +702,7 @@ export function HomePage() {
             className={isLocationShared ? "bg-red-600 text-white hover:bg-red-700" : ""}
             disabled={locationShare.isSharing}
             loading={locationShare.isSharing}
-            onClick={() =>
-              void (isLocationShared
-                ? locationShare.stopCurrentLocationShare()
-                : locationShare.shareCurrentLocation())
-            }
+            onClick={handleLocationShareToggle}
           >
             <MapPin size={18} weight="bold" />
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
@@ -822,6 +850,34 @@ export function HomePage() {
           sendingMessageKey={sendingQuickMessageTo}
         />
       ) : null}
+     </BottomSheet>
+    <BottomSheet
+      footer={
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => setIsLocationConsentOpen(false)} type="button" variant="secondary">
+            나중에
+          </Button>
+          <Button onClick={acceptLocationConsent} type="button">
+            위치 공유 시작
+          </Button>
+        </div>
+      }
+      isOpen={isLocationConsentOpen}
+      onClose={() => setIsLocationConsentOpen(false)}
+      title="위치 공유"
+    >
+      <div className="grid gap-4">
+        <div className="grid place-items-center gap-3 rounded-2xl bg-brand-soft p-6 text-center">
+          <MapPin className="text-brand" size={32} weight="regular" />
+          <p className="text-base font-semibold">현재 위치를 크루와 공유할까요?</p>
+        </div>
+        <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
+          허용하면 현재 선택한 크루 멤버에게 위치가 보여요. 이동할 때만 최대 10초 간격으로 갱신하고, 위치 공유를 끄면 바로 중단해요.
+        </p>
+        <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+          다음 단계에서 브라우저 위치 권한을 허용해주세요. 권한을 거절해도 다른 기능은 계속 사용할 수 있어요.
+        </p>
+      </div>
     </BottomSheet>
     <BottomSheet
       isOpen={Boolean(selectedManageMember)}

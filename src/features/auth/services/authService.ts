@@ -22,6 +22,7 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { auth, db, googleProvider, realtimeDb } from "../../../lib/firebase/app";
+import { getStoredRequiredConsent } from "../../compliance/consentStorage";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -120,6 +121,7 @@ async function clearUserRealtimeData(familyId: string, userId: string) {
 export async function syncUserProfile(user: User) {
   const userRef = doc(db, "users", user.uid);
   const userSnapshot = await getDoc(userRef);
+  const consent = getStoredRequiredConsent();
 
   await setDoc(
     userRef,
@@ -130,6 +132,7 @@ export async function syncUserProfile(user: User) {
       photoURL: user.photoURL,
       updatedAt: serverTimestamp(),
       ...(!userSnapshot.exists() ? { createdAt: serverTimestamp() } : {}),
+      ...(consent ? { requiredConsent: consent } : {}),
     },
     { merge: true }
   );
