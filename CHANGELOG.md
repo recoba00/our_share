@@ -10,6 +10,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 부크루장의 초대 기능은 허용하되 크루 삭제·멤버 관리 권한은 크루장에게만 유지하고, 부크루장 탈퇴·삭제 시 역할 슬롯을 정리한다.
 - Firestore·Realtime Database 역할 규칙과 Firebase Functions 멤버십 미러를 `VICE_OWNER`까지 확장하고 승계·최대 2명·크루 삭제 권한 테스트를 추가했다.
 - Hosting 자동 배포 workflow에서도 Firestore 규칙을 함께 배포하도록 서비스 계정 임시 인증 단계를 추가했다.
+- `VICE_OWNER` RTDB 미러 저장이 운영 규칙에서 막히지 않도록 Hosting 자동 배포에 Realtime Database 규칙 배포도 포함했다.
 
 ## 2026-09-16
 
