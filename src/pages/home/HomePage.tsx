@@ -632,36 +632,36 @@ export function HomePage() {
             <MapPin size={18} weight="bold" />
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
-          <div className="mt-3 grid gap-2">
-            <div>
-              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">다른 그룹 추가</p>
-              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                초대코드를 입력하면 현재 그룹은 유지되고 새 그룹이 추가돼요.
-              </p>
-            </div>
-            <div className="flex min-w-0 items-end gap-2">
-              <div className="min-w-0 flex-1">
-                <Input
-                  className="w-full"
-                  label=""
-                  onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
-                  placeholder="초대코드를 입력해주세요"
-                  value={inviteCode}
-                />
-              </div>
-              <Button
-                className="shrink-0 whitespace-nowrap"
-                disabled={isJoiningFamily}
-                onClick={() => void handleJoinFamily()}
-                variant="secondary"
-              >
-                <UserPlus size={18} weight="bold" />
-                그룹 추가
-              </Button>
-            </div>
-          </div>
         </div>
       </Card>
+      <section className="grid gap-2 px-1">
+        <div>
+          <p className="text-sm font-semibold">다른 그룹 추가</p>
+          <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+            초대코드를 입력하면 현재 그룹은 유지되고 새 그룹이 추가돼요.
+          </p>
+        </div>
+        <div className="flex min-w-0 items-end gap-2">
+          <div className="min-w-0 flex-1">
+            <Input
+              className="w-full"
+              label=""
+              onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+              placeholder="초대코드를 입력해주세요"
+              value={inviteCode}
+            />
+          </div>
+          <Button
+            className="shrink-0 whitespace-nowrap"
+            disabled={isJoiningFamily}
+            onClick={() => void handleJoinFamily()}
+            variant="secondary"
+          >
+            <UserPlus size={18} weight="bold" />
+            그룹 추가
+          </Button>
+        </div>
+      </section>
     </div>
   );
 
