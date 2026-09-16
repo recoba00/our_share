@@ -109,6 +109,23 @@ type KakaoMaps = {
     container: HTMLElement,
     options: { center: unknown; level: number }
   ) => KakaoMap;
+  services: {
+    Geocoder: new () => KakaoGeocoder;
+    Status: {
+      OK: string;
+    };
+  };
+};
+type KakaoGeocoder = {
+  coord2Address: (
+    longitude: number,
+    latitude: number,
+    callback: (result: KakaoAddressResult[], status: string) => void
+  ) => void;
+};
+type KakaoAddressResult = {
+  address?: { address_name?: string };
+  road_address?: { address_name?: string };
 };
 type MapPinPosition = {
   unit: "px" | "%";
@@ -136,6 +153,7 @@ export function HomePage() {
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
   const [deletingMemberId, setDeletingMemberId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
+  const [locationAddresses, setLocationAddresses] = useState<Record<string, string>>({});
   const [selectedLocationMemberId, setSelectedLocationMemberId] = useState("");
   const [selectedManageMemberId, setSelectedManageMemberId] = useState("");
   const [memberManageView, setMemberManageView] = useState<"ACTIONS" | "ROLE">("ACTIONS");
@@ -152,6 +170,9 @@ export function HomePage() {
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
   );
+  const handleLocationAddressChange = useCallback((memberId: string, address: string) => {
+    setLocationAddresses((current) => ({ ...current, [memberId]: address }));
+  }, []);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -465,7 +486,10 @@ export function HomePage() {
                 <MapPin className="shrink-0" size={14} weight="fill" />
                 <span className="min-w-0 truncate">
                   {liveLocations[member.userId]
-                    ? formatLocationPreview(liveLocations[member.userId])
+                    ? formatLocationPreview(
+                        liveLocations[member.userId],
+                        locationAddresses[member.userId]
+                      )
                     : "위치 공유 대기"}
                 </span>
               </p>
@@ -577,13 +601,6 @@ export function HomePage() {
           </div>
         </div>
       </Card>
-      <Link
-        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-200 active:scale-[0.98] hover:bg-brand-hover"
-        to="/profile"
-      >
-        <UsersThree size={18} weight="bold" />
-        그룹 생성하기
-      </Link>
     </div>
   );
 
@@ -607,6 +624,7 @@ export function HomePage() {
               <FamilyLocationMap
                 locations={liveLocations}
                 members={members}
+                onAddressChange={handleLocationAddressChange}
                 onSelectMember={setSelectedLocationMemberId}
               />
           )}
@@ -675,6 +693,7 @@ export function HomePage() {
       {selectedLocationMember ? (
         <FamilyLocationPin
           location={selectedLocation}
+          address={selectedLocation ? locationAddresses[selectedLocationMemberId] : undefined}
           member={selectedLocationMember}
           onQuickMessage={handleSendQuickMessage}
           sendingMessageKey={sendingQuickMessageTo}
@@ -862,10 +881,12 @@ function DashboardSwipeSection({
 function FamilyLocationMap({
   locations,
   members,
+  onAddressChange,
   onSelectMember,
 }: {
   locations: Record<string, LiveLocation>;
   members: FamilyMemberProfile[];
+  onAddressChange: (memberId: string, address: string) => void;
   onSelectMember: (memberId: string) => void;
 }) {
   const pins = useMemo(
@@ -887,6 +908,7 @@ function FamilyLocationMap({
   const [mapError, setMapError] = useState("");
   const [projectedPositions, setProjectedPositions] = useState<Record<string, MapPinPosition>>({});
   const [focusedMemberId, setFocusedMemberId] = useState("");
+  const geocodedPositionKeysRef = useRef(new Set<string>());
   const bounds = pins.length > 0 ? getLocationBounds(pins.map((pin) => pin.location)) : null;
   const fallbackPositions = Object.fromEntries(
     bounds
@@ -1019,6 +1041,46 @@ function FamilyLocationMap({
       active = false;
     };
   }, [pins]);
+
+  useEffect(() => {
+    if (mapStatus !== "READY" || pins.length === 0) {
+      return;
+    }
+
+    const kakao = getKakaoMaps();
+    const geocoder = new kakao.services.Geocoder();
+    let active = true;
+
+    pins.forEach(({ location, member }) => {
+      const positionKey = `${member.userId}:${location.latitude.toFixed(5)},${location.longitude.toFixed(5)}`;
+
+      if (geocodedPositionKeysRef.current.has(positionKey)) {
+        return;
+      }
+
+      geocodedPositionKeysRef.current.add(positionKey);
+      geocoder.coord2Address(
+        location.longitude,
+        location.latitude,
+        (result, status) => {
+          if (!active || status !== kakao.services.Status.OK) {
+            return;
+          }
+
+          const address =
+            result[0]?.road_address?.address_name ?? result[0]?.address?.address_name;
+
+          if (address) {
+            onAddressChange(member.userId, address);
+          }
+        }
+      );
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [mapStatus, onAddressChange, pins]);
 
   if (pins.length === 0) {
     return (
@@ -1186,11 +1248,13 @@ function DashboardList({
 }
 
 function FamilyLocationPin({
+  address,
   location,
   member,
   onQuickMessage,
   sendingMessageKey,
 }: {
+  address?: string;
   location?: LiveLocation;
   member: FamilyMemberProfile;
   onQuickMessage: (member: FamilyMemberProfile, message: string) => void;
@@ -1211,7 +1275,9 @@ function FamilyLocationPin({
           </span>
         </div>
         <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">
-          {location ? formatLocationPreview(location) : "아직 공유된 위치가 없습니다."}
+          {location
+            ? formatLocationPreview(location, address)
+            : "아직 공유된 위치가 없습니다."}
         </p>
         {location ? (
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-text-secondary)]">
@@ -1253,8 +1319,8 @@ function formatEventMeta(event: CalendarEvent) {
   return tags.join(" · ");
 }
 
-function formatLocationPreview(location: LiveLocation) {
-  return `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+function formatLocationPreview(location: LiveLocation, address?: string) {
+  return address ?? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
 }
 
 function getLocationPinLabel(member: FamilyMemberProfile) {
@@ -1292,7 +1358,7 @@ function loadKakaoMapScript() {
     const script = document.createElement("script");
     script.async = true;
     script.id = "kakao-map-sdk";
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(kakaoMapJavaScriptKey)}&autoload=false`;
+    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(kakaoMapJavaScriptKey)}&autoload=false&libraries=services`;
     script.addEventListener("load", handleScriptReady, { once: true });
     script.addEventListener("error", reject, { once: true });
     document.head.appendChild(script);

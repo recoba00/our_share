@@ -8,14 +8,18 @@ import {
   GearSix,
   NotePencil,
   SealQuestion,
+  UsersThree,
 } from "@phosphor-icons/react";
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
+import { Input } from "../common/Input";
 import { useAuth } from "../../features/auth/useAuth";
+import { createFamily } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
+import { useToast } from "../common/toastContext";
 import { mainNavigationItems } from "../navigation/navigationItems";
 
 type LocationState = {
@@ -24,9 +28,13 @@ type LocationState = {
 
 export function AppHeader() {
   const { signOut, status, user } = useAuth();
-  const { activeFamily, families, selectFamily } = useFamily();
+  const { activeFamily, families, refreshFamilies, selectFamily } = useFamily();
+  const { showToast } = useToast();
   const { pathname, state } = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [isCreateFamilyOpen, setIsCreateFamilyOpen] = useState(false);
+  const [newFamilyName, setNewFamilyName] = useState("");
+  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
   const locationState = state as LocationState | null;
   const title = getPageTitle(pathname);
   const isHome = title === "우리끼리";
@@ -62,11 +70,12 @@ export function AppHeader() {
                 className="size-8 rounded-xl object-cover"
                 src={`${import.meta.env.BASE_URL}brand-logo.svg`}
               />
-              {status === "authenticated" && families.length > 0 ? (
+              {status === "authenticated" ? (
                 <GroupSwitcher
                   activeFamilyId={activeFamily?.id ?? ""}
                   compact
                   families={families}
+                  onCreateFamily={() => setIsCreateFamilyOpen(true)}
                   onSelect={selectFamily}
                 />
               ) : null}
@@ -165,23 +174,87 @@ export function AppHeader() {
           ) : null}
         </div>
       </div>
+      {user ? (
+        <BottomSheet
+          isOpen={isCreateFamilyOpen}
+          onClose={() => {
+            setIsCreateFamilyOpen(false);
+            setNewFamilyName("");
+          }}
+          title="그룹 생성"
+        >
+          <form className="grid gap-4" onSubmit={(event) => void handleCreateFamily(event)}>
+            <div>
+              <p className="text-sm font-semibold text-brand">새 그룹 만들기</p>
+              <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
+                그룹을 만든 뒤 바로 해당 그룹으로 전환합니다.
+              </p>
+            </div>
+            <Input
+              autoFocus
+              label="그룹 이름"
+              onChange={(event) => setNewFamilyName(event.target.value)}
+              placeholder="새 그룹 이름을 입력해주세요"
+              value={newFamilyName}
+            />
+            <Button disabled={isCreatingFamily} type="submit">
+              <UsersThree size={18} weight="bold" />
+              생성하기
+            </Button>
+          </form>
+        </BottomSheet>
+      ) : null}
     </header>
   );
+
+  async function handleCreateFamily(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (!user) {
+      return;
+    }
+
+    const normalizedName = newFamilyName.trim();
+
+    if (!normalizedName) {
+      showToast({ message: "그룹 이름을 입력해주세요.", variant: "info" });
+      return;
+    }
+
+    setIsCreatingFamily(true);
+
+    try {
+      const result = await createFamily({ name: normalizedName, owner: user });
+      await refreshFamilies(result.id);
+      setNewFamilyName("");
+      setIsCreateFamilyOpen(false);
+      showToast({ message: "그룹을 생성했습니다.", variant: "success" });
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "그룹 생성에 실패했습니다.",
+        variant: "error",
+      });
+    } finally {
+      setIsCreatingFamily(false);
+    }
+  }
 }
 
 function GroupSwitcher({
   activeFamilyId,
   compact = false,
   families,
+  onCreateFamily,
   onSelect,
 }: {
   activeFamilyId: string;
   compact?: boolean;
   families: { id: string; name: string }[];
+  onCreateFamily: () => void;
   onSelect: (familyId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
-  const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0];
+  const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0] ?? null;
 
   return (
     <div className={`relative min-w-0 ${compact ? "max-w-[min(46vw,190px)]" : "max-w-[min(44vw,180px)]"}`}>
@@ -196,11 +269,18 @@ function GroupSwitcher({
         onClick={() => setIsOpen((current) => !current)}
         type="button"
       >
-        <span className="truncate">{truncateFamilyName(activeFamily.name)}</span>
+        <span className="truncate">
+          {activeFamily ? truncateFamilyName(activeFamily.name) : "그룹 선택"}
+        </span>
         {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
       </button>
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="그룹 전환">
         <div className="grid gap-3" role="listbox">
+          {families.length === 0 ? (
+            <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
+              아직 참여 중인 그룹이 없습니다.
+            </p>
+          ) : null}
           {families.map((family) => (
             <BottomSheetItem
               aria-selected={family.id === activeFamilyId}
@@ -217,6 +297,19 @@ function GroupSwitcher({
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </BottomSheetItem>
           ))}
+          <div className="border-t border-[var(--color-border)] pt-3">
+            <Button
+              className="w-full"
+              onClick={() => {
+                setIsOpen(false);
+                onCreateFamily();
+              }}
+              type="button"
+            >
+              <UsersThree size={18} weight="bold" />
+              그룹 생성하기
+            </Button>
+          </div>
         </div>
       </BottomSheet>
     </div>
