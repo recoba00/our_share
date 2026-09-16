@@ -17,6 +17,7 @@ import {
   setDoc,
   updateDoc,
   where,
+  writeBatch,
 } from "firebase/firestore";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
@@ -154,6 +155,31 @@ describe("family membership rules", () => {
 
     await assertFails(deleteDoc(doc(bobDb, "familyMembers", "familyA_chris")));
     await assertSucceeds(deleteDoc(doc(aliceDb, "familyMembers", "familyA_chris")));
+  });
+
+  it("allows owners to delete the family and all membership documents in one batch", async () => {
+    const memberIds = [
+      "alice",
+      ...Array.from({ length: 12 }, (_, index) => `member${index}`),
+    ];
+
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds,
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const batch = writeBatch(aliceDb);
+
+    memberIds.forEach((userId) => {
+      batch.delete(doc(aliceDb, "familyMembers", `familyA_${userId}`));
+    });
+    batch.delete(doc(aliceDb, "families", "familyA"));
+    batch.delete(doc(aliceDb, "familyInvites", "ABC123"));
+
+    await assertSucceeds(batch.commit());
   });
 
   it("scopes owner permissions to the selected family", async () => {
