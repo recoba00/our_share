@@ -57,6 +57,7 @@ type LeaveFamilyInput = {
 type JoinFamilyResult = {
   id: string;
   name: string;
+  alreadyMember: boolean;
 };
 
 const inFlightInviteJoins = new Map<string, Promise<JoinFamilyResult>>();
@@ -145,6 +146,7 @@ async function joinFamilyByInviteCodeInternal({
     return {
       id: familyId,
       name: invite.name as string,
+      alreadyMember: true,
     };
   }
 
@@ -159,6 +161,7 @@ async function joinFamilyByInviteCodeInternal({
   return {
     id: familyId,
     name: invite.name as string,
+    alreadyMember: false,
   };
 }
 

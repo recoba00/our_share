@@ -472,9 +472,14 @@ export function HomePage() {
 
     try {
       const result = await joinFamilyByInviteCode({ inviteCode, user });
-      await refreshFamilies(result.id);
+      await refreshFamilies();
       setInviteCode("");
-      notify(`${result.name} 그룹에 참여했습니다.`, "success");
+      notify(
+        result.alreadyMember
+          ? `이미 ${result.name} 그룹에 참여 중입니다.`
+          : `${result.name} 그룹을 추가했습니다. 헤더에서 전환할 수 있어요.`,
+        result.alreadyMember ? "info" : "success"
+      );
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {

@@ -13,6 +13,7 @@ import { useAuth } from "../../features/auth/useAuth";
 import {
   createFamily,
   deleteFamily,
+  leaveFamily,
   updateFamily,
 } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
@@ -125,6 +126,35 @@ export function ProfilePage() {
       await deleteFamily({ familyId, ownerId: user.uid });
       await refreshFamilies();
       notify("그룹을 삭제했습니다.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setBusyFamilyId("");
+    }
+  }
+
+  async function handleLeaveFamily(familyId: string, familyName: string) {
+    if (!user) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "그룹 나가기",
+      description: `${familyName} 그룹의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      title: `'${familyName}' 그룹에서 나갈까요?`,
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setBusyFamilyId(familyId);
+
+    try {
+      await leaveFamily({ familyId, userId: user.uid });
+      await refreshFamilies();
+      notify("그룹에서 나갔습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -375,7 +405,17 @@ export function ProfilePage() {
                               <Trash size={17} />
                             </button>
                           </>
-                        ) : null}
+                        ) : (
+                          <button
+                            aria-label={`${family.name} 그룹 나가기`}
+                            className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
+                            disabled={isBusy}
+                            onClick={() => void handleLeaveFamily(family.id, family.name)}
+                            type="button"
+                          >
+                            <SignOut size={17} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   )}
