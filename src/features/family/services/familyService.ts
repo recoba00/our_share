@@ -100,11 +100,15 @@ export async function joinFamilyByInviteCode({
 
   const invite = inviteSnapshot.data();
   const familyId = invite.familyId as string;
-  const existingMemberSnapshot = await getDoc(
-    doc(db, "familyMembers", `${familyId}_${user.uid}`)
+  const existingMemberSnapshot = await getDocs(
+    query(
+      collection(db, "familyMembers"),
+      where("familyId", "==", familyId),
+      where("userId", "==", user.uid)
+    )
   );
 
-  if (existingMemberSnapshot.exists()) {
+  if (!existingMemberSnapshot.empty) {
     return {
       id: familyId,
       name: invite.name as string,

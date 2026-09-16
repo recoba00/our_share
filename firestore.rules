@@ -23,11 +23,6 @@ service cloud.firestore {
         get(membershipPath(familyId)).data.role == "OWNER";
     }
 
-    function isOwnMembershipId(memberId) {
-      return signedIn() &&
-        memberId.matches("^.*_" + request.auth.uid + "$");
-    }
-
     function isValidFamilyRole(role) {
       return role == "OWNER" ||
         role == "PARENT" ||
@@ -330,10 +325,9 @@ service cloud.firestore {
     }
 
     match /familyMembers/{memberId} {
-      allow read: if isOwnMembershipId(memberId) ||
-        (signedIn() &&
+      allow read: if signedIn() &&
         (resource.data.userId == request.auth.uid ||
-          isFamilyMember(resource.data.familyId)))
+          isFamilyMember(resource.data.familyId));
       allow create: if signedIn() &&
         memberId == request.resource.data.familyId + "_" + request.auth.uid &&
         request.resource.data.keys().hasOnly([
