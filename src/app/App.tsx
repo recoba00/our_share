@@ -11,6 +11,7 @@ import { CalendarPage } from "../pages/calendar/CalendarPage";
 import { ChatPage } from "../pages/chat/ChatPage";
 import { DiagnosticsPage } from "../pages/diagnostics/DiagnosticsPage";
 import { HomePage } from "../pages/home/HomePage";
+import { InvitePage } from "../pages/invite/InvitePage";
 import { MemoPage } from "../pages/memo/MemoPage";
 import { PollPage } from "../pages/poll/PollPage";
 import { ProfilePage } from "../pages/profile/ProfilePage";
@@ -26,6 +27,7 @@ export function App() {
               <AppLayout>
                 <Routes>
                   <Route path="/" element={<HomePage />} />
+                  <Route path="/invite/:inviteCode" element={<InvitePage />} />
                   <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
                   <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
                   <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />

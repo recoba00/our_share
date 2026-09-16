@@ -18,6 +18,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
+import { BottomSheet } from "../../components/common/BottomSheet";
 import { Card } from "../../components/common/Card";
 import { Avatar } from "../../components/common/Avatar";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -732,8 +733,7 @@ export function ChatPage() {
           onClick={() => setIsCreateOpen(true)}
         />
       ) : null}
-      <ActionLayer
-        desktop
+      <BottomSheet
         isOpen={isPollCreateOpen}
         onClose={() => setIsPollCreateOpen(false)}
         title="투표 만들기"
@@ -820,7 +820,7 @@ export function ChatPage() {
             </p>
           ) : null}
         </form>
-      </ActionLayer>
+      </BottomSheet>
       <Modal
         isOpen={Boolean(editingMessageId)}
         onClose={() => {

@@ -318,7 +318,10 @@ service cloud.firestore {
         request.resource.data.ownerId == request.auth.uid &&
         exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)) &&
         get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.ownerId == request.auth.uid;
-      allow update, delete: if false;
+      allow update: if false;
+      allow delete: if signedIn() &&
+        resource.data.ownerId == request.auth.uid &&
+        isFamilyOwner(resource.data.familyId);
     }
 
     match /familyMembers/{memberId} {

@@ -243,7 +243,9 @@
 - [x] Chat Room Delete
 - [x] Mobile Full-Screen Room Form
 - [x] Family Invite Entry
+- [x] Family Invite Link Auto Join after Google Login
 - [x] Chat Poll Create
+- [x] In-chat Poll Create Bottom Sheet
 - [x] Send Poll to Chat Room
 - [x] Read Status
 - [x] Text Message Only MVP

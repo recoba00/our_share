@@ -100,10 +100,15 @@ export async function joinFamilyByInviteCode({
 
   const invite = inviteSnapshot.data();
   const familyId = invite.familyId as string;
-  const familySnapshot = await getDoc(doc(db, "families", familyId));
+  const existingMemberSnapshot = await getDoc(
+    doc(db, "familyMembers", `${familyId}_${user.uid}`)
+  );
 
-  if (!familySnapshot.exists()) {
-    throw new Error("더 이상 참여할 수 없는 그룹입니다.");
+  if (existingMemberSnapshot.exists()) {
+    return {
+      id: familyId,
+      name: invite.name as string,
+    };
   }
 
   await upsertFamilyMember({
@@ -116,9 +121,7 @@ export async function joinFamilyByInviteCode({
 
   return {
     id: familyId,
-    name: familySnapshot.exists()
-      ? (familySnapshot.data().name as string)
-      : (invite.name as string),
+    name: invite.name as string,
   };
 }
 
@@ -136,6 +139,12 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
 }
 
 export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
+  const familySnapshot = await getDoc(doc(db, "families", familyId));
+
+  if (!familySnapshot.exists()) {
+    throw new Error("삭제할 그룹을 찾을 수 없습니다.");
+  }
+
   const memberSnapshot = await getDocs(
     query(collection(db, "familyMembers"), where("familyId", "==", familyId))
   );
@@ -150,6 +159,12 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   const batch = writeBatch(db);
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
   batch.delete(doc(db, "families", familyId));
+  const inviteCode = familySnapshot.data().inviteCode as string | undefined;
+
+  if (inviteCode) {
+    batch.delete(doc(db, "familyInvites", inviteCode));
+  }
+
   await batch.commit();
 
   await remove(ref(realtimeDb, `familyMembers/${familyId}/${ownerId}`));

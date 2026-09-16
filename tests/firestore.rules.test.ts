@@ -70,6 +70,20 @@ describe("family membership rules", () => {
     );
   });
 
+  it("allows only the family owner to delete the invite index", async () => {
+    await seedFamily({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertFails(deleteDoc(doc(bobDb, "familyInvites", "ABC123")));
+    await assertSucceeds(deleteDoc(doc(aliceDb, "familyInvites", "ABC123")));
+  });
+
   it("blocks arbitrary self-joining without a matching invite index", async () => {
     await seedFamily({
       familyId: "familyA",

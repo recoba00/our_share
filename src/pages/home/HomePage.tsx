@@ -10,6 +10,7 @@ import {
   GoogleLogo,
   MapPin,
   Note,
+  ShareNetwork,
   Trash,
   GearSix,
   UserPlus,
@@ -427,6 +428,40 @@ export function HomePage() {
     }
   }
 
+  async function handleShareInviteLink() {
+    if (!activeFamily) {
+      notify("공유할 초대 링크가 없습니다.", "info");
+      return;
+    }
+
+    const inviteUrl = getInviteUrl(activeFamily.inviteCode);
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          text: `${activeFamily.name} 그룹에 참여해주세요.`,
+          title: "우리끼리 그룹 초대",
+          url: inviteUrl,
+        });
+        return;
+      }
+
+      if (!navigator.clipboard || !window.isSecureContext) {
+        notify("현재 브라우저에서는 초대 링크 공유를 사용할 수 없습니다.", "error");
+        return;
+      }
+
+      await navigator.clipboard.writeText(inviteUrl);
+      notify("초대 링크를 복사했습니다.", "success");
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+
+      notify(getErrorMessage(error), "error");
+    }
+  }
+
   async function handleJoinFamily() {
     if (!user || !inviteCode.trim()) {
       notify("초대 코드를 입력해주세요.", "info");
@@ -551,6 +586,14 @@ export function HomePage() {
                   >
                     {activeFamily.inviteCode}
                     <CopySimple size={14} weight="bold" />
+                  </button>
+                  <button
+                    aria-label="그룹 초대 링크 공유"
+                    className="grid size-8 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-brand-soft hover:text-brand"
+                    onClick={() => void handleShareInviteLink()}
+                    type="button"
+                  >
+                    <ShareNetwork size={17} weight="bold" />
                   </button>
                   <Link
                     aria-label="그룹 관리하기"
@@ -1322,6 +1365,13 @@ function formatEventMeta(event: CalendarEvent) {
 
 function formatLocationPreview(location: LiveLocation, address?: string) {
   return address ?? `${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`;
+}
+
+function getInviteUrl(inviteCode: string) {
+  return new URL(
+    `${import.meta.env.BASE_URL}invite/${encodeURIComponent(inviteCode)}`,
+    window.location.origin
+  ).toString();
 }
 
 function getLocationPinLabel(member: FamilyMemberProfile) {
