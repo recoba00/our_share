@@ -107,6 +107,13 @@ describe("family membership rules", () => {
     );
   });
 
+  it("allows a user to check their own missing membership document", async () => {
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertSucceeds(getDoc(doc(bobDb, "familyMembers", "familyA_bob")));
+    await assertFails(getDoc(doc(bobDb, "familyMembers", "familyA_alice")));
+  });
+
   it("blocks family document reads for non-members", async () => {
     await seedFamily({
       familyId: "familyA",

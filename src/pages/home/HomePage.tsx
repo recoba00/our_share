@@ -548,7 +548,7 @@ export function HomePage() {
         <div className="grid gap-3">
           {activeFamily ? (
             <div
-              className={`flex min-w-0 items-start justify-between gap-3 rounded-2xl border p-3 ${
+              className={`min-w-0 rounded-2xl border p-3 ${
                 isFamilyOwner
                   ? "border-[var(--color-owner-border)] bg-brand-soft/40"
                   : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
@@ -564,49 +564,54 @@ export function HomePage() {
                 >
                   <UsersThree size={20} weight="bold" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {isFamilyOwner ? "그룹 오너" : "그룹원"}
-                  </p>
-                  <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+                        {isFamilyOwner ? "그룹 오너" : "그룹원"}
+                      </p>
+                      <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
+                    </div>
+                    {isFamilyOwner ? (
+                      <Link
+                        aria-label="그룹 관리하기"
+                        className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                        to="/profile"
+                      >
+                        <GearSix size={18} weight="bold" />
+                      </Link>
+                    ) : null}
+                  </div>
                   <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
                     {isFamilyOwner
                       ? "초대코드를 공유해 그룹원을 초대할 수 있어요."
                       : "초대코드는 그룹 오너가 관리해요."}
                   </p>
-                  {isFamilyOwner ? (
-                    <div className="mt-3 flex min-w-0 flex-wrap items-center gap-2">
-                      <button
-                        aria-label="그룹 초대 코드 복사"
-                        className="inline-flex items-center gap-1.5 rounded-full bg-white px-3 py-1 text-xs font-semibold text-brand transition hover:bg-brand-soft"
-                        onClick={() => void handleCopyInviteCode()}
-                        type="button"
-                      >
-                        {activeFamily.inviteCode}
-                        <CopySimple size={14} weight="bold" />
-                      </button>
-                      <Button
-                        className="h-9 whitespace-nowrap px-3 text-xs"
-                        aria-label="그룹 초대하기"
-                        onClick={() => void handleShareInviteLink()}
-                        type="button"
-                        variant="secondary"
-                      >
-                        <ShareNetwork size={15} weight="bold" />
-                        초대하기
-                      </Button>
-                    </div>
-                  ) : null}
                 </div>
               </div>
               {isFamilyOwner ? (
-                <Link
-                  aria-label="그룹 관리하기"
-                  className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                  to="/profile"
-                >
-                  <GearSix size={18} weight="bold" />
-                </Link>
+                <div className="mt-3 grid w-full min-w-0 grid-cols-2 gap-2">
+                  <Button
+                    aria-label="그룹 초대 코드 복사"
+                    className="h-9 min-w-0 w-full px-3 text-xs"
+                    onClick={() => void handleCopyInviteCode()}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <span className="truncate">{activeFamily.inviteCode}</span>
+                    <CopySimple className="shrink-0" size={14} weight="bold" />
+                  </Button>
+                  <Button
+                    aria-label="그룹 초대하기"
+                    className="h-9 min-w-0 w-full px-3 text-xs"
+                    onClick={() => void handleShareInviteLink()}
+                    type="button"
+                    variant="secondary"
+                  >
+                    <ShareNetwork size={15} weight="bold" />
+                    초대하기
+                  </Button>
+                </div>
               ) : null}
             </div>
           ) : null}
