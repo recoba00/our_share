@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "../components/auth/RequireAuth";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
@@ -7,15 +8,34 @@ import { AppLayout } from "../components/layout/AppLayout";
 import { PwaPrompt } from "../components/pwa/PwaPrompt";
 import { AuthProvider } from "../features/auth/AuthProvider";
 import { FamilyProvider } from "../features/family/FamilyProvider";
-import { CalendarPage } from "../pages/calendar/CalendarPage";
-import { ChatPage } from "../pages/chat/ChatPage";
-import { DiagnosticsPage } from "../pages/diagnostics/DiagnosticsPage";
-import { HomePage } from "../pages/home/HomePage";
-import { InvitePage } from "../pages/invite/InvitePage";
-import { MemoPage } from "../pages/memo/MemoPage";
-import { PollPage } from "../pages/poll/PollPage";
-import { ProfilePage } from "../pages/profile/ProfilePage";
-import { SettingsPage } from "../pages/settings/SettingsPage";
+
+const CalendarPage = lazy(() =>
+  import("../pages/calendar/CalendarPage").then(({ CalendarPage: page }) => ({ default: page }))
+);
+const ChatPage = lazy(() =>
+  import("../pages/chat/ChatPage").then(({ ChatPage: page }) => ({ default: page }))
+);
+const DiagnosticsPage = lazy(() =>
+  import("../pages/diagnostics/DiagnosticsPage").then(({ DiagnosticsPage: page }) => ({ default: page }))
+);
+const HomePage = lazy(() =>
+  import("../pages/home/HomePage").then(({ HomePage: page }) => ({ default: page }))
+);
+const InvitePage = lazy(() =>
+  import("../pages/invite/InvitePage").then(({ InvitePage: page }) => ({ default: page }))
+);
+const MemoPage = lazy(() =>
+  import("../pages/memo/MemoPage").then(({ MemoPage: page }) => ({ default: page }))
+);
+const PollPage = lazy(() =>
+  import("../pages/poll/PollPage").then(({ PollPage: page }) => ({ default: page }))
+);
+const ProfilePage = lazy(() =>
+  import("../pages/profile/ProfilePage").then(({ ProfilePage: page }) => ({ default: page }))
+);
+const SettingsPage = lazy(() =>
+  import("../pages/settings/SettingsPage").then(({ SettingsPage: page }) => ({ default: page }))
+);
 
 export function App() {
   return (
@@ -25,19 +45,21 @@ export function App() {
           <ConfirmDialogProvider>
             <ErrorBoundary>
               <AppLayout>
-                <Routes>
-                  <Route path="/" element={<HomePage />} />
-                  <Route path="/invite/:inviteCode" element={<InvitePage />} />
-                  <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
-                  <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
-                  <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
-                  <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
-                  <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
-                  <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
-                  <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
-                  <Route path="/diagnostics" element={<DiagnosticsPage />} />
-                  <Route path="*" element={<Navigate to="/" replace />} />
-                </Routes>
+                <Suspense fallback={<RouteLoading />}>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/invite/:inviteCode" element={<InvitePage />} />
+                    <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
+                    <Route path="/chat/:roomId" element={<RequireAuth><ChatPage /></RequireAuth>} />
+                    <Route path="/poll" element={<RequireAuth><PollPage /></RequireAuth>} />
+                    <Route path="/memo" element={<RequireAuth><MemoPage /></RequireAuth>} />
+                    <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
+                    <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
+                    <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+                    <Route path="/diagnostics" element={<DiagnosticsPage />} />
+                    <Route path="*" element={<Navigate to="/" replace />} />
+                  </Routes>
+                </Suspense>
                 <PwaPrompt />
               </AppLayout>
             </ErrorBoundary>
@@ -45,5 +67,13 @@ export function App() {
         </ToastProvider>
       </FamilyProvider>
     </AuthProvider>
+  );
+}
+
+function RouteLoading() {
+  return (
+    <div className="grid min-h-[12rem] place-items-center">
+      <p className="text-sm font-semibold text-[var(--color-text-secondary)]">화면을 불러오는 중입니다.</p>
+    </div>
   );
 }

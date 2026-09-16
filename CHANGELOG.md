@@ -4,6 +4,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 ## 2026-09-16
 
+- `App.tsx`의 페이지 정적 import를 라우트 지연 로딩으로 전환해 초기 엔트리 JS를 약 173KB에서 48KB로 줄이고, 기능 페이지별 청크 로딩으로 초기 진입 부담을 낮췄다.
 - GitHub Actions Functions 에뮬레이터 테스트가 CI 초기화 지연으로 기본 15초 제한을 넘지 않도록 테스트·hook 제한을 30초로 늘리고 미러 대기 시간을 25초로 조정했다.
 - Firebase Functions 멤버십 미러 트리거를 Firestore 서울 리전(`asia-northeast3`)으로 명시해 기본 미국 리전 실행에 따른 지연을 줄이도록 정리했다.
 - Firebase Functions 배포 workflow의 Node 버전을 Functions 런타임(`20`)과 일치시켜 CI 실행 환경 차이 경고를 제거했다.
