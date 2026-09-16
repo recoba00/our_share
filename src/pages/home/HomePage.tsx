@@ -8,6 +8,7 @@ import {
   CopySimple,
   DotsThreeVertical,
   GoogleLogo,
+  LinkSimple,
   MapPin,
   Note,
   ShareNetwork,
@@ -460,6 +461,25 @@ export function HomePage() {
     }
   }
 
+  async function handleCopyInviteLink() {
+    if (!activeFamily) {
+      notify("복사할 초대 링크가 없습니다.", "info");
+      return;
+    }
+
+    if (!navigator.clipboard || !window.isSecureContext) {
+      notify("현재 브라우저에서는 링크 복사를 사용할 수 없습니다.", "error");
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(getInviteUrl(activeFamily.inviteCode));
+      notify("초대 링크를 복사했습니다.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    }
+  }
+
   async function handleShareInviteLink() {
     if (!activeFamily) {
       notify("공유할 초대 링크가 없습니다.", "info");
@@ -591,18 +611,8 @@ export function HomePage() {
                   : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
               }`}
             >
-              <div className="flex min-w-0 items-start gap-3">
-                <div
-                  className={`grid size-10 shrink-0 place-items-center rounded-xl ${
-                    isFamilyOwner
-                      ? "bg-brand text-white"
-                      : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
-                  }`}
-                >
-                  <UsersThree size={20} weight="bold" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex min-w-0 items-start justify-between gap-2">
+              <div className="min-w-0">
+                <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
                         {isFamilyOwner ? "그룹 오너" : "그룹원"}
@@ -610,43 +620,53 @@ export function HomePage() {
                       <strong className="mt-0.5 block truncate">{activeFamily.name}</strong>
                     </div>
                     {isFamilyOwner ? (
-                      <Link
-                        aria-label="그룹 관리하기"
-                        className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                        to="/profile?tab=group"
-                      >
-                        <GearSix size={18} weight="bold" />
-                      </Link>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          aria-label={`초대코드 ${activeFamily.inviteCode} 복사`}
+                          className="flex min-w-0 max-w-[10rem] items-center gap-1 rounded-lg px-1.5 py-1 text-xs font-semibold text-[var(--color-text-secondary)] transition hover:text-brand"
+                          onClick={() => void handleCopyInviteCode()}
+                          type="button"
+                        >
+                          <span className="truncate">초대코드 {activeFamily.inviteCode}</span>
+                          <CopySimple className="shrink-0" size={14} weight="regular" />
+                        </button>
+                        <Link
+                          aria-label="그룹 관리하기"
+                          className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                          to="/profile?tab=group"
+                        >
+                          <GearSix size={18} weight="regular" />
+                        </Link>
+                      </div>
                     ) : null}
-                  </div>
-                  <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                    {isFamilyOwner
-                      ? "초대코드를 공유해 그룹원을 초대할 수 있어요."
-                      : "초대코드는 그룹 오너가 관리해요."}
-                  </p>
                 </div>
+                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                  {isFamilyOwner
+                    ? "초대코드를 공유해 그룹원을 초대할 수 있어요."
+                    : "초대코드는 그룹 오너가 관리해요."}
+                </p>
               </div>
               {isFamilyOwner ? (
                 <div className="mt-3 grid w-full min-w-0 grid-cols-2 gap-2">
                   <Button
-                    aria-label="그룹 초대 코드 복사"
+                    aria-label="그룹 초대 링크 복사"
                     className="h-9 min-w-0 w-full px-3 text-xs"
-                    onClick={() => void handleCopyInviteCode()}
+                    onClick={() => void handleCopyInviteLink()}
                     type="button"
                     variant="secondary"
                   >
-                    <span className="truncate">{activeFamily.inviteCode}</span>
-                    <CopySimple className="shrink-0" size={14} weight="bold" />
+                    <LinkSimple className="shrink-0" size={15} weight="regular" />
+                    링크 복사
                   </Button>
                   <Button
-                    aria-label="그룹 초대하기"
+                    aria-label="그룹 공유하기"
                     className="h-9 min-w-0 w-full px-3 text-xs"
                     onClick={() => void handleShareInviteLink()}
                     type="button"
                     variant="secondary"
                   >
-                    <ShareNetwork size={15} weight="bold" />
-                    초대하기
+                    <ShareNetwork size={15} weight="regular" />
+                    공유하기
                   </Button>
                 </div>
               ) : null}
