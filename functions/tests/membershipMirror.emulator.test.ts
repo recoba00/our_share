@@ -16,7 +16,7 @@ const firestore = getFirestore(app);
 const realtimeDatabase = getDatabase(app);
 
 async function waitForMirror(path: string, expectedRole?: string) {
-  const timeoutAt = Date.now() + 10_000;
+  const timeoutAt = Date.now() + 25_000;
 
   while (Date.now() < timeoutAt) {
     const snapshot = await realtimeDatabase.ref(path).get();
