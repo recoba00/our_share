@@ -585,22 +585,15 @@ export function HomePage() {
                         {activeFamily.inviteCode}
                         <CopySimple size={14} weight="bold" />
                       </button>
-                      <button
-                        aria-label="그룹 초대 링크 공유"
-                        className="grid size-8 shrink-0 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-brand-soft hover:text-brand"
-                        onClick={() => void handleShareInviteLink()}
-                        type="button"
-                      >
-                        <ShareNetwork size={17} weight="bold" />
-                      </button>
                       <Button
                         className="h-9 whitespace-nowrap px-3 text-xs"
+                        aria-label="그룹 초대하기"
                         onClick={() => void handleShareInviteLink()}
                         type="button"
                         variant="secondary"
                       >
-                        <UserPlus size={15} weight="bold" />
-                        그룹 초대
+                        <ShareNetwork size={15} weight="bold" />
+                        초대하기
                       </Button>
                     </div>
                   ) : null}
