@@ -20,11 +20,13 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar } from "../../components/common/Avatar";
+import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { BottomSheetItem } from "../../components/common/BottomSheetItem";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { SignInConsentButton } from "../../components/compliance/SignInConsentButton";
+import { PolicyDocumentView } from "../../components/compliance/PolicyDocumentView";
 import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
@@ -36,6 +38,7 @@ import {
   hasLocationShareConsent,
   saveLocationShareConsent,
 } from "../../features/compliance/consentStorage";
+import { policyDocuments } from "../../features/compliance/policyDocuments";
 import {
   deleteFamilyMember,
   getFamilyMembers,
@@ -178,6 +181,8 @@ export function HomePage() {
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
   const [isLeavingFamily, setIsLeavingFamily] = useState(false);
   const [isLocationConsentOpen, setIsLocationConsentOpen] = useState(false);
+  const [isLocationPolicyOpen, setIsLocationPolicyOpen] = useState(false);
+  const [isLocationConsentChecked, setIsLocationConsentChecked] = useState(false);
   const [locationConsentUserId, setLocationConsentUserId] = useState("");
   const handleDataError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
@@ -565,6 +570,7 @@ export function HomePage() {
 
     saveLocationShareConsent(user.uid);
     setLocationConsentUserId(user.uid);
+    setIsLocationConsentChecked(false);
     setIsLocationConsentOpen(false);
     void locationShare.shareCurrentLocation();
   }
@@ -854,16 +860,26 @@ export function HomePage() {
     <BottomSheet
       footer={
         <div className="grid grid-cols-2 gap-2">
-          <Button onClick={() => setIsLocationConsentOpen(false)} type="button" variant="secondary">
+          <Button
+            onClick={() => {
+              setIsLocationConsentChecked(false);
+              setIsLocationConsentOpen(false);
+            }}
+            type="button"
+            variant="secondary"
+          >
             나중에
           </Button>
-          <Button onClick={acceptLocationConsent} type="button">
+          <Button disabled={!isLocationConsentChecked} onClick={acceptLocationConsent} type="button">
             위치 공유 시작
           </Button>
         </div>
       }
       isOpen={isLocationConsentOpen}
-      onClose={() => setIsLocationConsentOpen(false)}
+      onClose={() => {
+        setIsLocationConsentChecked(false);
+        setIsLocationConsentOpen(false);
+      }}
       title="위치 공유"
     >
       <div className="grid gap-4">
@@ -877,7 +893,31 @@ export function HomePage() {
         <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
           다음 단계에서 브라우저 위치 권한을 허용해주세요. 권한을 거절해도 다른 기능은 계속 사용할 수 있어요.
         </p>
+        <div className="flex items-start gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3">
+          <AnimatedCheckbox
+            aria-label="위치정보 이용약관 확인 및 동의"
+            checked={isLocationConsentChecked}
+            onChange={(event) => setIsLocationConsentChecked(event.target.checked)}
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">위치정보 이용약관을 확인했고 동의해요.</p>
+            <button
+              className="mt-1 text-xs font-semibold text-brand underline underline-offset-2"
+              onClick={() => setIsLocationPolicyOpen(true)}
+              type="button"
+            >
+              내용 보기
+            </button>
+          </div>
+        </div>
       </div>
+    </BottomSheet>
+    <BottomSheet
+      isOpen={isLocationPolicyOpen}
+      onClose={() => setIsLocationPolicyOpen(false)}
+      title={policyDocuments.location.title}
+    >
+      <PolicyDocumentView documentId="location" />
     </BottomSheet>
     <BottomSheet
       isOpen={Boolean(selectedManageMember)}
