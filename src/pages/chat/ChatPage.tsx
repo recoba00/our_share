@@ -627,7 +627,7 @@ export function ChatPage() {
       {chatCreateTab === "SECRET" ? (
         <form className="grid gap-3" onSubmit={handleCreateSecretRoom}>
           <SectionHeading
-            description="초대된 구성원만 참여할 수 있어요."
+            description="초대된 멤버만 참여할 수 있어요."
             icon={<LockKey size={20} weight="bold" />}
             level="h3"
             title="비밀방 만들기"
@@ -659,7 +659,7 @@ export function ChatPage() {
       ) : (
         <form className="grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
           <SectionHeading
-            description="선택한 구성원과 함께 사용할 방을 만들어요."
+            description="선택한 멤버와 함께 사용할 방을 만들어요."
             icon={<Users size={20} weight="bold" />}
             level="h3"
             title="크루방 만들기"
@@ -1159,7 +1159,7 @@ function MemberSelectionList({
   return (
     <div className="grid gap-2">
       <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-        함께할 구성원 선택
+        함께할 멤버 선택
       </p>
       {selectableMembers.map((member) => (
         <label

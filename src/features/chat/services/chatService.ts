@@ -104,7 +104,7 @@ export async function createSecretRoom({
   }
 
   if (normalizedMemberIds.length < 2) {
-    throw new Error("비밀방에는 본인 외 구성원 1명 이상이 필요합니다.");
+    throw new Error("비밀방에는 본인 외 멤버 1명 이상이 필요합니다.");
   }
 
   const roomRef = doc(collection(db, "families", familyId, "chatRooms"));

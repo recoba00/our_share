@@ -531,7 +531,7 @@ export function HomePage() {
       notify(
         result.alreadyMember
           ? `이미 ${result.name} 크루에 참여 중입니다.`
-          : `${result.name} 크루를 추가했습니다. 헤더에서 전환할 수 있어요.`,
+          : `${result.name} 크루에 참여했어요. 헤더에서 전환할 수 있어요.`,
         result.alreadyMember ? "info" : "success"
       );
     } catch (error) {
@@ -683,9 +683,9 @@ export function HomePage() {
       </Card>
       <Card className="grid gap-2">
         <div>
-          <p className="text-sm font-semibold">다른 크루 추가</p>
+          <p className="text-sm font-semibold">새 크루 참여</p>
           <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-            초대코드를 입력하면 현재 크루는 유지되고 새 크루가 추가돼요.
+            초대코드를 입력하면 현재 크루는 유지되고 새 크루에 참여해요.
           </p>
         </div>
         <div className="flex min-w-0 items-end gap-2">
@@ -706,7 +706,7 @@ export function HomePage() {
             variant="secondary"
           >
             <UserPlus size={18} weight="bold" />
-            크루 추가
+            참여하기
           </Button>
         </div>
       </Card>
@@ -832,13 +832,13 @@ export function HomePage() {
       }}
       title={
         memberManageView === "ROLE"
-          ? "구성원 역할 변경"
-          : selectedManageMember?.displayName ?? selectedManageMember?.nickname ?? "구성원 관리"
+          ? "멤버 역할 변경"
+          : selectedManageMember?.displayName ?? selectedManageMember?.nickname ?? "멤버 관리"
       }
       titleAction={
         memberManageView === "ROLE" ? (
           <button
-            aria-label="구성원 관리로 돌아가기"
+            aria-label="멤버 관리로 돌아가기"
             className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
             onClick={() => setMemberManageView("ACTIONS")}
             type="button"
@@ -860,7 +860,7 @@ export function HomePage() {
             }}
             type="button"
             >
-            <span>구성원 역할 변경</span>
+            <span>멤버 역할 변경</span>
             <span className="text-xs text-[var(--color-text-secondary)]">
               {roleLabels[selectedManageMember.role]}
             </span>

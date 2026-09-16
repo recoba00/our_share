@@ -301,8 +301,8 @@ function GroupSwitcher({
             <SegmentedControl
               onChange={setGroupTab}
               options={[
-                { label: `크루장 크루 ${ownerFamilies.length}`, value: "OWNER" },
-                { label: `멤버 크루 ${memberFamilies.length}`, value: "MEMBER" },
+                { label: `내 크루 ${ownerFamilies.length}`, value: "OWNER" },
+                { label: `참여 크루 ${memberFamilies.length}`, value: "MEMBER" },
               ]}
               value={visibleGroupTab}
             />
@@ -314,7 +314,7 @@ function GroupSwitcher({
           ) : null}
           {families.length > 0 && visibleFamilies.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              {visibleGroupTab === "OWNER" ? "내가 크루장인 크루가 없습니다." : "멤버로 참여 중인 크루가 없습니다."}
+              {visibleGroupTab === "OWNER" ? "만든 크루가 없습니다." : "참여 중인 크루가 없습니다."}
             </p>
           ) : null}
           {visibleFamilies.map((family) => (

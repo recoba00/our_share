@@ -288,7 +288,7 @@ export function ProfilePage() {
               <h2 className="text-lg font-semibold">내 크루</h2>
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              크루장은 초대코드와 크루를 관리하고, 멤버는 참여 상태를 확인할 수 있습니다.
+              내 크루의 초대코드와 멤버를 관리하고, 참여 중인 크루를 확인할 수 있습니다.
             </p>
           </div>
         </div>
@@ -328,8 +328,8 @@ export function ProfilePage() {
           <SegmentedControl
             onChange={setGroupRoleTab}
             options={[
-              { label: `크루장 크루 ${ownerFamilies.length}`, value: "OWNER" },
-              { label: `멤버 크루 ${memberFamilies.length}`, value: "MEMBER" },
+              { label: `내 크루 ${ownerFamilies.length}`, value: "OWNER" },
+              { label: `참여 크루 ${memberFamilies.length}`, value: "MEMBER" },
             ]}
             value={visibleGroupRoleTab}
           />
@@ -450,8 +450,8 @@ export function ProfilePage() {
           ) : (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
               {visibleGroupRoleTab === "OWNER"
-                ? "내가 크루장인 크루가 없습니다."
-                : "멤버로 참여 중인 크루가 없습니다."}
+                ? "만든 크루가 없습니다."
+                : "참여 중인 크루가 없습니다."}
             </p>
           )}
         </div>
