@@ -187,6 +187,14 @@ Firebase Hosting 이전은 완료된 상태다.
 
 릴리즈 후보 점검은 배포 전 로컬에서 `npm run test:mvp`를 실행하고, 배포 후 GitHub Actions의 `npm run test:hosting` 단계 성공 여부로 확인한다.
 
+## Firebase Rules 배포
+
+Hosting 배포와 Firebase Rules 배포는 분리한다. Realtime Database Rules를 수정한 뒤에는 GitHub Actions의 `Firebase Database Rules Deploy` workflow를 `Run workflow`로 실행한다.
+
+이 workflow는 Firebase Rules 에뮬레이터 테스트, 서비스 계정 JSON 검증, `database.rules.json` 배포 순서로 동작한다.
+
+서비스 계정에는 Realtime Database Rules를 배포할 수 있는 Firebase/Google Cloud 권한이 필요하다. 권한이 없으면 Hosting 배포에는 영향이 없고 Rules workflow만 실패한다.
+
 ## Firebase Functions 운영 배포
 
 Admin SDK Membership Mirror는 `functions-deploy.yml` 수동 workflow로 배포한다. Functions는 Hosting과 달리 Blaze 요금제와 Cloud Functions 권한이 필요하므로, Blaze 전환을 결정하기 전에는 실행하지 않는다.
