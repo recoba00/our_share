@@ -432,6 +432,12 @@ function createDiagnostics(authStatus: string, userId?: string) {
         label: "Battery API",
         status: "ok",
       },
+      {
+        detail:
+          "PWA 웹에서는 OS가 브라우저를 강제 종료하면 GPS와 watchPosition 실행을 보장할 수 없습니다. 앱이 열려 있거나 백그라운드 탭인 동안에만 이동 감지 위치 공유가 동작합니다.",
+        label: "Background Location",
+        status: "warning",
+      },
     ] satisfies DiagnosticItem[],
   };
 }
