@@ -180,7 +180,9 @@ export function getAuthErrorMessage(error: unknown) {
   const code = getFirebaseAuthCode(error);
 
   if (code === "auth/unauthorized-domain") {
-    return "Firebase Auth 승인 도메인에 현재 접속 도메인을 추가해야 합니다. Firebase Console > Authentication > Settings > 승인된 도메인에 recoba00.dothome.co.kr를 추가해주세요.";
+    const currentHost = typeof window !== "undefined" ? window.location.hostname : "our-share-6baf5.web.app";
+
+    return `Firebase Auth 승인 도메인에 현재 접속 도메인(${currentHost})을 추가해야 합니다. Firebase Console > Authentication > Settings > 승인된 도메인에서 확인해주세요.`;
   }
 
   if (code === "auth/operation-not-allowed") {
