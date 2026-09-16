@@ -6,14 +6,18 @@ export function FamilyRoleIndicator({
   role,
 }: {
   className?: string;
-  role: FamilyRole | "MEMBER";
+  role: FamilyRole;
 }) {
-  if (role === "OWNER") {
+  if (role === "OWNER" || role === "VICE_OWNER") {
+    const isOwner = role === "OWNER";
+
     return (
       <span
-        aria-label="크루장"
-        className={`inline-flex size-5 shrink-0 items-center justify-center text-orange-500 ${className}`}
-        title="크루장"
+        aria-label={isOwner ? "크루장" : "부크루장"}
+        className={`inline-flex size-5 shrink-0 items-center justify-center ${
+          isOwner ? "text-amber-500" : "text-amber-700"
+        } ${className}`}
+        title={isOwner ? "크루장" : "부크루장"}
       >
         <CrownSimple aria-hidden="true" size={14} weight="fill" />
       </span>

@@ -2,7 +2,6 @@ import type { User } from "firebase/auth";
 import {
   collection,
   documentId,
-  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -32,6 +31,12 @@ type UpdateFamilyMemberRoleInput = {
   actorUserId: string;
   familyId: string;
   role: Exclude<FamilyRole, "OWNER">;
+  targetUserId: string;
+};
+
+type TransferFamilyOwnershipInput = {
+  actorUserId: string;
+  familyId: string;
   targetUserId: string;
 };
 
@@ -83,6 +88,7 @@ export async function createFamily({ name, owner }: CreateFamilyInput) {
     name: normalizedName,
     ownerId: owner.uid,
     inviteCode,
+    viceOwnerIds: [],
     createdAt: serverTimestamp(),
   });
 
@@ -238,6 +244,7 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
 
 export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
   const memberRef = doc(db, "familyMembers", `${familyId}_${userId}`);
+  const familyRef = doc(db, "families", familyId);
   const memberSnapshot = await getDoc(memberRef);
 
   if (!memberSnapshot.exists()) {
@@ -250,7 +257,22 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
 
   await clearMemberRealtimeData(familyId, userId);
   await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
-  await deleteDoc(memberRef);
+
+  const familySnapshot = await getDoc(familyRef);
+  const batch = writeBatch(db);
+  batch.delete(memberRef);
+
+  if (memberSnapshot.data().role === "VICE_OWNER" && familySnapshot.exists()) {
+    const viceOwnerIds = readViceOwnerIds(familySnapshot.data()).filter(
+      (viceOwnerId) => viceOwnerId !== userId
+    );
+    batch.update(familyRef, {
+      viceOwnerIds,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  await batch.commit();
 }
 
 async function clearMemberRealtimeData(familyId: string, userId: string) {
@@ -310,6 +332,7 @@ export async function getFamiliesForUser(userId: string) {
       inviteCode,
       ownerId: family.ownerId as string,
       role,
+      viceOwnerIds: readViceOwnerIds(family),
       createdAt: family.createdAt,
     };
   });
@@ -380,16 +403,128 @@ export async function updateFamilyMemberRole({
     throw new Error("크루장 역할은 여기서 바꿀 수 없어요.");
   }
 
-  await updateDoc(targetRef, {
+  const familyRef = doc(db, "families", familyId);
+  const familySnapshot = await getDoc(familyRef);
+  if (!familySnapshot.exists()) {
+    throw new Error("변경할 크루를 찾을 수 없어요.");
+  }
+
+  const memberSnapshot = await getDocs(
+    query(collection(db, "familyMembers"), where("familyId", "==", familyId))
+  );
+  const currentViceOwnerIds = memberSnapshot.docs
+    .filter((memberDoc) => memberDoc.data().role === "VICE_OWNER")
+    .map((memberDoc) => memberDoc.data().userId as string);
+
+  if (
+    role === "VICE_OWNER" &&
+    targetSnapshot.data().role !== "VICE_OWNER" &&
+    currentViceOwnerIds.length >= 2
+  ) {
+    throw new Error("부크루장은 최대 2명까지 지정할 수 있어요.");
+  }
+
+  const nextViceOwnerIds = currentViceOwnerIds.filter(
+    (viceOwnerId) => viceOwnerId !== targetUserId
+  );
+  if (role === "VICE_OWNER") {
+    nextViceOwnerIds.push(targetUserId);
+  }
+
+  const batch = writeBatch(db);
+  batch.update(familyRef, {
+    viceOwnerIds: nextViceOwnerIds,
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(targetRef, {
     role,
     updatedAt: serverTimestamp(),
   });
+  await batch.commit();
 
   await set(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`), {
     role,
     userId: targetUserId,
     updatedAt: Date.now(),
   });
+}
+
+export async function transferFamilyOwnership({
+  actorUserId,
+  familyId,
+  targetUserId,
+}: TransferFamilyOwnershipInput) {
+  const familyRef = doc(db, "families", familyId);
+  const actorRef = doc(db, "familyMembers", `${familyId}_${actorUserId}`);
+  const targetRef = doc(db, "familyMembers", `${familyId}_${targetUserId}`);
+  const [familySnapshot, actorSnapshot, targetSnapshot, memberSnapshot] = await Promise.all([
+    getDoc(familyRef),
+    getDoc(actorRef),
+    getDoc(targetRef),
+    getDocs(query(collection(db, "familyMembers"), where("familyId", "==", familyId))),
+  ]);
+
+  if (
+    !familySnapshot.exists() ||
+    !actorSnapshot.exists() ||
+    familySnapshot.data().ownerId !== actorUserId ||
+    actorSnapshot.data().role !== "OWNER"
+  ) {
+    throw new Error("크루장 승계는 현재 크루장만 할 수 있어요.");
+  }
+
+  if (!targetSnapshot.exists() || targetSnapshot.data().userId !== targetUserId) {
+    throw new Error("승계할 멤버를 찾을 수 없어요.");
+  }
+
+  if (targetSnapshot.data().role === "OWNER") {
+    throw new Error("이미 크루장인 멤버예요.");
+  }
+
+  const currentViceOwnerIds = memberSnapshot.docs
+    .filter((memberDoc) => memberDoc.data().role === "VICE_OWNER")
+    .map((memberDoc) => memberDoc.data().userId as string);
+
+  if (
+    targetSnapshot.data().role !== "VICE_OWNER" &&
+    currentViceOwnerIds.length >= 2
+  ) {
+    throw new Error("부크루장은 최대 2명이라 승계 전에 한 명을 멤버로 바꿔주세요.");
+  }
+
+  const nextViceOwnerIds = currentViceOwnerIds.filter(
+    (viceOwnerId) => viceOwnerId !== targetUserId && viceOwnerId !== actorUserId
+  );
+  nextViceOwnerIds.push(actorUserId);
+
+  const batch = writeBatch(db);
+  batch.update(familyRef, {
+    ownerId: targetUserId,
+    viceOwnerIds: nextViceOwnerIds,
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(actorRef, {
+    role: "VICE_OWNER",
+    updatedAt: serverTimestamp(),
+  });
+  batch.update(targetRef, {
+    role: "OWNER",
+    updatedAt: serverTimestamp(),
+  });
+  await batch.commit();
+
+  await Promise.all([
+    set(ref(realtimeDb, `familyMembers/${familyId}/${actorUserId}`), {
+      role: "VICE_OWNER",
+      userId: actorUserId,
+      updatedAt: Date.now(),
+    }),
+    set(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`), {
+      role: "OWNER",
+      userId: targetUserId,
+      updatedAt: Date.now(),
+    }),
+  ]);
 }
 
 export async function deleteFamilyMember({
@@ -413,7 +548,21 @@ export async function deleteFamilyMember({
     throw new Error("크루장은 삭제할 수 없어요.");
   }
 
-  await deleteDoc(targetRef);
+  const batch = writeBatch(db);
+  batch.delete(targetRef);
+  if (targetSnapshot.data().role === "VICE_OWNER") {
+    const familyRef = doc(db, "families", familyId);
+    const familySnapshot = await getDoc(familyRef);
+    if (familySnapshot.exists()) {
+      batch.update(familyRef, {
+        viceOwnerIds: readViceOwnerIds(familySnapshot.data()).filter(
+          (viceOwnerId) => viceOwnerId !== targetUserId
+        ),
+        updatedAt: serverTimestamp(),
+      });
+    }
+  }
+  await batch.commit();
   await remove(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`));
 }
 
@@ -498,6 +647,12 @@ async function ensureFamilyInviteIndex({
 
 function createInviteCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function readViceOwnerIds(data: Record<string, unknown>) {
+  return Array.isArray(data.viceOwnerIds)
+    ? data.viceOwnerIds.filter((userId): userId is string => typeof userId === "string")
+    : [];
 }
 
 async function getDocumentsByIds(collectionName: "families" | "users", ids: string[]) {

@@ -157,6 +157,82 @@ describe("family membership rules", () => {
     await assertSucceeds(deleteDoc(doc(aliceDb, "familyMembers", "familyA_chris")));
   });
 
+  it("allows an owner to promote a member to vice owner and limits the count to two", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob", "chris", "dave"],
+      ownerId: "alice",
+    });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await updateDoc(doc(db, "families", "familyA"), {
+        viceOwnerIds: ["bob", "chris"],
+      });
+      await updateDoc(doc(db, "familyMembers", "familyA_bob"), { role: "VICE_OWNER" });
+      await updateDoc(doc(db, "familyMembers", "familyA_chris"), { role: "VICE_OWNER" });
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const promoteThirdViceOwner = writeBatch(aliceDb);
+    promoteThirdViceOwner.update(doc(aliceDb, "families", "familyA"), {
+      viceOwnerIds: ["bob", "chris", "dave"],
+      updatedAt: new Date(),
+    });
+    promoteThirdViceOwner.update(doc(aliceDb, "familyMembers", "familyA_dave"), {
+      role: "VICE_OWNER",
+      updatedAt: new Date(),
+    });
+
+    await assertFails(promoteThirdViceOwner.commit());
+  });
+
+  it("allows an owner to transfer ownership atomically and makes the old owner a vice owner", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const transfer = writeBatch(aliceDb);
+    transfer.update(doc(aliceDb, "families", "familyA"), {
+      ownerId: "bob",
+      viceOwnerIds: ["alice"],
+      updatedAt: new Date(),
+    });
+    transfer.update(doc(aliceDb, "familyMembers", "familyA_alice"), {
+      role: "VICE_OWNER",
+      updatedAt: new Date(),
+    });
+    transfer.update(doc(aliceDb, "familyMembers", "familyA_bob"), {
+      role: "OWNER",
+      updatedAt: new Date(),
+    });
+
+    await assertSucceeds(transfer.commit());
+  });
+
+  it("does not allow a vice owner to delete the family", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await updateDoc(doc(db, "familyMembers", "familyA_bob"), { role: "VICE_OWNER" });
+      await updateDoc(doc(db, "families", "familyA"), { viceOwnerIds: ["bob"] });
+    });
+
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    await assertFails(deleteDoc(doc(bobDb, "families", "familyA")));
+  });
+
   it("allows owners to delete the family and all membership documents in one batch", async () => {
     const memberIds = [
       "alice",
@@ -1008,6 +1084,7 @@ function createFamily(familyId: string, ownerId: string) {
     name: "테스트 가족",
     ownerId,
     inviteCode: "ABC123",
+    viceOwnerIds: [],
     createdAt: new Date(),
   };
 }
@@ -1025,7 +1102,7 @@ function createFamilyInvite(familyId: string, inviteCode: string, ownerId: strin
 function createFamilyMember(
   familyId: string,
   userId: string,
-  role: "OWNER" | "MEMBER",
+  role: "OWNER" | "VICE_OWNER" | "PARENT" | "MEMBER" | "CHILD",
   inviteCode?: string
 ) {
   return {

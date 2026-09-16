@@ -390,14 +390,16 @@ export function ProfilePage() {
                         type="button"
                       >
                         <span className="flex w-full min-w-0 items-center gap-2">
-                          <FamilyRoleIndicator role={isOwner ? "OWNER" : "MEMBER"} />
+                          <FamilyRoleIndicator role={family.role} />
                           <strong className="min-w-0 flex-1 truncate text-base">
                             {truncateFamilyName(family.name)}
                           </strong>
                         </span>
                         <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
-                          {isOwner
-                            ? `초대 코드 ${family.inviteCode}`
+                          {isOwner || family.role === "VICE_OWNER"
+                            ? isOwner
+                              ? `초대 코드 ${family.inviteCode}`
+                              : "초대 링크를 공유할 수 있어요."
                             : "초대코드는 크루장이 관리해요."}
                         </span>
                       </button>

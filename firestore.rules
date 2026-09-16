@@ -14,6 +14,10 @@ service cloud.firestore {
       return /databases/$(database)/documents/familyMembers/$(membershipId(familyId));
     }
 
+    function memberPath(familyId, userId) {
+      return /databases/$(database)/documents/familyMembers/$(familyId + "_" + userId);
+    }
+
     function isFamilyMember(familyId) {
       return signedIn() && exists(membershipPath(familyId));
     }
@@ -23,11 +27,30 @@ service cloud.firestore {
         get(membershipPath(familyId)).data.role == "OWNER";
     }
 
+    function isFamilyViceOwner(familyId) {
+      return isFamilyMember(familyId) &&
+        get(membershipPath(familyId)).data.role == "VICE_OWNER";
+    }
+
     function isValidFamilyRole(role) {
       return role == "OWNER" ||
+        role == "VICE_OWNER" ||
         role == "PARENT" ||
         role == "MEMBER" ||
         role == "CHILD";
+    }
+
+    function hasValidViceOwnerIds(data) {
+      return data.keys().hasAll(["viceOwnerIds"]) &&
+        data.viceOwnerIds is list &&
+        data.viceOwnerIds.size() <= 2;
+    }
+
+    function isOwnerTransfer(familyId) {
+      return request.resource.data.ownerId != resource.data.ownerId &&
+        request.resource.data.ownerId != request.auth.uid &&
+        getAfter(memberPath(familyId, request.resource.data.ownerId)).data.role == "OWNER" &&
+        getAfter(membershipPath(familyId)).data.role == "VICE_OWNER";
     }
 
     function isValidInviteCode(inviteCode) {
@@ -273,6 +296,7 @@ service cloud.firestore {
           "name",
           "ownerId",
           "inviteCode",
+          "viceOwnerIds",
           "createdAt"
         ]) &&
         request.resource.data.id == familyId &&
@@ -281,19 +305,54 @@ service cloud.firestore {
         request.resource.data.name.size() <= 50 &&
         request.resource.data.inviteCode is string &&
         request.resource.data.inviteCode.size() == 6 &&
-        request.resource.data.ownerId == request.auth.uid;
-      allow update: if isFamilyOwner(familyId) &&
-        request.resource.data.id == resource.data.id &&
-        request.resource.data.ownerId == resource.data.ownerId &&
-        request.resource.data.inviteCode == resource.data.inviteCode &&
-        request.resource.data.createdAt == resource.data.createdAt &&
-        request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "name",
-          "updatedAt"
-        ]) &&
-        request.resource.data.name is string &&
-        request.resource.data.name.size() > 0 &&
-        request.resource.data.name.size() <= 50;
+        request.resource.data.ownerId == request.auth.uid &&
+        hasValidViceOwnerIds(request.resource.data);
+      allow update: if
+        (
+          isFamilyOwner(familyId) &&
+          request.resource.data.id == resource.data.id &&
+          request.resource.data.inviteCode == resource.data.inviteCode &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.name is string &&
+          request.resource.data.name.size() > 0 &&
+          request.resource.data.name.size() <= 50 &&
+          (
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "name",
+              "updatedAt"
+            ]) ||
+            (
+              request.resource.data.ownerId == resource.data.ownerId &&
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "viceOwnerIds",
+                "updatedAt"
+              ]) &&
+              hasValidViceOwnerIds(request.resource.data)
+            ) ||
+            (
+              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                "ownerId",
+                "viceOwnerIds",
+                "updatedAt"
+              ]) &&
+              hasValidViceOwnerIds(request.resource.data) &&
+              isOwnerTransfer(familyId)
+            )
+          )
+        ) ||
+        (
+          isFamilyViceOwner(familyId) &&
+          request.resource.data.id == resource.data.id &&
+          request.resource.data.ownerId == resource.data.ownerId &&
+          request.resource.data.inviteCode == resource.data.inviteCode &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "viceOwnerIds",
+            "updatedAt"
+          ]) &&
+          hasValidViceOwnerIds(request.resource.data) &&
+          !request.resource.data.viceOwnerIds.hasAny([request.auth.uid])
+        );
       allow delete: if isFamilyOwner(familyId);
     }
 
@@ -365,12 +424,53 @@ service cloud.firestore {
             (
               request.resource.data.role == "PARENT" ||
               request.resource.data.role == "MEMBER" ||
-              request.resource.data.role == "CHILD"
+              request.resource.data.role == "CHILD" ||
+              request.resource.data.role == "VICE_OWNER"
             ) &&
             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               "role",
               "updatedAt"
-            ])
+            ]) &&
+            getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.ownerId == request.auth.uid &&
+            hasValidViceOwnerIds(getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data) &&
+            (
+              (
+                request.resource.data.role == "VICE_OWNER" &&
+                getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.viceOwnerIds.hasAny([request.resource.data.userId])
+              ) ||
+              (
+                request.resource.data.role != "VICE_OWNER" &&
+                !getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.viceOwnerIds.hasAny([request.resource.data.userId])
+              )
+            )
+          ) ||
+          (
+            isFamilyOwner(resource.data.familyId) &&
+            resource.data.userId == request.auth.uid &&
+            resource.data.role == "OWNER" &&
+            request.resource.data.familyId == resource.data.familyId &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.role == "VICE_OWNER" &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "role",
+              "updatedAt"
+            ]) &&
+            getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.ownerId != request.auth.uid &&
+            hasValidViceOwnerIds(getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data) &&
+            getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.viceOwnerIds.hasAny([request.auth.uid])
+          ) ||
+          (
+            isFamilyOwner(resource.data.familyId) &&
+            resource.data.role != "OWNER" &&
+            request.resource.data.familyId == resource.data.familyId &&
+            request.resource.data.userId == resource.data.userId &&
+            request.resource.data.role == "OWNER" &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "role",
+              "updatedAt"
+            ]) &&
+            getAfter(/databases/$(database)/documents/families/$(resource.data.familyId)).data.ownerId == request.resource.data.userId &&
+            getAfter(membershipPath(resource.data.familyId)).data.role == "VICE_OWNER"
           ) ||
           (
             resource.data.userId == request.auth.uid &&

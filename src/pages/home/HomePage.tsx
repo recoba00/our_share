@@ -44,6 +44,7 @@ import {
   getFamilyMembers,
   joinFamilyByInviteCode,
   leaveFamily,
+  transferFamilyOwnership,
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
@@ -76,16 +77,13 @@ import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
 const quickMessages = ["어디야?", "언제 와?", "오는 길에 마트 들러줘!"];
-const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = [
-  "PARENT",
-  "MEMBER",
-  "CHILD",
-];
+const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = ["VICE_OWNER", "MEMBER"];
 const roleLabels: Record<FamilyRole, string> = {
   CHILD: "자녀",
   MEMBER: "멤버",
   OWNER: "크루장",
   PARENT: "부모",
+  VICE_OWNER: "부크루장",
 };
 const kakaoMapJavaScriptKey =
   import.meta.env.VITE_KAKAO_MAP_JAVASCRIPT_KEY ||
@@ -168,6 +166,7 @@ export function HomePage() {
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
   const [updatingMemberRoleId, setUpdatingMemberRoleId] = useState("");
+  const [transferringOwnerId, setTransferringOwnerId] = useState("");
   const [deletingMemberId, setDeletingMemberId] = useState("");
   const [liveLocations, setLiveLocations] = useState<Record<string, LiveLocation>>({});
   const [locationAddresses, setLocationAddresses] = useState<Record<string, string>>({});
@@ -387,6 +386,42 @@ export function HomePage() {
     }
   }
 
+  async function handleTransferOwnership(member: FamilyMemberProfile) {
+    if (!activeFamily || !user || !isFamilyOwner) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "승계하기",
+      description: `${member.displayName ?? member.nickname}님이 새 크루장이 되고, 나는 부크루장으로 변경돼요. 크루 삭제 권한은 새 크루장에게만 있어요.`,
+      title: "크루장을 승계할까요?",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setTransferringOwnerId(member.userId);
+    try {
+      await transferFamilyOwnership({
+        actorUserId: user.uid,
+        familyId: activeFamily.id,
+        targetUserId: member.userId,
+      });
+      await refreshFamilies(activeFamily.id);
+      setMembers(await getFamilyMembers(activeFamily.id));
+      setSelectedManageMemberId("");
+      setMemberManageView("ACTIONS");
+      setPendingMemberRole(null);
+      notify(`${member.displayName ?? member.nickname}님에게 크루장을 넘겼어요.`, "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setTransferringOwnerId("");
+    }
+  }
+
   async function handleDeleteMember(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
       notify("크루를 먼저 선택해주세요.", "info");
@@ -582,6 +617,16 @@ export function HomePage() {
   const isFamilyOwner =
     activeFamily?.role === "OWNER" ||
     members.some((member) => member.userId === user?.uid && member.role === "OWNER");
+  const isFamilyViceOwner =
+    activeFamily?.role === "VICE_OWNER" ||
+    members.some((member) => member.userId === user?.uid && member.role === "VICE_OWNER");
+  const currentFamilyRole: FamilyRole = isFamilyOwner
+    ? "OWNER"
+    : isFamilyViceOwner
+      ? "VICE_OWNER"
+      : activeFamily?.role ?? "MEMBER";
+  const canInviteToFamily = isFamilyOwner || isFamilyViceOwner;
+  const viceOwnerCount = members.filter((member) => member.role === "VICE_OWNER").length;
   const selectedLocationMember =
     members.find((member) => member.userId === selectedLocationMemberId) ?? null;
   const selectedLocation = selectedLocationMember
@@ -648,10 +693,10 @@ export function HomePage() {
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="flex min-w-0 items-center gap-1.5">
-                      <FamilyRoleIndicator role={isFamilyOwner ? "OWNER" : "MEMBER"} />
+                      <FamilyRoleIndicator role={currentFamilyRole} />
                       <strong className="min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
                     </div>
-                    {isFamilyOwner ? (
+                    {canInviteToFamily ? (
                       <div className="flex shrink-0 items-center gap-1">
                         <button
                           aria-label={`초대코드 ${activeFamily.inviteCode} 복사`}
@@ -662,23 +707,25 @@ export function HomePage() {
                           <span className="truncate">초대코드 {activeFamily.inviteCode}</span>
                           <CopySimple className="shrink-0" size={14} weight="regular" />
                         </button>
-                        <Link
-                          aria-label="크루 관리하기"
-                          className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                          to="/profile?tab=group"
-                        >
-                          <GearSix size={18} weight="regular" />
-                        </Link>
+                        {isFamilyOwner ? (
+                          <Link
+                            aria-label="크루 관리하기"
+                            className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                            to="/profile?tab=group"
+                          >
+                            <GearSix size={18} weight="regular" />
+                          </Link>
+                        ) : null}
                       </div>
                     ) : null}
                 </div>
                 <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-                  {isFamilyOwner
+                  {canInviteToFamily
                     ? "초대코드를 공유해 크루 멤버를 초대할 수 있어요."
                     : "초대코드는 크루장이 관리해요."}
-                </p>
-              </div>
-              {isFamilyOwner ? (
+              </p>
+            </div>
+              {canInviteToFamily ? (
                 <div className="mt-3 grid w-full min-w-0 grid-cols-2 gap-2">
                   <Button
                     aria-label="크루 초대 링크 복사"
@@ -800,8 +847,8 @@ export function HomePage() {
                     {member.displayName ?? member.nickname}
                   </strong>
                   <div className="mt-1 flex items-center text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {member.role === "OWNER" ? (
-                      <FamilyRoleIndicator role="OWNER" />
+                    {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
+                      <FamilyRoleIndicator role={member.role} />
                     ) : (
                       roleLabels[member.role]
                     )}
@@ -962,6 +1009,14 @@ export function HomePage() {
             </span>
           </BottomSheetItem>
           <BottomSheetItem
+            disabled={transferringOwnerId === selectedManageMember.userId}
+            onClick={() => void handleTransferOwnership(selectedManageMember)}
+            type="button"
+          >
+            <span>크루장 승계</span>
+            <FamilyRoleIndicator role="OWNER" />
+          </BottomSheetItem>
+          <BottomSheetItem
             disabled={deletingMemberId === selectedManageMember.userId}
             onClick={() => void handleDeleteMember(selectedManageMember)}
             tone="danger"
@@ -981,7 +1036,10 @@ export function HomePage() {
                 active={pendingMemberRole === role || selectedManageMember.role === role}
                 disabled={
                   updatingMemberRoleId === selectedManageMember.userId ||
-                  selectedManageMember.role === role
+                  selectedManageMember.role === role ||
+                  (role === "VICE_OWNER" &&
+                    viceOwnerCount >= 2 &&
+                    selectedManageMember.role !== "VICE_OWNER")
                 }
                 key={role}
                 onClick={() => setPendingMemberRole(role)}
@@ -994,6 +1052,9 @@ export function HomePage() {
               </BottomSheetItem>
             ))}
           </div>
+          <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
+            부크루장은 최대 2명까지 지정할 수 있고 초대 기능을 사용할 수 있어요.
+          </p>
           <Button
             className="w-full"
             disabled={
@@ -1025,7 +1086,11 @@ function MemberSheetProfile({ member }: { member: FamilyMemberProfile }) {
       <div className="min-w-0">
         <strong className="block truncate">{member.displayName ?? member.nickname}</strong>
         <div className="mt-1 flex min-w-0 items-center gap-1 truncate text-xs font-semibold text-[var(--color-text-secondary)]">
-          {member.role === "OWNER" ? <FamilyRoleIndicator role="OWNER" /> : roleLabels[member.role]}
+          {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
+            <FamilyRoleIndicator role={member.role} />
+          ) : (
+            roleLabels[member.role]
+          )}
           <span className="truncate">· {member.email ?? "이메일 없음"}</span>
         </div>
       </div>

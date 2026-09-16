@@ -1,4 +1,4 @@
-export type FamilyRole = "OWNER" | "PARENT" | "MEMBER" | "CHILD";
+export type FamilyRole = "OWNER" | "VICE_OWNER" | "PARENT" | "MEMBER" | "CHILD";
 
 export type Family = {
   id: string;
@@ -6,6 +6,7 @@ export type Family = {
   ownerId: string;
   inviteCode: string;
   role: FamilyRole;
+  viceOwnerIds?: string[];
   createdAt: unknown;
 };
 

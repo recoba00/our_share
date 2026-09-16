@@ -5,14 +5,14 @@ Version: 2.0
 ## 제품 용어 및 다중 크루 방향
 
 사용자에게 노출되는 서비스 용어는 `그룹` 대신 `크루`를 사용한다. 크루는 가족, 친구 모임, 룸메이트, 소규모 팀까지 확장할 수 있는 상위 개념이다.
-`오너`는 `크루장`, `그룹원`과 `구성원`은 `멤버`로 표시한다.
+`오너`는 `크루장`, `그룹원`과 `구성원`은 `멤버`로 표시한다. `VICE_OWNER`는 `부크루장`으로 표시한다.
 
 현재 MVP의 Firebase 컬렉션과 코드 내부 식별자는 기존 데이터 호환을 위해 `families`, `familyId`, `familyMembers`를 유지한다. 이 이름은 사용자 화면에 노출하지 않는 내부 호환 계층이다.
 
 다중 그룹 확장 방향:
 
 - 한 사용자는 여러 크루의 멤버가 될 수 있다.
-- 크루마다 OWNER(화면에서는 크루장)와 멤버 역할을 별도로 가진다.
+- 크루마다 OWNER(화면에서는 크루장), VICE_OWNER(부크루장), 멤버 역할을 별도로 가진다.
 - 앱 전역에 현재 선택된 `activeGroupId`를 두고 모든 일정, 메모, 투표, 채팅, 위치 구독이 이를 기준으로 동작한다.
 - 기존 `familyMembers` 조인 컬렉션은 사용자별 여러 문서를 이미 표현할 수 있으므로, 현재의 단일 그룹 조회(`limit(1)`)를 다중 목록 조회로 확장한다.
 - 마지막 선택 크루는 로컬 저장소에 보관하고, 크루 전환 UI는 헤더 또는 홈 상단에 배치한다.
@@ -379,6 +379,7 @@ familyMembers 필드:
 role:
 
 - OWNER
+- VICE_OWNER
 - PARENT
 - MEMBER
 - CHILD
@@ -421,7 +422,9 @@ MVP 정책:
 - 사용자는 자신이 속한 `familyId` 데이터만 접근 가능
 - PUBLIC 데이터는 가족 구성원이 접근 가능
 - PRIVATE 데이터는 `visibleTo` 배열에 사용자 UID가 포함된 경우에만 접근 가능
-- ADMIN/OWNER는 가족 관리 가능
+- OWNER는 크루명·멤버·초대·크루 삭제를 관리할 수 있다.
+- VICE_OWNER는 초대 기능을 사용할 수 있지만 멤버 관리와 크루 삭제는 할 수 없다. 크루당 최대 2명이다.
+- MEMBER는 크루 데이터를 이용할 수 있지만 크루 관리 권한은 없다.
 
 ### Firestore / Realtime Database 동기화 정책
 
@@ -432,6 +435,7 @@ MVP 클라이언트 동작:
 - 가족 생성 시 Firestore membership과 RTDB mirror를 함께 생성한다.
 - 초대 코드 참여 시 Firestore membership 생성 후 RTDB mirror를 best-effort로 생성한다.
 - 가족 구성원 역할 변경 시 Firestore membership과 RTDB mirror role을 함께 갱신한다.
+- 크루장 승계 시 기존 OWNER를 VICE_OWNER로 바꾸고 새 OWNER를 같은 Firestore batch로 저장한다.
 - OWNER가 구성원을 삭제할 때 Firestore membership 삭제 후 RTDB mirror도 삭제한다.
 - 기존 membership에 mirror가 없으면 앱 구독 시 best-effort backfill을 수행한다.
 

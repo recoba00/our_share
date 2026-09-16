@@ -118,6 +118,12 @@
 - [x] App / modal / bottom sheet header title typography unified
 - [x] Fixed glass header
 - [x] Glass bottom navigation with safe area
+
+## Crew Permissions
+
+- [x] Crew owner succession with confirmation dialog
+- [x] Vice owner role with invite permission and owner-only deletion safeguards
+- [x] Maximum two vice owners with Firestore rule coverage
 - [x] Compact bottom navigation with safe-area offset on scroll
 - [x] Bottom navigation active state without background fill
 - [x] Bottom Navigation Scroll To Top

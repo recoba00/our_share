@@ -1,5 +1,6 @@
 export const FAMILY_MEMBER_ROLES = [
   "OWNER",
+  "VICE_OWNER",
   "PARENT",
   "MEMBER",
   "CHILD",

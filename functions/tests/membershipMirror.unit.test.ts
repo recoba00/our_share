@@ -15,6 +15,18 @@ describe("buildMembershipMirror", () => {
     });
   });
 
+  it("mirrors a vice owner role", () => {
+    expect(
+      buildMembershipMirror(
+        { familyId: "group-a", userId: "user-a", role: "VICE_OWNER" },
+        123
+      )
+    ).toEqual({
+      path: "familyMembers/group-a/user-a",
+      data: { role: "VICE_OWNER", userId: "user-a", updatedAt: 123 },
+    });
+  });
+
   it("rejects incomplete or unknown membership records", () => {
     expect(buildMembershipMirror(undefined, 123)).toBeNull();
     expect(
