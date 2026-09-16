@@ -11,6 +11,11 @@ import { buildMembershipMirror, type FamilyMemberRecord } from "./membershipMirr
 
 initializeApp();
 
+const familyMemberTrigger = {
+  document: "familyMembers/{memberId}",
+  region: "asia-northeast3" as const,
+};
+
 function toRecord(data: Record<string, unknown> | undefined): FamilyMemberRecord {
   return data ?? {};
 }
@@ -38,16 +43,16 @@ async function removeMembershipMirror(data: Record<string, unknown> | undefined)
 }
 
 export const syncFamilyMemberCreated = onDocumentCreated(
-  "familyMembers/{memberId}",
+  familyMemberTrigger,
   async (event) => writeMembershipMirror(event.data?.data())
 );
 
 export const syncFamilyMemberUpdated = onDocumentUpdated(
-  "familyMembers/{memberId}",
+  familyMemberTrigger,
   async (event) => writeMembershipMirror(event.data?.after.data())
 );
 
 export const syncFamilyMemberDeleted = onDocumentDeleted(
-  "familyMembers/{memberId}",
+  familyMemberTrigger,
   async (event) => removeMembershipMirror(event.data?.data())
 );
