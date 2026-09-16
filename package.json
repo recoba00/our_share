@@ -9,7 +9,7 @@
     "build:firebase": "tsc -b && vite build --base=/ && node scripts/stamp-service-worker.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "test:unit": "vitest run tests/pollDraft.test.ts",
+    "test:unit": "vitest run tests/pollDraft.test.ts tests/familyName.test.ts",
     "test:ui-feedback": "node scripts/run-ui-feedback-smoke.mjs",
     "test:dist": "node scripts/run-dist-smoke.mjs --base=/our_share/",
     "test:dist:firebase": "node scripts/run-dist-smoke.mjs --base=/",
