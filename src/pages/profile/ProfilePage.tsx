@@ -1,6 +1,7 @@
 import { Check, PencilSimple, Plus, SignOut, Trash, UsersThree } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -19,6 +20,7 @@ import {
 import { useFamily } from "../../features/family/useFamily";
 
 export function ProfilePage() {
+  const [searchParams] = useSearchParams();
   const { refreshUser, signOut, user } = useAuth();
   const { activeFamily, families, isLoading: isFamilyLoading, refreshFamilies, selectFamily } = useFamily();
   const { confirm } = useConfirmDialog();
@@ -29,7 +31,11 @@ export function ProfilePage() {
   const [editingFamilyId, setEditingFamilyId] = useState("");
   const [editingFamilyName, setEditingFamilyName] = useState("");
   const [busyFamilyId, setBusyFamilyId] = useState("");
-  const [activeTab, setActiveTab] = useState<"MY" | "GROUP">("MY");
+  const groupTabRequested = searchParams.get("tab") === "group";
+  const groupTabsRef = useRef<HTMLDivElement>(null);
+  const [activeTab, setActiveTab] = useState<"MY" | "GROUP">(
+    groupTabRequested ? "GROUP" : "MY"
+  );
   const [groupRoleTab, setGroupRoleTab] = useState<"OWNER" | "MEMBER">("OWNER");
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
   const [newFamilyName, setNewFamilyName] = useState("");
@@ -173,6 +179,21 @@ export function ProfilePage() {
     : groupRoleTab;
   const visibleFamilies = visibleGroupRoleTab === "OWNER" ? ownerFamilies : memberFamilies;
 
+  useEffect(() => {
+    if (!groupTabRequested) {
+      return;
+    }
+
+    const frameId = window.requestAnimationFrame(() => {
+      groupTabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      groupTabsRef.current
+        ?.querySelector<HTMLButtonElement>('[role="tab"][aria-selected="true"]')
+        ?.focus({ preventScroll: true });
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
+  }, [groupTabRequested]);
+
   return (
     <DesktopWorkspace
       sidebar={
@@ -194,14 +215,16 @@ export function ProfilePage() {
       }
     >
       <div className="grid gap-4">
-        <SegmentedControl
-          onChange={setActiveTab}
-          options={[
-            { label: "MY", value: "MY" },
-            { label: "그룹", value: "GROUP" },
-          ]}
-          value={activeTab}
-        />
+        <div className="scroll-mt-20" ref={groupTabsRef}>
+          <SegmentedControl
+            onChange={setActiveTab}
+            options={[
+              { label: "MY", value: "MY" },
+              { label: "그룹", value: "GROUP" },
+            ]}
+            value={activeTab}
+          />
+        </div>
 
         {activeTab === "MY" ? (
       <Card>

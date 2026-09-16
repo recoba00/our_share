@@ -581,7 +581,7 @@ export function HomePage() {
                       <Link
                         aria-label="그룹 관리하기"
                         className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                        to="/profile"
+                        to="/profile?tab=group"
                       >
                         <GearSix size={18} weight="bold" />
                       </Link>
