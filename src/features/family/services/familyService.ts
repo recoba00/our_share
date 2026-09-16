@@ -207,7 +207,13 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
 
   await batch.commit();
 
-  await remove(ref(realtimeDb, `familyMembers/${familyId}/${ownerId}`));
+  await Promise.all(
+    memberSnapshot.docs.map((memberDoc) => {
+      const memberUserId = memberDoc.data().userId as string;
+
+      return remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`));
+    })
+  );
 }
 
 export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
