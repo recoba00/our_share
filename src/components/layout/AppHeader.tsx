@@ -43,6 +43,7 @@ export function AppHeader() {
   const isProfile = pathname.startsWith("/profile");
   const isSettings = pathname.startsWith("/settings");
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
+  const isFeaturePage = ["/chat", "/poll", "/memo", "/calendar"].includes(pathname);
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
@@ -84,7 +85,19 @@ export function AppHeader() {
               ) : null}
             </div>
           ) : (
-            <h1 className="text-lg font-semibold leading-none">{title}</h1>
+            <div className="flex min-w-0 items-center gap-3">
+              <h1 className="shrink-0 text-lg font-semibold leading-none">{title}</h1>
+              {isFeaturePage && status === "authenticated" ? (
+                <GroupSwitcher
+                  activeFamilyId={activeFamily?.id ?? ""}
+                  compact
+                  families={families}
+                  onCreateFamily={() => setIsCreateFamilyOpen(true)}
+                  onSelect={selectFamily}
+                  userId={user?.uid}
+                />
+              ) : null}
+            </div>
           )}
         </div>
         <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
