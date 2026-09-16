@@ -88,6 +88,16 @@ jobs:
           console.log('Firebase service account secret shape is valid.');
           NODE
 
+      - name: Deploy Firestore security rules
+        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
+        env:
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
+        run: |
+          SERVICE_ACCOUNT_FILE="$RUNNER_TEMP/firebase-service-account.json"
+          printf '%s' "$FIREBASE_SERVICE_ACCOUNT_JSON" > "$SERVICE_ACCOUNT_FILE"
+          export GOOGLE_APPLICATION_CREDENTIALS="$SERVICE_ACCOUNT_FILE"
+          npx --yes firebase-tools@latest deploy --only firestore:rules --project our-share-6baf5 --non-interactive
+
       - name: Deploy to Firebase Hosting
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
