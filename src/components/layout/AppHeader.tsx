@@ -75,7 +75,7 @@ export function AppHeader() {
             <h1 className="text-lg font-semibold leading-none">{title}</h1>
           )}
         </div>
-        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-start gap-1 lg:ml-20 lg:flex">
+        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
           {mainNavigationItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               className={({ isActive }) =>

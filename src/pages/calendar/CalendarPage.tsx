@@ -483,7 +483,7 @@ export function CalendarPage() {
                 role="button"
                 tabIndex={0}
               >
-                <div className="flex min-w-0 items-center justify-center gap-0.5">
+                <div className="flex min-w-0 items-center justify-between gap-0.5">
                   <span className="shrink-0">{day.date.getDate()}</span>
                   {day.isCurrentMonth && dayOffEvent ? (
                     <span
