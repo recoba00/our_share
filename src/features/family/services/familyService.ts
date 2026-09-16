@@ -1,6 +1,7 @@
 import type { User } from "firebase/auth";
 import {
   collection,
+  documentId,
   deleteDoc,
   doc,
   getDoc,
@@ -252,49 +253,51 @@ export async function getFamiliesForUser(userId: string) {
   );
   const memberSnapshot = await getDocs(membersQuery);
 
-  const families = await Promise.all(
-    memberSnapshot.docs.map(async (memberDoc) => {
-      const member = memberDoc.data();
-      const familyId = member.familyId as string;
-      const role = member.role as FamilyRole;
-      const familySnapshot = await getDoc(doc(db, "families", familyId));
+  const familyIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().familyId as string);
+  const familySnapshots = await getDocumentsByIds("families", familyIds);
+  const familiesById = new Map(familySnapshots.map((familySnapshot) => [familySnapshot.id, familySnapshot]));
 
-      if (!familySnapshot.exists()) {
-        return null;
-      }
+  const families = memberSnapshot.docs.map((memberDoc) => {
+    const member = memberDoc.data();
+    const familyId = member.familyId as string;
+    const role = member.role as FamilyRole;
+    const familySnapshot = familiesById.get(familyId);
 
-      mirrorFamilyMemberRole({
+    if (!familySnapshot?.exists()) {
+      return null;
+    }
+
+    mirrorFamilyMemberRole({
+      familyId,
+      role,
+      userId,
+    }).catch(() => {
+      // RTDB mirror backfill is best-effort during MVP.
+    });
+
+    const family = familySnapshot.data();
+    const inviteCode = family.inviteCode as string;
+
+    if (family.ownerId === userId && inviteCode) {
+      ensureFamilyInviteIndex({
         familyId,
-        role,
-        userId,
-      }).catch(() => {
-        // RTDB mirror backfill is best-effort during MVP.
-      });
-
-      const family = familySnapshot.data();
-      const inviteCode = family.inviteCode as string;
-
-      if (family.ownerId === userId && inviteCode) {
-        ensureFamilyInviteIndex({
-          familyId,
-          inviteCode,
-          name: family.name as string,
-          ownerId: userId,
-        }).catch(() => {
-          // Invite index backfill is best-effort for older family documents.
-        });
-      }
-
-      return {
-        id: familySnapshot.id,
-        name: family.name as string,
         inviteCode,
-        ownerId: family.ownerId as string,
-        role,
-        createdAt: family.createdAt,
-      };
-    })
-  );
+        name: family.name as string,
+        ownerId: userId,
+      }).catch(() => {
+        // Invite index backfill is best-effort for older family documents.
+      });
+    }
+
+    return {
+      id: familySnapshot.id,
+      name: family.name as string,
+      inviteCode,
+      ownerId: family.ownerId as string,
+      role,
+      createdAt: family.createdAt,
+    };
+  });
 
   return families.filter((family): family is NonNullable<typeof family> => Boolean(family));
 }
@@ -314,27 +317,30 @@ export async function getFamilyMembers(
   );
   const memberSnapshot = await getDocs(membersQuery);
 
-  return Promise.all(
-    memberSnapshot.docs.map(async (memberDoc) => {
-      const member = memberDoc.data();
-      const userId = member.userId as string;
-      const userSnapshot = await getDoc(doc(db, "users", userId));
-      const profile = userSnapshot.exists() ? userSnapshot.data() : {};
-
-      return {
-        familyId: member.familyId as string,
-        userId,
-        role: member.role as FamilyRole,
-        nickname: member.nickname as string,
-        relation: member.relation as string,
-        permissions: (member.permissions ?? []) as string[],
-        createdAt: member.createdAt,
-        displayName: (profile.displayName as string | null) ?? null,
-        email: (profile.email as string | null) ?? null,
-        photoURL: (profile.photoURL as string | null) ?? null,
-      };
-    })
+  const userIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().userId as string);
+  const userSnapshots = await getDocumentsByIds("users", userIds);
+  const profilesById = new Map(
+    userSnapshots.map((userSnapshot) => [userSnapshot.id, userSnapshot.data()])
   );
+
+  return memberSnapshot.docs.map((memberDoc) => {
+    const member = memberDoc.data();
+    const userId = member.userId as string;
+    const profile = profilesById.get(userId) ?? {};
+
+    return {
+      familyId: member.familyId as string,
+      userId,
+      role: member.role as FamilyRole,
+      nickname: member.nickname as string,
+      relation: member.relation as string,
+      permissions: (member.permissions ?? []) as string[],
+      createdAt: member.createdAt,
+      displayName: (profile.displayName as string | null) ?? null,
+      email: (profile.email as string | null) ?? null,
+      photoURL: (profile.photoURL as string | null) ?? null,
+    };
+  });
 }
 
 export async function updateFamilyMemberRole({
@@ -477,4 +483,23 @@ async function ensureFamilyInviteIndex({
 
 function createInviteCode() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+async function getDocumentsByIds(collectionName: "families" | "users", ids: string[]) {
+  const uniqueIds = [...new Set(ids)].filter(Boolean);
+
+  if (uniqueIds.length === 0) {
+    return [];
+  }
+
+  const chunks = Array.from({ length: Math.ceil(uniqueIds.length / 30) }, (_, index) =>
+    uniqueIds.slice(index * 30, index * 30 + 30)
+  );
+  const snapshots = await Promise.all(
+    chunks.map((chunk) =>
+      getDocs(query(collection(db, collectionName), where(documentId(), "in", chunk)))
+    )
+  );
+
+  return snapshots.flatMap((snapshot) => snapshot.docs);
 }
