@@ -634,22 +634,6 @@ export function ChatPage() {
 
   const chatCreateTools = (
     <div className="mx-auto grid w-full max-w-xl gap-4">
-      <div className="min-w-0">
-        <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
-        <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
-          {activeFamily.role === "OWNER"
-            ? "그룹원을 초대할 때 이 코드를 공유하세요."
-            : "초대코드는 그룹 오너가 관리해요."}
-        </p>
-        {activeFamily.role === "OWNER" ? (
-          <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
-            {activeFamily.inviteCode}
-          </p>
-        ) : null}
-      </div>
-
-      <div className="h-px bg-[var(--color-border)]" />
-
       <SegmentedControl
         onChange={setChatCreateTab}
         options={[
@@ -872,7 +856,10 @@ export function ChatPage() {
       </Modal>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:items-start lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 self-start overscroll-contain overflow-y-auto lg:max-h-[calc(100dvh-112px)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
+      <div
+        className={`${roomId ? "hidden lg:grid" : "grid"} min-w-0 content-start gap-4 overscroll-contain lg:max-h-[calc(100dvh-112px)] lg:overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}
+      >
+      <Card className="min-w-0 self-start">
         <SectionHeading
           action={
             <div className="flex items-center gap-1">
@@ -1011,7 +998,10 @@ export function ChatPage() {
           </div>
         </div>
 
-        <div className="mt-6 hidden border-t border-[var(--color-border)] pt-5 lg:block">
+      </Card>
+
+      <Card className="hidden min-w-0 lg:block">
+        <div>
           <SectionHeading
             icon={<UserPlus size={20} weight="bold" />}
             level="h3"
@@ -1019,8 +1009,8 @@ export function ChatPage() {
           />
           <div className="mt-4">{chatCreateTools}</div>
         </div>
-
       </Card>
+      </div>
 
       <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-full lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
