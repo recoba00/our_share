@@ -20,6 +20,7 @@ import type { ChatMessage, ChatRoom } from "../types/chatTypes";
 type CreateSecretRoomInput = {
   createdBy: string;
   familyId: string;
+  memberIds: string[];
   name: string;
 };
 
@@ -92,12 +93,18 @@ export async function getOrCreateFamilyRoom({
 export async function createSecretRoom({
   createdBy,
   familyId,
+  memberIds,
   name,
 }: CreateSecretRoomInput) {
   const normalizedName = name.trim();
+  const normalizedMemberIds = Array.from(new Set([createdBy, ...memberIds]));
 
   if (!normalizedName) {
     throw new Error("비밀방 이름을 입력해주세요.");
+  }
+
+  if (normalizedMemberIds.length < 2) {
+    throw new Error("비밀방에는 본인 외 구성원 1명 이상이 필요합니다.");
   }
 
   const roomRef = doc(collection(db, "families", familyId, "chatRooms"));
@@ -107,7 +114,7 @@ export async function createSecretRoom({
     familyId,
     type: "PRIVATE_GROUP",
     name: normalizedName,
-    memberIds: [createdBy],
+    memberIds: normalizedMemberIds,
     createdBy,
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),

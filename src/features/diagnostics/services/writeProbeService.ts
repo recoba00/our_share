@@ -143,9 +143,17 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
   });
 
   await runProbeStep(results, "채팅방 생성", async () => {
+    const familyMembers = await getFamilyMembers(family.id);
+    const otherMember = familyMembers.find((member) => member.userId !== userId);
+
+    if (!otherMember) {
+      return "다른 그룹 구성원이 없어 비밀방 생성 검사를 생략했습니다.";
+    }
+
     const roomId = await createSecretRoom({
       createdBy: userId,
       familyId: family.id,
+      memberIds: [otherMember.userId],
       name: "[진단] 저장 권한 확인",
     });
 

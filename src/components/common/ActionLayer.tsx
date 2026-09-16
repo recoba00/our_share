@@ -31,9 +31,11 @@ export function ActionLayer({ children, desktop = false, isOpen, onClose, title 
 }
 
 export function MobileCreateButton({
+  desktop = false,
   label,
   onClick,
 }: {
+  desktop?: boolean;
   label: string;
   onClick: () => void;
 }) {
@@ -58,7 +60,7 @@ export function MobileCreateButton({
 
   return (
     <button
-      className={`fixed bottom-28 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-emerald-500/85 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 backdrop-blur-xl transition-all duration-300 hover:bg-brand-hover lg:hidden ${
+      className={`fixed bottom-28 right-4 z-30 inline-flex h-12 items-center justify-center rounded-full border border-white/70 bg-emerald-500/85 text-sm font-semibold text-white shadow-lg shadow-emerald-900/20 backdrop-blur-xl transition-all duration-300 hover:bg-brand-hover ${desktop ? "lg:bottom-8" : "lg:hidden"} ${
         isScrolling ? "w-12 px-0" : "w-auto px-5"
       }`}
       onClick={onClick}

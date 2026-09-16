@@ -224,7 +224,7 @@ export function MemoPage() {
             </span>
           }
           icon={<NotePencil size={20} weight="bold" />}
-          title="메모"
+          title="최근 메모"
         />
         <div className="mt-4 grid gap-3">
           {memos.length === 0 ? (

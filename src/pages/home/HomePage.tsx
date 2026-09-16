@@ -1097,7 +1097,7 @@ function FamilyLocationMap({
               {member.photoURL ? (
                 <img
                   alt=""
-                  className="size-10 rounded-full object-cover"
+                  className="size-10 rounded-full object-cover ring-1 ring-inset ring-black/[0.04]"
                   src={member.photoURL}
                 />
               ) : (
@@ -1128,7 +1128,7 @@ function LocationMapPin({ member }: { member: FamilyMemberProfile }) {
       />
       <circle cx="24" cy="24" fill="#F4F4F4" r="18" />
       <foreignObject height="36" width="36" x="6" y="6">
-        <div className="grid size-9 place-items-center overflow-hidden rounded-full bg-[#F4F4F4] text-[11px] font-semibold text-brand">
+        <div className="grid size-9 place-items-center overflow-hidden rounded-full bg-[#F4F4F4] text-[11px] font-semibold text-brand ring-1 ring-inset ring-black/[0.04]">
           {member.photoURL ? (
             <img
               alt={member.displayName ?? member.nickname}

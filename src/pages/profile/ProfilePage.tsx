@@ -171,7 +171,7 @@ export function ProfilePage() {
           {photoURL ? (
             <img
               alt={displayName || "사용자"}
-              className="size-20 rounded-full border border-[var(--color-border)] object-cover"
+              className="size-20 rounded-full object-cover ring-1 ring-inset ring-black/[0.04]"
               src={photoURL}
             />
           ) : (

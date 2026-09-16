@@ -449,7 +449,7 @@ export function CalendarPage() {
           }
           description={activeFamily.name}
           icon={<CalendarCheck size={20} weight="bold" />}
-          title="캘린더"
+          title="이번 달 캘린더"
         />
         <div className="mt-5 grid grid-cols-7 gap-1 text-center text-xs font-semibold text-[var(--color-text-secondary)] sm:gap-2">
           {weekLabels.map((label) => (

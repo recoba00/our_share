@@ -53,7 +53,7 @@ export function AppHeader() {
               <h1 className="min-w-0 truncate text-lg font-semibold leading-none lg:hidden">
                 {locationState?.chatRoomName ?? "채팅방"}
               </h1>
-              <h1 className="hidden text-lg font-semibold leading-none lg:block">채팅</h1>
+              <h1 className="hidden text-lg font-semibold leading-none lg:block">진행 중인 채팅</h1>
             </>
           ) : isHome ? (
             <div className="flex min-w-0 items-center gap-3">
@@ -75,7 +75,7 @@ export function AppHeader() {
             <h1 className="text-lg font-semibold leading-none">{title}</h1>
           )}
         </div>
-        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-end gap-1 lg:flex lg:pr-6">
+        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-start gap-1 lg:ml-20 lg:flex">
           {mainNavigationItems.map(({ to, label, icon: Icon }) => (
             <NavLink
               className={({ isActive }) =>
@@ -266,19 +266,19 @@ function NotificationLink({
 
 function getPageTitle(pathname: string) {
   if (pathname.startsWith("/chat")) {
-    return "채팅";
+    return "진행 중인 채팅";
   }
 
   if (pathname.startsWith("/poll")) {
-    return "투표";
+    return "진행 중인 투표";
   }
 
   if (pathname.startsWith("/memo")) {
-    return "메모";
+    return "최근 메모";
   }
 
   if (pathname.startsWith("/calendar")) {
-    return "캘린더";
+    return "이번 달 캘린더";
   }
 
   if (pathname.startsWith("/diagnostics")) {

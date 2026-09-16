@@ -412,7 +412,7 @@ export function PollPage() {
           }
           description="투표 메뉴에서 만들고 이후 채팅방으로 보낼 수 있습니다."
           icon={<ChartBar size={20} weight="bold" />}
-          title="진행중 투표"
+          title="진행 중인 투표"
         />
       </Card>
 

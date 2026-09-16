@@ -15,10 +15,11 @@ import {
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ActionLayer } from "../../components/common/ActionLayer";
+import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { Avatar } from "../../components/common/Avatar";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { IconButton } from "../../components/common/IconButton";
@@ -84,6 +85,7 @@ export function ChatPage() {
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [messageText, setMessageText] = useState("");
   const [privateGroupMemberIds, setPrivateGroupMemberIds] = useState<string[]>([]);
+  const [secretRoomMemberIds, setSecretRoomMemberIds] = useState<string[]>([]);
   const [privateGroupName, setPrivateGroupName] = useState("");
   const [secretRoomName, setSecretRoomName] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -142,6 +144,14 @@ export function ChatPage() {
     () => new Map(polls.map((poll) => [poll.id, poll])),
     [polls]
   );
+
+  function toggleSecretRoomMember(memberId: string) {
+    setSecretRoomMemberIds((current) =>
+      current.includes(memberId)
+        ? current.filter((selectedMemberId) => selectedMemberId !== memberId)
+        : [...current, memberId]
+    );
+  }
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -381,9 +391,11 @@ export function ChatPage() {
       const roomId = await createSecretRoom({
         createdBy: user.uid,
         familyId: activeFamily.id,
+        memberIds: secretRoomMemberIds,
         name: secretRoomName,
       });
       setSecretRoomName("");
+      setSecretRoomMemberIds([]);
       setSelectedRoomId(roomId);
       openRoom(roomId);
       setIsCreateOpen(false);
@@ -601,78 +613,86 @@ export function ChatPage() {
   }
 
   const chatCreateTools = (
-    <div className="mx-auto grid w-full max-w-xl gap-6">
-      {activeFamily.role === "OWNER" ? (
-        <section className="grid gap-2 rounded-2xl bg-brand-soft/50 p-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-brand">
-            <UserPlus size={18} weight="bold" />
-            그룹 초대 코드
+    <div className="mx-auto grid w-full max-w-xl gap-4">
+      <Card>
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+            <UserPlus size={20} weight="bold" />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
+            <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
+              {activeFamily.role === "OWNER"
+                ? "그룹원을 초대할 때 이 코드를 공유하세요."
+                : "초대코드는 그룹 오너가 관리해요."}
+            </p>
+            {activeFamily.role === "OWNER" ? (
+              <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
+                {activeFamily.inviteCode}
+              </p>
+            ) : null}
           </div>
-          <p className="font-mono text-2xl font-semibold tracking-wide">
-            {activeFamily.inviteCode}
-          </p>
-          <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
-            그룹원을 초대할 때 이 코드를 공유하세요.
-          </p>
-        </section>
-      ) : null}
+        </div>
+      </Card>
 
-      <section className="grid gap-3">
+      <Card>
         <SectionHeading
           description="초대된 구성원만 참여할 수 있어요."
           icon={<LockKey size={20} weight="bold" />}
           level="h3"
           title="비밀방"
         />
-        <form className="grid gap-3" onSubmit={handleCreateSecretRoom}>
+        <form className="mt-4 grid gap-3" onSubmit={handleCreateSecretRoom}>
           <Input
             label="방 이름"
             onChange={(event) => setSecretRoomName(event.target.value)}
             placeholder="예: 선물 작전방"
             value={secretRoomName}
           />
-          <Button type="submit" variant="secondary">
+          <MemberSelectionList
+            currentUserId={user?.uid}
+            members={members}
+            onToggle={toggleSecretRoomMember}
+            selectedMemberIds={secretRoomMemberIds}
+          />
+          <Button
+            disabled={
+              members.filter((member) => member.userId !== user?.uid).length === 0 ||
+              secretRoomMemberIds.length === 0
+            }
+            type="submit"
+            variant="secondary"
+          >
             <LockKey size={18} weight="bold" />
             비밀방 만들기
           </Button>
         </form>
-      </section>
+      </Card>
 
-      <section className="grid gap-3">
+      <Card>
         <SectionHeading
           description="선택한 구성원과 함께 사용할 방을 만들어요."
           icon={<Users size={20} weight="bold" />}
           level="h3"
           title="그룹방"
         />
-        <form className="grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
+        <form className="mt-4 grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
           <Input
             label="방 이름"
             onChange={(event) => setPrivateGroupName(event.target.value)}
             placeholder="예: 주말 준비방"
             value={privateGroupName}
           />
-          <div className="grid gap-2">
-            {members
-              .filter((member) => member.userId !== user?.uid)
-              .map((member) => (
-                <label
-                  className="flex items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold"
-                  key={member.userId}
-                >
-                  <AnimatedCheckbox
-                    checked={privateGroupMemberIds.includes(member.userId)}
-                    onChange={() => togglePrivateGroupMember(member.userId)}
-                  />
-                  <span className="min-w-0 truncate">
-                    {member.displayName ?? member.nickname}
-                  </span>
-                </label>
-              ))}
-          </div>
+          <MemberSelectionList
+            currentUserId={user?.uid}
+            members={members}
+            onToggle={togglePrivateGroupMember}
+            selectedMemberIds={privateGroupMemberIds}
+          />
           <Button
             disabled={
-              members.filter((member) => member.userId !== user?.uid).length === 0
+              members.filter((member) => member.userId !== user?.uid).length === 0 ||
+              privateGroupMemberIds.length === 0
             }
             type="submit"
             variant="secondary"
@@ -681,7 +701,7 @@ export function ChatPage() {
             그룹방 만들기
           </Button>
         </form>
-      </section>
+      </Card>
     </div>
   );
 
@@ -695,6 +715,13 @@ export function ChatPage() {
       >
         {chatCreateTools}
       </ActionLayer>
+      {!roomId ? (
+        <MobileCreateButton
+          desktop
+          label="+ 채팅방"
+          onClick={() => setIsCreateOpen(true)}
+        />
+      ) : null}
       <ActionLayer
         desktop
         isOpen={isPollCreateOpen}
@@ -819,7 +846,7 @@ export function ChatPage() {
       </Modal>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-y-auto lg:h-full`}>
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:h-full`}>
         <SectionHeading
           action={
             <div className="flex items-center gap-1">
@@ -830,13 +857,10 @@ export function ChatPage() {
               >
                 <MagnifyingGlass size={21} />
               </IconButton>
-              <IconButton label="채팅방 만들기" onClick={() => setIsCreateOpen(true)} variant="ghost">
-                <ChatCircleDots size={21} />
-              </IconButton>
             </div>
           }
           icon={<ChatCircleDots size={20} weight="bold" />}
-          title="채팅"
+          title="진행 중인 채팅"
         />
         {isRoomSearchOpen ? (
           <label className="mt-3 flex h-11 items-center gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3">
@@ -884,9 +908,11 @@ export function ChatPage() {
                     onClick={() => void handleCreateDirectRoom(member)}
                     type="button"
                   >
-                    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-sm font-semibold text-brand">
-                      {(member.displayName ?? member.nickname).slice(0, 1)}
-                    </span>
+                    <Avatar
+                      alt={member.displayName ?? member.nickname}
+                      className="size-9 shrink-0 text-sm"
+                      src={member.photoURL}
+                    />
                     <span className="min-w-0 flex-1">
                       <strong className="block truncate text-sm">
                         {member.displayName ?? member.nickname}
@@ -913,7 +939,7 @@ export function ChatPage() {
                 <div
                     className={`flex min-w-0 items-center gap-3 rounded-xl px-2 py-2.5 transition ${
                       selectedRoom?.id === room.id
-                        ? "bg-brand-soft/50"
+                        ? "bg-brand-soft text-brand"
                         : "hover:bg-[var(--color-surface-muted)]"
                   }`}
                   key={room.id}
@@ -968,7 +994,7 @@ export function ChatPage() {
           </h3>
         </div>
         <div
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 sm:px-6 lg:mt-4 lg:min-h-0 lg:rounded-2xl lg:bg-slate-50 lg:p-4"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:mt-4 lg:min-h-0 lg:rounded-2xl lg:bg-slate-50 lg:p-4"
           ref={messagesScrollRef}
         >
           <div className="mt-auto grid gap-3">
@@ -1078,19 +1104,21 @@ function RoomAvatar({
 }) {
   const targetUserId = room.memberIds.find((memberId) => memberId !== currentUserId);
   const targetMember = members.find((member) => member.userId === targetUserId);
+  const roomMember =
+    targetMember ?? members.find((member) => room.memberIds.includes(member.userId)) ?? members[0];
 
-  if (room.type === "DIRECT" && targetMember?.photoURL) {
+  if (roomMember) {
     return (
-      <img
-        alt={targetMember.displayName ?? targetMember.nickname}
-        className="size-12 shrink-0 rounded-2xl object-cover"
-        src={targetMember.photoURL}
+      <Avatar
+        alt={roomMember.displayName ?? roomMember.nickname}
+        className="size-12 shrink-0"
+        src={roomMember.photoURL}
       />
     );
   }
 
   return (
-    <span className="grid size-12 shrink-0 place-items-center rounded-2xl bg-brand-soft text-brand">
+    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-inset ring-black/[0.04]">
       {room.type === "DIRECT" ? (
         <User size={26} weight="fill" />
       ) : room.type === "PRIVATE_GROUP" ? (
@@ -1099,6 +1127,54 @@ function RoomAvatar({
         <Users size={26} weight="fill" />
       )}
     </span>
+  );
+}
+
+function MemberSelectionList({
+  currentUserId,
+  members,
+  onToggle,
+  selectedMemberIds,
+}: {
+  currentUserId?: string;
+  members: FamilyMemberProfile[];
+  onToggle: (memberId: string) => void;
+  selectedMemberIds: string[];
+}) {
+  const selectableMembers = members.filter((member) => member.userId !== currentUserId);
+
+  if (selectableMembers.length === 0) {
+    return (
+      <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+        함께할 그룹 구성원이 없습니다.
+      </p>
+    );
+  }
+
+  return (
+    <div className="grid gap-2">
+      <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
+        함께할 구성원 선택
+      </p>
+      {selectableMembers.map((member) => (
+        <label
+          className="flex cursor-pointer items-center gap-3 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm font-semibold transition hover:bg-brand-soft/60"
+          key={member.userId}
+        >
+          <Avatar
+            alt={member.displayName ?? member.nickname}
+            src={member.photoURL}
+          />
+          <span className="min-w-0 flex-1 truncate">
+            {member.displayName ?? member.nickname}
+          </span>
+          <AnimatedCheckbox
+            checked={selectedMemberIds.includes(member.userId)}
+            onChange={() => onToggle(member.userId)}
+          />
+        </label>
+      ))}
+    </div>
   );
 }
 
@@ -1170,17 +1246,11 @@ function MessageRow({
   return (
     <div className={`flex w-full min-w-0 gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
       {!isMine ? (
-        <span className="grid size-8 shrink-0 place-items-center overflow-hidden rounded-full bg-white text-xs font-semibold text-brand shadow-sm">
-          {member?.photoURL ? (
-            <img
-              alt={member.displayName ?? member.nickname}
-              className="size-full object-cover"
-              src={member.photoURL}
-            />
-          ) : (
-            (member?.displayName ?? member?.nickname ?? "?").slice(0, 1)
-          )}
-        </span>
+        <Avatar
+          alt={member?.displayName ?? member?.nickname ?? "그룹 구성원"}
+          className="size-8 shrink-0 bg-white text-xs shadow-sm"
+          src={member?.photoURL}
+        />
       ) : null}
       <div className={`min-w-0 max-w-[78%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
         {!isMine ? (
