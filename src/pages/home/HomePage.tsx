@@ -628,9 +628,12 @@ export function HomePage() {
             {isLocationShared ? "위치 공유 끊기" : "위치 공유하기"}
           </Button>
           <div className="mt-3 grid gap-2">
-            <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-              초대코드로 다른 그룹 참여
-            </p>
+            <div>
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">새 그룹 참여</p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                초대코드로 새로운 그룹을 추가할 수 있어요.
+              </p>
+            </div>
             <div className="flex min-w-0 items-end gap-2">
               <div className="min-w-0 flex-1">
                 <Input
