@@ -228,8 +228,13 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
     throw new Error("오너는 그룹을 나갈 수 없습니다. 그룹을 삭제하거나 오너 권한을 넘겨주세요.");
   }
 
-  await deleteDoc(memberRef);
+  await Promise.all([
+    remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`)),
+    remove(ref(realtimeDb, `onlinePresence/${familyId}/${userId}`)),
+    remove(ref(realtimeDb, `deviceStatus/${familyId}/${userId}`)),
+  ]);
   await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
+  await deleteDoc(memberRef);
 }
 
 export async function getFamiliesForUser(userId: string) {

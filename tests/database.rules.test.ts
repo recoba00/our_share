@@ -4,7 +4,7 @@ import {
   initializeTestEnvironment,
   type RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { get, ref, set, update } from "firebase/database";
+import { get, ref, remove, set, update } from "firebase/database";
 import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
 
@@ -118,6 +118,22 @@ describe("Realtime Database family membership mirror rules", () => {
 
     await assertSucceeds(get(ref(aliceDb, "familyMembers/familyA/bob")));
     await assertFails(get(ref(outsiderDb, "familyMembers/familyA/bob")));
+  });
+
+  it("allows a non-owner to leave and owner-managed member deletion", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+
+    const bobDb = testEnv.authenticatedContext("bob").database();
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+
+    await assertSucceeds(remove(ref(bobDb, "familyMembers/familyA/bob")));
+    await assertSucceeds(remove(ref(aliceDb, "familyMembers/familyA/alice")));
   });
 });
 
