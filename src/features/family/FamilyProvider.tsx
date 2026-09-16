@@ -2,7 +2,11 @@ import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } fro
 import { useAuth } from "../auth/useAuth";
 import { useMyLocationShare } from "../location/hooks/useMyLocationShare";
 import { FamilyContext } from "./FamilyContext";
-import { getFamiliesForUser } from "./services/familyService";
+import { getFamiliesForUser, joinFamilyByInviteCode } from "./services/familyService";
+import {
+  clearPendingInviteCode,
+  getPendingInviteCode,
+} from "./services/pendingInviteService";
 import type { Family } from "./types/familyTypes";
 
 const ACTIVE_FAMILY_STORAGE_KEY = "our-share-active-group-id";
@@ -71,6 +75,42 @@ export function FamilyProvider({ children }: PropsWithChildren) {
         setActiveFamilyId(null);
       });
     });
+  }, [refreshFamilies, status, user]);
+
+  useEffect(() => {
+    if (status !== "authenticated" || !user) {
+      return;
+    }
+
+    let cancelled = false;
+
+    void (async () => {
+      const pendingInviteCode = getPendingInviteCode();
+
+      if (!pendingInviteCode) {
+        return;
+      }
+
+      try {
+        const result = await joinFamilyByInviteCode({
+          inviteCode: pendingInviteCode,
+          user,
+        });
+
+        if (cancelled) {
+          return;
+        }
+
+        clearPendingInviteCode();
+        await refreshFamilies(result.id);
+      } catch {
+        // 초대 화면에서 오류와 재시도 버튼을 보여주도록 코드를 유지한다.
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [refreshFamilies, status, user]);
 
   const selectFamily = useCallback(

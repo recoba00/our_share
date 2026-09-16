@@ -54,6 +54,13 @@ type LeaveFamilyInput = {
   userId: string;
 };
 
+type JoinFamilyResult = {
+  id: string;
+  name: string;
+};
+
+const inFlightInviteJoins = new Map<string, Promise<JoinFamilyResult>>();
+
 export async function createFamily({ name, owner }: CreateFamilyInput) {
   const familyRef = doc(collection(db, "families"));
   const inviteCode = createInviteCode();
@@ -87,10 +94,36 @@ export async function createFamily({ name, owner }: CreateFamilyInput) {
   };
 }
 
-export async function joinFamilyByInviteCode({
+export function joinFamilyByInviteCode({
   inviteCode,
   user,
-}: JoinFamilyInput) {
+}: JoinFamilyInput): Promise<JoinFamilyResult> {
+  const normalizedInviteCode = inviteCode.trim().toUpperCase();
+  const requestKey = `${normalizedInviteCode}:${user.uid}`;
+  const existingRequest = inFlightInviteJoins.get(requestKey);
+
+  if (existingRequest) {
+    return existingRequest;
+  }
+
+  const request = joinFamilyByInviteCodeInternal({
+    inviteCode: normalizedInviteCode,
+    user,
+  });
+
+  inFlightInviteJoins.set(requestKey, request);
+  request.then(
+    () => inFlightInviteJoins.delete(requestKey),
+    () => inFlightInviteJoins.delete(requestKey)
+  );
+
+  return request;
+}
+
+async function joinFamilyByInviteCodeInternal({
+  inviteCode,
+  user,
+}: JoinFamilyInput): Promise<JoinFamilyResult> {
   const normalizedInviteCode = inviteCode.trim().toUpperCase();
   const inviteSnapshot = await getDoc(doc(db, "familyInvites", normalizedInviteCode));
 

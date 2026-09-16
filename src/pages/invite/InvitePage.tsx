@@ -6,9 +6,11 @@ import { Card } from "../../components/common/Card";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import { joinFamilyByInviteCode } from "../../features/family/services/familyService";
+import {
+  clearPendingInviteCode,
+  savePendingInviteCode,
+} from "../../features/family/services/pendingInviteService";
 import { useFamily } from "../../features/family/useFamily";
-
-const PENDING_INVITE_STORAGE_KEY = "our-share-pending-invite-code";
 
 export function InvitePage() {
   const { inviteCode: routeInviteCode = "" } = useParams();
@@ -18,6 +20,7 @@ export function InvitePage() {
   const navigate = useNavigate();
   const attemptedCodeRef = useRef("");
   const [joinError, setJoinError] = useState("");
+  const [joinAttempt, setJoinAttempt] = useState(0);
   const normalizedInviteCode = routeInviteCode.trim().toUpperCase();
   const isValidCode = /^[A-Z0-9]{6}$/.test(normalizedInviteCode);
 
@@ -26,11 +29,7 @@ export function InvitePage() {
       return;
     }
 
-    try {
-      window.localStorage.setItem(PENDING_INVITE_STORAGE_KEY, normalizedInviteCode);
-    } catch {
-      // 로그인 redirect 환경에서 저장소를 사용할 수 없어도 현재 URL의 코드를 사용한다.
-    }
+    savePendingInviteCode(normalizedInviteCode);
   }, [isValidCode, normalizedInviteCode]);
 
   useEffect(() => {
@@ -48,7 +47,7 @@ export function InvitePage() {
     void joinFamilyByInviteCode({ inviteCode: normalizedInviteCode, user })
       .then(async (result) => {
         await refreshFamilies(result.id);
-        removePendingInviteCode();
+        clearPendingInviteCode();
         showToast({ message: `${result.name} 그룹에 참여했습니다.`, variant: "success" });
         navigate("/", { replace: true });
       })
@@ -56,7 +55,7 @@ export function InvitePage() {
         attemptedCodeRef.current = "";
         setJoinError(error instanceof Error ? error.message : "그룹 참여에 실패했습니다.");
       });
-  }, [isValidCode, navigate, normalizedInviteCode, refreshFamilies, showToast, status, user]);
+  }, [isValidCode, joinAttempt, navigate, normalizedInviteCode, refreshFamilies, showToast, status, user]);
 
   if (!isValidCode) {
     return (
@@ -95,8 +94,20 @@ export function InvitePage() {
         Google 계정으로 가입하거나 로그인하면 초대 코드를 다시 입력하지 않고 바로 그룹에 참여합니다.
       </p>
       {status === "authenticated" ? (
-        <Button className="mt-6 w-full" onClick={() => navigate("/", { replace: true })}>
-          홈으로 돌아가기
+        <Button
+          className="mt-6 w-full"
+          onClick={() => {
+            if (joinError) {
+              attemptedCodeRef.current = "";
+              setJoinError("");
+              setJoinAttempt((attempt) => attempt + 1);
+              return;
+            }
+
+            navigate("/", { replace: true });
+          }}
+        >
+          {joinError ? "다시 그룹 참여하기" : "홈으로 돌아가기"}
           <ArrowRight className="ml-auto" size={18} weight="bold" />
         </Button>
       ) : (
@@ -127,12 +138,4 @@ function InviteHeader() {
       </div>
     </div>
   );
-}
-
-function removePendingInviteCode() {
-  try {
-    window.localStorage.removeItem(PENDING_INVITE_STORAGE_KEY);
-  } catch {
-    // 저장소를 사용할 수 없는 환경에서도 참여 완료는 유지한다.
-  }
 }
