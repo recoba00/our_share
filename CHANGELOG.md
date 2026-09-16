@@ -4,6 +4,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 ## 2026-09-16
 
+- Admin SDK Membership Mirror 운영 전환을 위해 Functions build·emulator test·deploy를 수동 실행하는 GitHub Actions workflow와 Blaze 전환 runbook을 추가했다.
 - 홈 사이드영역 그룹 오너 카드의 다크모드 보더를 어두운 Emerald/Slate 대비값으로 분리했다.
 - TODO의 Admin SDK Membership Mirror Sync를 재점검하고 Functions 에뮬레이터 생성·수정·삭제 동기화 테스트 통과 상태를 기록했다.
 - 다크 테마의 neutral 계열 기본 텍스트 컬러를 Slate 계열로 변경해 전 플랫폼 텍스트 색상 체계를 통일했다.

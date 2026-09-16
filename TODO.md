@@ -297,3 +297,4 @@
   - [x] Firestore `familyMembers` onDelete 트리거로 RTDB mirror 삭제
   - [ ] 클라이언트의 RTDB membership mirror 직접 쓰기 제거
   - [x] Functions emulator 기반 동기화 테스트 추가
+  - [x] Blaze 전환 후 실행할 수동 Functions 배포 workflow와 runbook 추가

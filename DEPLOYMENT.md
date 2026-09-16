@@ -187,6 +187,20 @@ Firebase Hosting 이전은 완료된 상태다.
 
 릴리즈 후보 점검은 배포 전 로컬에서 `npm run test:mvp`를 실행하고, 배포 후 GitHub Actions의 `npm run test:hosting` 단계 성공 여부로 확인한다.
 
+## Firebase Functions 운영 배포
+
+Admin SDK Membership Mirror는 `functions-deploy.yml` 수동 workflow로 배포한다. Functions는 Hosting과 달리 Blaze 요금제와 Cloud Functions 권한이 필요하므로, Blaze 전환을 결정하기 전에는 실행하지 않는다.
+
+배포 전 조건:
+
+- Blaze 요금제 전환
+- `FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5` Secret에 서비스 계정 JSON 전체 등록
+- 해당 서비스 계정에 Functions 배포 권한 부여
+
+GitHub Actions에서 `Firebase Functions Deploy` workflow를 `Run workflow`로 실행한다. workflow는 Functions build, emulator sync test, `firebase deploy --only functions` 순서로 동작한다.
+
+Functions가 운영 배포되고 미러 동기화를 확인한 뒤에만 클라이언트의 RTDB membership mirror 직접 쓰기를 제거한다. 그 전까지는 신규 가입·역할 변경·탈퇴 직후 위치 접근이 끊기지 않도록 현재 fallback을 유지한다.
+
 ## PWA
 
 `public/manifest.webmanifest`, `public/sw.js`, `public/pwa-icon.svg`는 Vite 빌드 시 `dist`에 복사된다.
