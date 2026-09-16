@@ -634,23 +634,18 @@ export function ChatPage() {
 
   const chatCreateTools = (
     <div className="mx-auto grid w-full max-w-xl gap-4">
-      <div className="flex items-start gap-3">
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-          <UserPlus size={20} weight="bold" />
-        </span>
-        <div className="min-w-0">
-          <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
-          <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
-            {activeFamily.role === "OWNER"
-              ? "그룹원을 초대할 때 이 코드를 공유하세요."
-              : "초대코드는 그룹 오너가 관리해요."}
+      <div className="min-w-0">
+        <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
+        <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
+          {activeFamily.role === "OWNER"
+            ? "그룹원을 초대할 때 이 코드를 공유하세요."
+            : "초대코드는 그룹 오너가 관리해요."}
+        </p>
+        {activeFamily.role === "OWNER" ? (
+          <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
+            {activeFamily.inviteCode}
           </p>
-          {activeFamily.role === "OWNER" ? (
-            <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
-              {activeFamily.inviteCode}
-            </p>
-          ) : null}
-        </div>
+        ) : null}
       </div>
 
       <div className="h-px bg-[var(--color-border)]" />
@@ -877,7 +872,7 @@ export function ChatPage() {
       </Modal>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:items-start lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 self-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 self-start overscroll-contain overflow-y-auto lg:max-h-[calc(100dvh-112px)] [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
         <SectionHeading
           action={
             <div className="flex items-center gap-1">

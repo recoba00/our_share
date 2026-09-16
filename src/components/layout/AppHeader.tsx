@@ -76,7 +76,7 @@ export function AppHeader() {
           )}
         </div>
         <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
-          {mainNavigationItems.map(({ to, label, icon: Icon }) => (
+          {mainNavigationItems.map(({ to, label }) => (
             <NavLink
               className={({ isActive }) =>
                 `inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold transition-colors ${
@@ -89,16 +89,11 @@ export function AppHeader() {
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               to={to}
             >
-              {({ isActive }) => (
-                <>
-                  <Icon size={19} weight={isActive ? "fill" : "regular"} />
-                  <span>{label}</span>
-                </>
-              )}
+              {label}
             </NavLink>
           ))}
         </nav>
-        <div className="relative flex items-center gap-2">
+        <div className="relative flex items-center gap-4">
           {status === "authenticated" && (
             <Button className="hidden sm:inline-flex" onClick={signOut} variant="secondary">
               로그아웃
