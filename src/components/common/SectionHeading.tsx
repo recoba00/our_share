@@ -18,7 +18,7 @@ export function SectionHeading({
   const Heading = level;
 
   return (
-    <div className="flex min-w-0 items-start justify-between gap-3">
+    <div className="flex min-w-0 items-center justify-between gap-3">
       <div className="flex min-w-0 items-start gap-2">
         <span className="mt-0.5 grid size-6 shrink-0 place-items-center text-brand">{icon}</span>
         <div className="min-w-0">

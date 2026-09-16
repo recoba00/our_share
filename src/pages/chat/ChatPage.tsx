@@ -290,6 +290,16 @@ export function ChatPage() {
     );
   }
 
+  function toggleAllPrivateGroupMembers() {
+    const selectableMemberIds = members
+      .filter((member) => member.userId !== user?.uid)
+      .map((member) => member.userId);
+
+    setPrivateGroupMemberIds((current) =>
+      current.length === selectableMemberIds.length ? [] : selectableMemberIds
+    );
+  }
+
   useEffect(() => {
     if (!activeFamily || !user) {
       return;
@@ -612,6 +622,13 @@ export function ChatPage() {
     );
   }
 
+  const selectablePrivateGroupMemberIds = members
+    .filter((member) => member.userId !== user?.uid)
+    .map((member) => member.userId);
+  const allPrivateGroupMembersSelected =
+    selectablePrivateGroupMemberIds.length > 0 &&
+    selectablePrivateGroupMemberIds.every((memberId) => privateGroupMemberIds.includes(memberId));
+
   const chatCreateTools = (
     <div className="mx-auto grid w-full max-w-xl gap-4">
       <Card>
@@ -683,6 +700,13 @@ export function ChatPage() {
             placeholder="예: 주말 준비방"
             value={privateGroupName}
           />
+          <label className="flex cursor-pointer items-center gap-2 self-start text-sm font-semibold text-[var(--color-text-secondary)]">
+            <AnimatedCheckbox
+              checked={allPrivateGroupMembersSelected}
+              onChange={() => toggleAllPrivateGroupMembers()}
+            />
+            <span>전체 선택</span>
+          </label>
           <MemberSelectionList
             currentUserId={user?.uid}
             members={members}
@@ -1111,20 +1135,20 @@ function RoomAvatar({
     return (
       <Avatar
         alt={roomMember.displayName ?? roomMember.nickname}
-        className="size-12 shrink-0"
+        className="size-9 shrink-0"
         src={roomMember.photoURL}
       />
     );
   }
 
   return (
-    <span className="grid size-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-inset ring-black/[0.04]">
+    <span className="grid size-9 shrink-0 place-items-center rounded-full bg-brand-soft text-brand ring-1 ring-inset ring-black/[0.04]">
       {room.type === "DIRECT" ? (
-        <User size={26} weight="fill" />
+        <User size={20} weight="fill" />
       ) : room.type === "PRIVATE_GROUP" ? (
-        <LockKey size={24} weight="fill" />
+        <LockKey size={19} weight="fill" />
       ) : (
-        <Users size={26} weight="fill" />
+        <Users size={20} weight="fill" />
       )}
     </span>
   );

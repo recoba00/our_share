@@ -1,6 +1,7 @@
 import {
   BatteryHigh,
   ArrowLeft,
+  ArrowCounterClockwise,
   CalendarDots,
   Check,
   ChatCircleDots,
@@ -22,6 +23,7 @@ import { BottomSheetItem } from "../../components/common/BottomSheetItem";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
+import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
 import { useToast } from "../../components/common/toastContext";
 import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
@@ -1031,13 +1033,14 @@ function FamilyLocationMap({
           <MapPin className="shrink-0 text-brand" size={22} weight="bold" />
           <h3 className="min-w-0 truncate text-base font-semibold">그룹 위치</h3>
         </div>
-        <button
-          className="shrink-0 text-sm font-semibold text-[var(--color-text-secondary)] transition hover:text-brand"
+        <IconButton
+          aria-label="지도 초기화"
+          label="지도 초기화"
           onClick={resetMapView}
-          type="button"
+          variant="ghost"
         >
-          초기화
-        </button>
+          <ArrowCounterClockwise size={18} weight="bold" />
+        </IconButton>
       </div>
       <div className="relative min-h-[220px] min-w-0 overflow-hidden rounded-2xl border border-[var(--color-border)] bg-emerald-50">
         <div

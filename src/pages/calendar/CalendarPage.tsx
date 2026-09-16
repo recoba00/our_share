@@ -461,7 +461,8 @@ export function CalendarPage() {
             const dayEvents = monthEvents.filter((event) =>
               isEventVisibleOnDate(event, day.date)
             );
-            const hasDayOff = dayEvents.some((event) => event.isDayOff);
+            const dayOffEvent = dayEvents.find((event) => event.isDayOff);
+            const hasDayOff = Boolean(dayOffEvent);
 
             return (
               <div
@@ -482,7 +483,17 @@ export function CalendarPage() {
                 role="button"
                 tabIndex={0}
               >
-                <span>{day.date.getDate()}</span>
+                <div className="flex min-w-0 items-center justify-center gap-0.5">
+                  <span className="shrink-0">{day.date.getDate()}</span>
+                  {day.isCurrentMonth && dayOffEvent ? (
+                    <span
+                      className="max-w-[62%] truncate rounded bg-amber-100 px-1 text-[10px] font-semibold leading-4 text-amber-700"
+                      title={dayOffEvent.title}
+                    >
+                      {dayOffEvent.title}
+                    </span>
+                  ) : null}
+                </div>
                 <div className="mt-1 flex min-w-0 flex-wrap items-center gap-0.5 sm:mt-2 sm:gap-1">
                   {dayEvents.slice(0, 5).map((event) => (
                     <button
