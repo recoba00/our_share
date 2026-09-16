@@ -74,7 +74,7 @@ export function FamilyProvider({ children }: PropsWithChildren) {
 
     queueMicrotask(() => {
       void refreshFamilies().catch(() => {
-        // 각 화면에서 그룹이 없는 상태를 안내할 수 있도록 빈 목록으로 유지한다.
+        // 각 화면에서 크루가 없는 상태를 안내할 수 있도록 빈 목록으로 유지한다.
         setFamilies([]);
         setActiveFamilyId(null);
       });

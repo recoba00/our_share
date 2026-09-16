@@ -49,7 +49,7 @@ import { createPoll } from "../../features/poll/services/pollService";
 
 const weekLabels = ["일", "월", "화", "수", "목", "금", "토"];
 const categoryOptions: { label: string; value: CalendarEventCategory }[] = [
-  { label: "그룹", value: "FAMILY" },
+  { label: "크루", value: "FAMILY" },
   { label: "개인", value: "PERSONAL" },
   { label: "기념일", value: "ANNIVERSARY" },
   { label: "생일", value: "BIRTHDAY" },
@@ -296,7 +296,7 @@ export function CalendarPage() {
       <Card>
         <h2 className="text-xl font-semibold">캘린더</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-          홈에서 그룹을 만들거나 초대 코드로 참여하면 일정을 사용할 수 있어요.
+          홈에서 크루를 만들거나 초대 코드로 참여하면 일정을 사용할 수 있어요.
         </p>
       </Card>
     );
@@ -666,7 +666,7 @@ function CalendarTools({
             <Input
               label="일정 제목"
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="예: 그룹 외식"
+              placeholder="예: 크루 외식"
               value={title}
             />
             <label className="grid gap-2 text-sm font-semibold text-[var(--color-text-primary)]">
@@ -764,7 +764,7 @@ function CalendarTools({
           <Input
             label="투표 제목"
             onChange={(event) => setVoteTitle(event.target.value)}
-            placeholder="예: 그룹 모임 날짜 정하기"
+              placeholder="예: 크루 모임 날짜 정하기"
             value={voteTitle}
           />
           <Input

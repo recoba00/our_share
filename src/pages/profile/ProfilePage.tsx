@@ -65,7 +65,7 @@ export function ProfilePage() {
 
   async function handleRenameFamily(familyId: string) {
     if (!editingFamilyName.trim()) {
-      notify("그룹 이름을 입력해주세요.", "info");
+      notify("크루 이름을 입력해주세요.", "info");
       return;
     }
 
@@ -76,7 +76,7 @@ export function ProfilePage() {
       await refreshFamilies(familyId);
       setEditingFamilyId("");
       setEditingFamilyName("");
-      notify("그룹 이름을 수정했습니다.", "success");
+      notify("크루 이름을 수정했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -92,7 +92,7 @@ export function ProfilePage() {
     }
 
     if (!newFamilyName.trim()) {
-      notify("그룹 이름을 입력해주세요.", "info");
+      notify("크루 이름을 입력해주세요.", "info");
       return;
     }
 
@@ -103,7 +103,7 @@ export function ProfilePage() {
       await refreshFamilies(result.id);
       setNewFamilyName("");
       setIsCreatingFamily(false);
-      notify("그룹을 생성했습니다.", "success");
+      notify("크루를 생성했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -117,9 +117,9 @@ export function ProfilePage() {
     }
 
     const confirmed = await confirm({
-      confirmLabel: "그룹 삭제",
-      description: `${familyName} 그룹의 구성원 연결을 삭제합니다. 일정, 메모, 투표, 채팅 데이터는 복구할 수 없습니다.`,
-      title: `'${familyName}' 그룹을 삭제할까요?`,
+      confirmLabel: "크루 삭제",
+      description: `${familyName} 크루의 멤버 연결을 삭제합니다. 일정, 메모, 투표, 채팅 데이터는 복구할 수 없습니다.`,
+      title: `'${familyName}' 크루를 삭제할까요?`,
       tone: "danger",
     });
 
@@ -132,7 +132,7 @@ export function ProfilePage() {
     try {
       await deleteFamily({ familyId, ownerId: user.uid });
       await refreshFamilies();
-      notify("그룹을 삭제했습니다.", "success");
+      notify("크루를 삭제했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -146,9 +146,9 @@ export function ProfilePage() {
     }
 
     const confirmed = await confirm({
-      confirmLabel: "그룹 나가기",
-      description: `${familyName} 그룹의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
-      title: `'${familyName}' 그룹에서 나갈까요?`,
+      confirmLabel: "크루 나가기",
+      description: `${familyName} 크루의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      title: `'${familyName}' 크루에서 나갈까요?`,
       tone: "danger",
     });
 
@@ -161,7 +161,7 @@ export function ProfilePage() {
     try {
       await leaveFamily({ familyId, userId: user.uid });
       await refreshFamilies();
-      notify("그룹에서 나갔습니다.", "success");
+      notify("크루에서 나갔습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -201,14 +201,14 @@ export function ProfilePage() {
         <Card className="grid gap-4">
           <div>
             <p className="text-xs font-semibold text-brand">내 정보</p>
-            <h2 className="mt-1 text-xl font-semibold">프로필과 그룹 관리</h2>
+            <h2 className="mt-1 text-xl font-semibold">프로필과 크루 관리</h2>
             <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-              내 정보와 참여 중인 그룹을 한곳에서 관리합니다.
+              내 정보와 참여 중인 크루를 한곳에서 관리합니다.
             </p>
           </div>
           {activeFamily ? (
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-3">
-              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">현재 그룹</p>
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">현재 크루</p>
               <strong className="mt-1 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
             </div>
           ) : null}
@@ -221,7 +221,7 @@ export function ProfilePage() {
             onChange={setActiveTab}
             options={[
               { label: "MY", value: "MY" },
-              { label: "그룹", value: "GROUP" },
+              { label: "크루", value: "GROUP" },
             ]}
             value={activeTab}
           />
@@ -243,7 +243,7 @@ export function ProfilePage() {
           )}
           <div className="min-w-0">
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">내 정보</p>
-            <h2 className="truncate text-2xl font-semibold">{displayName || "그룹 구성원"}</h2>
+            <h2 className="truncate text-2xl font-semibold">{displayName || "크루 멤버"}</h2>
             <p className="mt-1 truncate text-sm text-[var(--color-text-secondary)]">
               {user?.email ?? "이메일 없음"}
             </p>
@@ -254,7 +254,7 @@ export function ProfilePage() {
           <Input
             label="닉네임"
             onChange={(event) => setDisplayName(event.target.value)}
-            placeholder="그룹에 표시될 이름"
+              placeholder="크루에 표시될 이름"
             value={displayName}
           />
           <Input
@@ -280,10 +280,10 @@ export function ProfilePage() {
           <div>
             <div className="flex items-center gap-2">
               <UsersThree className="text-brand" size={22} weight="bold" />
-              <h2 className="text-lg font-semibold">내 그룹</h2>
+              <h2 className="text-lg font-semibold">내 크루</h2>
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              오너는 초대코드와 그룹을 관리하고, 그룹원은 참여 상태를 확인할 수 있습니다.
+              크루장은 초대코드와 크루를 관리하고, 멤버는 참여 상태를 확인할 수 있습니다.
             </p>
           </div>
         </div>
@@ -294,9 +294,9 @@ export function ProfilePage() {
             onSubmit={handleCreateFamily}
           >
             <Input
-              label="그룹 이름"
+              label="크루 이름"
               onChange={(event) => setNewFamilyName(event.target.value)}
-              placeholder="새 그룹 이름을 입력해주세요"
+              placeholder="새 크루 이름을 입력해주세요"
               value={newFamilyName}
             />
             <div className="grid grid-cols-2 gap-2">
@@ -322,8 +322,8 @@ export function ProfilePage() {
           <SegmentedControl
             onChange={setGroupRoleTab}
             options={[
-              { label: `오너 그룹 ${ownerFamilies.length}`, value: "OWNER" },
-              { label: `그룹원 그룹 ${memberFamilies.length}`, value: "MEMBER" },
+              { label: `크루장 크루 ${ownerFamilies.length}`, value: "OWNER" },
+              { label: `멤버 크루 ${memberFamilies.length}`, value: "MEMBER" },
             ]}
             value={visibleGroupRoleTab}
           />
@@ -332,7 +332,7 @@ export function ProfilePage() {
         <div className="mt-4 grid gap-2">
           {isFamilyLoading ? (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              그룹을 불러오는 중입니다.
+              크루를 불러오는 중입니다.
             </p>
           ) : visibleFamilies.length > 0 ? (
             visibleFamilies.map((family) => {
@@ -355,7 +355,7 @@ export function ProfilePage() {
                   {isEditing ? (
                     <div className="grid gap-3">
                       <Input
-                        label="그룹 이름"
+                        label="크루 이름"
                         onChange={(event) => setEditingFamilyName(event.target.value)}
                         value={editingFamilyName}
                       />
@@ -393,13 +393,13 @@ export function ProfilePage() {
                                 : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
                             }`}
                           >
-                            {isOwner ? "오너" : "그룹원"}
+                            {isOwner ? "크루장" : "멤버"}
                           </span>
                         </span>
                         <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
                           {isOwner
                             ? `초대 코드 ${family.inviteCode}`
-                            : "초대코드는 그룹 오너가 관리해요."}
+                            : "초대코드는 크루장이 관리해요."}
                         </span>
                       </button>
                       <div className="flex shrink-0 items-center gap-1">
@@ -433,7 +433,7 @@ export function ProfilePage() {
                           </>
                         ) : (
                           <button
-                            aria-label={`${family.name} 그룹 나가기`}
+                            aria-label={`${family.name} 크루 나가기`}
                             className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
                             disabled={isBusy}
                             onClick={() => void handleLeaveFamily(family.id, family.name)}
@@ -451,8 +451,8 @@ export function ProfilePage() {
           ) : (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
               {visibleGroupRoleTab === "OWNER"
-                ? "내가 오너인 그룹이 없습니다."
-                : "그룹원으로 참여 중인 그룹이 없습니다."}
+                ? "내가 크루장인 크루가 없습니다."
+                : "멤버로 참여 중인 크루가 없습니다."}
             </p>
           )}
         </div>
@@ -463,7 +463,7 @@ export function ProfilePage() {
           variant="secondary"
         >
           <Plus size={18} weight="bold" />
-          그룹 생성
+          크루 생성
         </Button>
       </Card>
         )}

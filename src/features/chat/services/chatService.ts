@@ -78,7 +78,7 @@ export async function getOrCreateFamilyRoom({
     id: roomId,
     familyId,
     type: "FAMILY",
-    name: "그룹 전체방",
+    name: "크루 전체방",
     memberIds: [],
     createdBy,
     createdAt: serverTimestamp(),
@@ -170,11 +170,11 @@ export async function createPrivateGroupRoom({
   const normalizedMemberIds = Array.from(new Set([createdBy, ...memberIds]));
 
   if (!normalizedName) {
-    throw new Error("그룹방 이름을 입력해주세요.");
+    throw new Error("크루방 이름을 입력해주세요.");
   }
 
   if (normalizedMemberIds.length < 2) {
-    throw new Error("그룹방에는 본인 외 구성원 1명 이상이 필요합니다.");
+    throw new Error("크루방에는 본인 외 멤버 1명 이상이 필요합니다.");
   }
 
   const roomRef = doc(collection(db, "families", familyId, "chatRooms"));

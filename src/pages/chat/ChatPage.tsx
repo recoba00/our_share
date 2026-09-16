@@ -65,7 +65,7 @@ type ChatCreateTab = "SECRET" | "GROUP";
 
 const chatRoomFilters: { label: string; value: ChatRoomFilter }[] = [
   { label: "전체", value: "ALL" },
-  { label: "그룹", value: "FAMILY" },
+  { label: "크루", value: "FAMILY" },
   { label: "1:1", value: "DIRECT" },
   { label: "비밀방", value: "PRIVATE_GROUP" },
 ];
@@ -197,7 +197,7 @@ export function ChatPage() {
         setSelectedRoomId(familyRoomResult.value);
       } else {
         reportError(
-          `그룹 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
+          `크루 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
         );
       }
     });
@@ -260,9 +260,9 @@ export function ChatPage() {
       setSelectedRoomId(roomId);
       openRoom(roomId);
       setIsCreateOpen(false);
-      notify("그룹방을 만들었어요.", "success");
+      notify("크루방을 만들었어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "그룹방 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "크루방 생성에 실패했습니다.", "error");
     }
   }
 
@@ -600,7 +600,7 @@ export function ChatPage() {
       <Card>
         <h2 className="text-xl font-semibold">채팅</h2>
         <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-          홈에서 그룹을 만들거나 초대 코드로 참여하면 채팅방을 사용할 수 있어요.
+          홈에서 크루를 만들거나 초대 코드로 참여하면 채팅방을 사용할 수 있어요.
         </p>
       </Card>
     );
@@ -619,7 +619,7 @@ export function ChatPage() {
         onChange={setChatCreateTab}
         options={[
           { icon: <LockKey size={16} weight="bold" />, label: "비밀방", value: "SECRET" },
-          { icon: <Users size={16} weight="bold" />, label: "그룹방", value: "GROUP" },
+          { icon: <Users size={16} weight="bold" />, label: "크루방", value: "GROUP" },
         ]}
         value={chatCreateTab}
       />
@@ -662,7 +662,7 @@ export function ChatPage() {
             description="선택한 구성원과 함께 사용할 방을 만들어요."
             icon={<Users size={20} weight="bold" />}
             level="h3"
-            title="그룹방 만들기"
+            title="크루방 만들기"
           />
           <Input
             label="방 이름"
@@ -692,7 +692,7 @@ export function ChatPage() {
             variant="secondary"
           >
             <Users size={18} weight="bold" />
-            그룹방 만들기
+            크루방 만들기
           </Button>
         </form>
       )}
@@ -889,7 +889,7 @@ export function ChatPage() {
           <div className="mt-3 grid gap-1">
             {members.filter((member) => member.userId !== user?.uid).length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-                다른 그룹 구성원이 참여하면 1:1 대화를 시작할 수 있어요.
+                다른 크루 멤버가 참여하면 1:1 대화를 시작할 수 있어요.
               </p>
             ) : (
               members
@@ -1005,7 +1005,7 @@ export function ChatPage() {
           <div className="mt-auto grid gap-3">
             {messages.length === 0 ? (
               <p className="text-sm text-[var(--color-text-secondary)]">
-                첫 메시지를 보내 그룹 대화를 시작해보세요.
+                첫 메시지를 보내 크루 대화를 시작해보세요.
               </p>
             ) : (
               messages.map((message) => {
@@ -1075,10 +1075,10 @@ function getRoomTypeLabel(room: ChatRoom) {
   }
 
   if (room.type === "PRIVATE_GROUP") {
-    return "그룹";
+    return "크루";
   }
 
-  return "그룹";
+  return "크루";
 }
 
 function getRoomDisplayName(
@@ -1151,7 +1151,7 @@ function MemberSelectionList({
   if (selectableMembers.length === 0) {
     return (
       <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-        함께할 그룹 구성원이 없습니다.
+        함께할 크루 멤버가 없습니다.
       </p>
     );
   }
@@ -1252,7 +1252,7 @@ function MessageRow({
     <div className={`flex w-full min-w-0 gap-2 ${isMine ? "justify-end" : "justify-start"}`}>
       {!isMine ? (
         <Avatar
-          alt={member?.displayName ?? member?.nickname ?? "그룹 구성원"}
+          alt={member?.displayName ?? member?.nickname ?? "크루 멤버"}
           className="size-8 shrink-0 bg-white text-xs shadow-sm"
           src={member?.photoURL}
         />
@@ -1260,7 +1260,7 @@ function MessageRow({
       <div className={`min-w-0 max-w-[78%] ${isMine ? "items-end" : "items-start"} flex flex-col gap-1`}>
         {!isMine ? (
           <span className="px-1 text-xs font-normal text-[var(--color-text-secondary)]">
-            {member?.displayName ?? member?.nickname ?? "그룹 구성원"}
+            {member?.displayName ?? member?.nickname ?? "크루 멤버"}
           </span>
         ) : null}
         <div className={`group flex items-end gap-1 ${isMine ? "flex-row-reverse" : ""}`}>

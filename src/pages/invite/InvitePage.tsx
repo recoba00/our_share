@@ -50,15 +50,15 @@ export function InvitePage() {
         clearPendingInviteCode();
         showToast({
           message: result.alreadyMember
-            ? `${result.name} 그룹에 이미 참여 중입니다.`
-            : `${result.name} 그룹에 참여했습니다.`,
+            ? `${result.name} 크루에 이미 참여 중입니다.`
+            : `${result.name} 크루에 참여했습니다.`,
           variant: result.alreadyMember ? "info" : "success",
         });
         navigate("/", { replace: true });
       })
       .catch((error: unknown) => {
         attemptedCodeRef.current = "";
-        setJoinError(error instanceof Error ? error.message : "그룹 참여에 실패했습니다.");
+        setJoinError(error instanceof Error ? error.message : "크루 참여에 실패했습니다.");
       });
   }, [isValidCode, joinAttempt, navigate, normalizedInviteCode, refreshFamilies, showToast, status, user]);
 
@@ -67,7 +67,7 @@ export function InvitePage() {
       <Card className="mx-auto mt-8 max-w-md">
         <InviteHeader />
         <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
-          유효하지 않은 초대 링크입니다. 그룹 오너에게 새 초대 링크를 요청해주세요.
+          유효하지 않은 초대 링크입니다. 크루장에게 새 초대 링크를 요청해주세요.
         </p>
       </Card>
     );
@@ -79,7 +79,7 @@ export function InvitePage() {
         <InviteHeader />
         <div className="mt-6 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-6 text-[var(--color-text-secondary)]">
           {status === "authenticated"
-            ? "초대 그룹에 참여하는 중입니다."
+            ? "초대 크루에 참여하는 중입니다."
             : "로그인 상태를 확인하고 있습니다."}
         </div>
       </Card>
@@ -90,13 +90,13 @@ export function InvitePage() {
     <Card className="mx-auto mt-8 max-w-md">
       <InviteHeader />
       <div className="mt-6 rounded-2xl bg-brand-soft p-4">
-        <p className="text-xs font-semibold text-brand">그룹 초대</p>
+        <p className="text-xs font-semibold text-brand">크루 초대</p>
         <p className="mt-2 text-2xl font-semibold tracking-[0.16em] text-[var(--color-text-primary)]">
           {normalizedInviteCode}
         </p>
       </div>
       <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
-        Google 계정으로 가입하거나 로그인하면 초대 코드를 다시 입력하지 않고 바로 그룹에 참여합니다.
+        Google 계정으로 가입하거나 로그인하면 초대 코드를 다시 입력하지 않고 바로 크루에 참여합니다.
       </p>
       {status === "authenticated" ? (
         <Button
@@ -112,7 +112,7 @@ export function InvitePage() {
             navigate("/", { replace: true });
           }}
         >
-          {joinError ? "다시 그룹 참여하기" : "홈으로 돌아가기"}
+          {joinError ? "다시 크루 참여하기" : "홈으로 돌아가기"}
           <ArrowRight className="ml-auto" size={18} weight="bold" />
         </Button>
       ) : (
@@ -139,7 +139,7 @@ function InviteHeader() {
       </span>
       <div>
         <p className="text-sm font-semibold text-brand">우리끼리</p>
-        <h1 className="mt-1 text-xl font-semibold">그룹에 초대되었어요</h1>
+        <h1 className="mt-1 text-xl font-semibold">크루에 초대되었어요</h1>
       </div>
     </div>
   );

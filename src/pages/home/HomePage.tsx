@@ -75,8 +75,8 @@ const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = [
 ];
 const roleLabels: Record<FamilyRole, string> = {
   CHILD: "자녀",
-  MEMBER: "구성원",
-  OWNER: "오너",
+  MEMBER: "멤버",
+  OWNER: "크루장",
   PARENT: "부모",
 };
 const kakaoMapJavaScriptKey =
@@ -293,10 +293,10 @@ export function HomePage() {
         <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
           <p className="text-sm font-semibold text-brand">우리끼리 스마트 홈</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
-            그룹 위치, 일정, 메모, 투표를 한곳에서 관리해요
+            크루 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
-            Google 계정으로 시작하고 그룹을 만들거나 초대 코드로 참여하세요.
+            Google 계정으로 시작하고 크루를 만들거나 초대 코드로 참여하세요.
           </p>
         </section>
         <Card className="self-start">
@@ -320,7 +320,7 @@ export function HomePage() {
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
     if (!activeFamily || !user) {
-      notify("그룹 정보를 먼저 불러와주세요.", "info");
+      notify("크루 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -339,7 +339,7 @@ export function HomePage() {
         text: createQuickMessageText(member, message),
       });
 
-      notify("그룹 전체방으로 빠른 메시지를 보냈습니다.", "success");
+      notify("크루 전체방으로 빠른 메시지를 보냈습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -352,7 +352,7 @@ export function HomePage() {
     nextRole: Exclude<FamilyRole, "OWNER">
   ) {
     if (!activeFamily || !user) {
-      notify("그룹 정보를 먼저 불러와주세요.", "info");
+      notify("크루 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -380,14 +380,14 @@ export function HomePage() {
 
   async function handleDeleteMember(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
-      notify("그룹 정보를 먼저 불러와주세요.", "info");
+      notify("크루 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `${member.displayName ?? member.nickname}님을 그룹에서 삭제합니다. 삭제된 구성원은 초대 코드로 다시 참여해야 합니다.`,
-      title: "그룹 구성원을 삭제할까요?",
+      description: `${member.displayName ?? member.nickname}님을 크루에서 삭제합니다. 삭제된 멤버는 초대 코드로 다시 참여해야 합니다.`,
+      title: "크루 멤버를 삭제할까요?",
       tone: "danger",
     });
 
@@ -406,7 +406,7 @@ export function HomePage() {
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
       setPendingMemberRole(null);
-      notify("그룹 구성원을 삭제했습니다.", "success");
+      notify("크루 멤버를 삭제했습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -420,9 +420,9 @@ export function HomePage() {
     }
 
     const confirmed = await confirm({
-      confirmLabel: "그룹 나가기",
-      description: `${activeFamily.name} 그룹의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
-      title: `'${activeFamily.name}' 그룹에서 나갈까요?`,
+      confirmLabel: "크루 나가기",
+      description: `${activeFamily.name} 크루의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      title: `'${activeFamily.name}' 크루에서 나갈까요?`,
       tone: "danger",
     });
 
@@ -435,7 +435,7 @@ export function HomePage() {
     try {
       await leaveFamily({ familyId: activeFamily.id, userId: user.uid });
       await refreshFamilies();
-      notify("그룹에서 나갔습니다.", "success");
+      notify("크루에서 나갔습니다.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -492,8 +492,8 @@ export function HomePage() {
     try {
       if (navigator.share) {
         await navigator.share({
-          text: `${activeFamily.name} 그룹에 참여해주세요.`,
-          title: "우리끼리 그룹 초대",
+          text: `${activeFamily.name} 크루에 참여해주세요.`,
+          title: "우리끼리 크루 초대",
           url: inviteUrl,
         });
         return;
@@ -529,8 +529,8 @@ export function HomePage() {
       setInviteCode("");
       notify(
         result.alreadyMember
-          ? `이미 ${result.name} 그룹에 참여 중입니다.`
-          : `${result.name} 그룹을 추가했습니다. 헤더에서 전환할 수 있어요.`,
+          ? `이미 ${result.name} 크루에 참여 중입니다.`
+          : `${result.name} 크루를 추가했습니다. 헤더에서 전환할 수 있어요.`,
         result.alreadyMember ? "info" : "success"
       );
     } catch (error) {
@@ -561,7 +561,7 @@ export function HomePage() {
     <div className="grid gap-4">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
         <p className="text-sm font-semibold text-brand">
-          오늘의 그룹 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} 그룹
+          오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} 크루
         </p>
         <h2 className="mt-2 text-2xl font-semibold leading-tight">
           모두의 위치와 일정을 한눈에 확인해요
@@ -596,7 +596,7 @@ export function HomePage() {
           ))}
           {members.length === 0 && (
             <div className="col-span-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-              그룹을 만들거나 초대 코드로 참여하면 그룹 상황이 표시됩니다.
+              크루를 만들거나 초대 코드로 참여하면 크루 상황이 표시됩니다.
             </div>
           )}
         </div>
@@ -616,7 +616,7 @@ export function HomePage() {
                 <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                        {isFamilyOwner ? "그룹 오너" : "그룹원"}
+                        {isFamilyOwner ? "크루장" : "멤버"}
                       </p>
                       <strong className="mt-0.5 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
                     </div>
@@ -632,7 +632,7 @@ export function HomePage() {
                           <CopySimple className="shrink-0" size={14} weight="regular" />
                         </button>
                         <Link
-                          aria-label="그룹 관리하기"
+                          aria-label="크루 관리하기"
                           className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
                           to="/profile?tab=group"
                         >
@@ -643,14 +643,14 @@ export function HomePage() {
                 </div>
                 <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
                   {isFamilyOwner
-                    ? "초대코드를 공유해 그룹원을 초대할 수 있어요."
-                    : "초대코드는 그룹 오너가 관리해요."}
+                    ? "초대코드를 공유해 크루 멤버를 초대할 수 있어요."
+                    : "초대코드는 크루장이 관리해요."}
                 </p>
               </div>
               {isFamilyOwner ? (
                 <div className="mt-3 grid w-full min-w-0 grid-cols-2 gap-2">
                   <Button
-                    aria-label="그룹 초대 링크 복사"
+                    aria-label="크루 초대 링크 복사"
                     className="h-9 min-w-0 w-full px-3 text-xs"
                     onClick={() => void handleCopyInviteLink()}
                     type="button"
@@ -660,7 +660,7 @@ export function HomePage() {
                     링크 복사
                   </Button>
                   <Button
-                    aria-label="그룹 공유하기"
+                    aria-label="크루 공유하기"
                     className="h-9 min-w-0 w-full px-3 text-xs"
                     onClick={() => void handleShareInviteLink()}
                     type="button"
@@ -689,9 +689,9 @@ export function HomePage() {
       </Card>
       <Card className="grid gap-2">
         <div>
-          <p className="text-sm font-semibold">다른 그룹 추가</p>
+          <p className="text-sm font-semibold">다른 크루 추가</p>
           <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
-            초대코드를 입력하면 현재 그룹은 유지되고 새 그룹이 추가돼요.
+            초대코드를 입력하면 현재 크루는 유지되고 새 크루가 추가돼요.
           </p>
         </div>
         <div className="flex min-w-0 items-end gap-2">
@@ -711,7 +711,7 @@ export function HomePage() {
             variant="secondary"
           >
             <UserPlus size={18} weight="bold" />
-            그룹 추가
+            크루 추가
           </Button>
         </div>
       </Card>
@@ -728,10 +728,10 @@ export function HomePage() {
             <>
               <div className="flex items-center gap-2">
                 <MapPin className="text-brand" size={22} weight="bold" />
-                <h3 className="text-base font-semibold">그룹 위치</h3>
+                <h3 className="text-base font-semibold">크루 위치</h3>
               </div>
               <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-                그룹 구성원이 있으면 위치 핀이 표시됩니다.
+                크루 멤버가 있으면 위치 핀이 표시됩니다.
               </p>
             </>
           ) : (
@@ -753,7 +753,7 @@ export function HomePage() {
       <Card>
         <div className="flex items-center gap-2">
           <UsersThree className="text-brand" size={22} weight="bold" />
-          <h3 className="text-base font-semibold">그룹 구성원</h3>
+          <h3 className="text-base font-semibold">크루 멤버</h3>
         </div>
         {members.length > 0 ? (
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -789,7 +789,7 @@ export function HomePage() {
                   </button>
                 ) : !isFamilyOwner && member.userId === user?.uid ? (
                   <button
-                    aria-label="그룹 나가기"
+                    aria-label="크루 나가기"
                     className="grid size-9 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
                     disabled={isLeavingFamily}
                     onClick={() => void handleLeaveFamily()}
@@ -803,7 +803,7 @@ export function HomePage() {
           </div>
         ) : (
           <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-            그룹을 만들거나 초대 코드로 참여하면 구성원이 표시됩니다.
+            크루를 만들거나 초대 코드로 참여하면 멤버가 표시됩니다.
           </p>
         )}
       </Card>
@@ -812,7 +812,7 @@ export function HomePage() {
     <BottomSheet
       isOpen={Boolean(selectedLocationMember)}
       onClose={() => setSelectedLocationMemberId("")}
-      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "그룹 위치"}
+      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "크루 위치"}
     >
       {selectedLocationMember ? (
         <FamilyLocationPin
@@ -1212,7 +1212,7 @@ function FamilyLocationMap({
         <div>
           <MapPin className="mx-auto text-slate-400" size={28} weight="bold" />
           <p className="mt-3 text-sm font-semibold text-[var(--color-text-secondary)]">
-            현재 위치 공유를 누르면 지도 위에 그룹 핀이 표시됩니다.
+            현재 위치 공유를 누르면 지도 위에 크루 핀이 표시됩니다.
           </p>
         </div>
       </div>
@@ -1224,7 +1224,7 @@ function FamilyLocationMap({
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="shrink-0 text-brand" size={22} weight="bold" />
-          <h3 className="min-w-0 truncate text-base font-semibold">그룹 위치</h3>
+          <h3 className="min-w-0 truncate text-base font-semibold">크루 위치</h3>
         </div>
         <IconButton
           aria-label="지도 초기화"

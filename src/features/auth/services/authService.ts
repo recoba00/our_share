@@ -81,7 +81,7 @@ export async function deleteAccount({
   user: User;
 }) {
   if (ownedFamilyIds.length > 0) {
-    throw new Error("그룹 오너인 계정은 먼저 그룹을 삭제한 뒤 탈퇴할 수 있습니다.");
+    throw new Error("크루장인 계정은 먼저 크루를 삭제한 뒤 탈퇴할 수 있습니다.");
   }
 
   await reauthenticateWithPopup(user, googleProvider);

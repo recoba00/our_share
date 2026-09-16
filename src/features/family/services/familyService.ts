@@ -170,7 +170,7 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
   const normalizedName = name.trim();
 
   if (!normalizedName) {
-    throw new Error("그룹 이름을 입력해주세요.");
+    throw new Error("크루 이름을 입력해주세요.");
   }
 
   await updateDoc(doc(db, "families", familyId), {
@@ -183,7 +183,7 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   const familySnapshot = await getDoc(doc(db, "families", familyId));
 
   if (!familySnapshot.exists()) {
-    throw new Error("삭제할 그룹을 찾을 수 없습니다.");
+    throw new Error("삭제할 크루를 찾을 수 없습니다.");
   }
 
   const memberSnapshot = await getDocs(
@@ -194,7 +194,7 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   );
 
   if (!ownerMember) {
-    throw new Error("그룹 삭제는 오너만 할 수 있습니다.");
+    throw new Error("크루 삭제는 크루장만 할 수 있습니다.");
   }
 
   const inviteCode = familySnapshot.data().inviteCode as string | undefined;
@@ -226,11 +226,11 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
   const memberSnapshot = await getDoc(memberRef);
 
   if (!memberSnapshot.exists()) {
-    throw new Error("이미 참여하지 않은 그룹입니다.");
+    throw new Error("이미 참여하지 않은 크루입니다.");
   }
 
   if (memberSnapshot.data().role === "OWNER") {
-    throw new Error("오너는 그룹을 나갈 수 없습니다. 그룹을 삭제하거나 오너 권한을 넘겨주세요.");
+    throw new Error("크루장은 크루를 나갈 수 없습니다. 크루를 삭제하거나 크루장 권한을 넘겨주세요.");
   }
 
   await clearMemberRealtimeData(familyId, userId);
@@ -354,11 +354,11 @@ export async function updateFamilyMemberRole({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("그룹 역할은 OWNER만 변경할 수 있습니다.");
+    throw new Error("크루 역할은 크루장만 변경할 수 있습니다.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("변경할 그룹 구성원을 찾을 수 없습니다.");
+    throw new Error("변경할 크루 멤버를 찾을 수 없습니다.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
@@ -387,11 +387,11 @@ export async function deleteFamilyMember({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("그룹 구성원 삭제는 OWNER만 할 수 있습니다.");
+    throw new Error("크루 멤버 삭제는 크루장만 할 수 있습니다.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("삭제할 그룹 구성원을 찾을 수 없습니다.");
+    throw new Error("삭제할 크루 멤버를 찾을 수 없습니다.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
@@ -421,7 +421,7 @@ async function upsertFamilyMember({
       familyId,
       userId: user.uid,
       role,
-      nickname: user.displayName ?? "그룹 구성원",
+      nickname: user.displayName ?? "크루 멤버",
       relation,
       permissions: [],
       ...(inviteCode ? { inviteCode } : {}),

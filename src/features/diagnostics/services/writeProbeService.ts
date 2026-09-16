@@ -27,8 +27,8 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
   if (!family) {
     return [
       {
-        detail: "로그인 계정에 연결된 그룹이 없습니다. 홈에서 그룹 생성 또는 초대 참여가 먼저 필요합니다.",
-        label: "그룹 membership",
+        detail: "로그인 계정에 연결된 크루가 없습니다. 홈에서 크루 생성 또는 초대 참여가 먼저 필요합니다.",
+        label: "크루 멤버십",
         ok: false,
       },
     ];
@@ -37,7 +37,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
   const results: WriteProbeResult[] = [
     {
       detail: `${family.name} / ${family.id}`,
-        label: "그룹 membership",
+        label: "크루 멤버십",
       ok: true,
     },
   ];
@@ -105,12 +105,12 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
     return "Realtime Database 저장 및 자동 삭제 성공";
   });
 
-  await runProbeStep(results, "그룹 전체방 준비", async () => {
+  await runProbeStep(results, "크루 전체방 준비", async () => {
     await getOrCreateFamilyRoom({
       createdBy: userId,
       familyId: family.id,
     });
-    return "그룹 전체방 확인 또는 생성 성공";
+    return "크루 전체방 확인 또는 생성 성공";
   });
 
   await runProbeStep(results, "1:1 채팅방 준비", async () => {
@@ -118,7 +118,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
     const targetMember = members.find((member) => member.userId !== userId);
 
     if (!targetMember) {
-      return "다른 그룹 구성원이 없어 1:1 채팅방 생성 검사는 건너뜀";
+      return "다른 크루 멤버가 없어 1:1 채팅방 생성 검사는 건너뜀";
     }
 
     const memberIds = [userId, targetMember.userId].sort();
@@ -147,7 +147,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
     const otherMember = familyMembers.find((member) => member.userId !== userId);
 
     if (!otherMember) {
-      return "다른 그룹 구성원이 없어 비밀방 생성 검사를 생략했습니다.";
+      return "다른 크루 멤버가 없어 비밀방 생성 검사를 생략했습니다.";
     }
 
     const roomId = await createSecretRoom({

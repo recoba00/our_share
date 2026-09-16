@@ -169,7 +169,7 @@ export function PollPage() {
 
   async function handleCreatePoll() {
     if (!user || !family) {
-      notify("그룹 정보를 먼저 불러와주세요.", "info");
+      notify("크루 정보를 먼저 불러와주세요.", "info");
       return;
     }
 
@@ -323,7 +323,7 @@ export function PollPage() {
   const createPollForm = (
     <>
         <SectionHeading
-          description={family ? `${truncateFamilyName(family.name)} 그룹 투표` : "그룹 정보가 필요합니다"}
+          description={family ? `${truncateFamilyName(family.name)} 크루 투표` : "크루 정보가 필요합니다"}
           icon={<ChartBar size={20} weight="bold" />}
           title="투표 만들기"
         />

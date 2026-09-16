@@ -2,7 +2,7 @@ export function getFirebaseErrorMessage(error: unknown) {
   const code = getFirebaseErrorCode(error);
 
   if (code === "permission-denied") {
-    return "Firebase 권한 오류입니다. 로그인 상태와 그룹 참여 상태를 확인해주세요.";
+    return "Firebase 권한 오류입니다. 로그인 상태와 크루 참여 상태를 확인해주세요.";
   }
 
   if (code === "unavailable") {

@@ -25,7 +25,7 @@ export function SettingsPage() {
 
     const confirmed = await confirm({
       confirmLabel: "회원탈퇴",
-      description: "프로필과 그룹 연결이 삭제되고 Firebase 계정에서 로그아웃됩니다. 이 작업은 되돌릴 수 없습니다.",
+      description: "프로필과 크루 연결이 삭제되고 Firebase 계정에서 로그아웃됩니다. 이 작업은 되돌릴 수 없습니다.",
       title: "회원탈퇴를 진행할까요?",
       tone: "danger",
     });
@@ -121,7 +121,7 @@ export function SettingsPage() {
         <section className="mt-8 border-t border-[var(--color-border)] pt-6">
           <h3 className="text-lg font-semibold">회원탈퇴</h3>
           <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-            계정과 프로필, 그룹 연결을 삭제합니다. 그룹 오너인 경우 그룹을 먼저 정리해야 합니다.
+            계정과 프로필, 크루 연결을 삭제합니다. 크루장인 경우 크루를 먼저 정리해야 합니다.
           </p>
           <Button
             className="mt-4 w-full"

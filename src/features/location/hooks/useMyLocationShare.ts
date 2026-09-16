@@ -48,7 +48,7 @@ export function useMyLocationShare({
   const shareCurrentLocation = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
-      setMessage("그룹 생성 또는 참여 후 위치를 공유할 수 있습니다.");
+      setMessage("크루 생성 또는 참여 후 위치를 공유할 수 있습니다.");
       return;
     }
 
@@ -92,7 +92,7 @@ export function useMyLocationShare({
   const stopCurrentLocationShare = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
-      setMessage("그룹 생성 또는 참여 후 위치 공유를 끊을 수 있습니다.");
+      setMessage("크루 생성 또는 참여 후 위치 공유를 끊을 수 있습니다.");
       return;
     }
 

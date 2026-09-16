@@ -156,14 +156,14 @@ export function AppHeader() {
                 to="/calendar"
               />
               <NotificationLink
-                description="진행 중인 그룹 투표를 확인하세요."
+                description="진행 중인 크루 투표를 확인하세요."
                 icon={<SealQuestion size={20} weight="bold" />}
                 label="투표 확인"
                 onClick={() => setIsNotificationsOpen(false)}
                 to="/poll"
               />
               <NotificationLink
-                description="그룹 채팅방 새 소식을 확인하세요."
+                description="크루 채팅방 새 소식을 확인하세요."
                 icon={<ChatCircleDots size={20} weight="bold" />}
                 label="채팅 확인"
                 onClick={() => setIsNotificationsOpen(false)}
@@ -187,20 +187,20 @@ export function AppHeader() {
             setIsCreateFamilyOpen(false);
             setNewFamilyName("");
           }}
-          title="그룹 생성"
+          title="크루 생성"
         >
           <form className="grid gap-4" onSubmit={(event) => void handleCreateFamily(event)}>
             <div>
-              <p className="text-sm font-semibold text-brand">새 그룹 만들기</p>
+              <p className="text-sm font-semibold text-brand">새 크루 만들기</p>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
-                그룹을 만든 뒤 바로 해당 그룹으로 전환합니다.
+                크루를 만든 뒤 바로 해당 크루로 전환합니다.
               </p>
             </div>
             <Input
               autoFocus
-              label="그룹 이름"
+              label="크루 이름"
               onChange={(event) => setNewFamilyName(event.target.value)}
-              placeholder="새 그룹 이름을 입력해주세요"
+              placeholder="새 크루 이름을 입력해주세요"
               value={newFamilyName}
             />
             <Button disabled={isCreatingFamily} type="submit">
@@ -223,7 +223,7 @@ export function AppHeader() {
     const normalizedName = newFamilyName.trim();
 
     if (!normalizedName) {
-      showToast({ message: "그룹 이름을 입력해주세요.", variant: "info" });
+      showToast({ message: "크루 이름을 입력해주세요.", variant: "info" });
       return;
     }
 
@@ -234,10 +234,10 @@ export function AppHeader() {
       await refreshFamilies(result.id);
       setNewFamilyName("");
       setIsCreateFamilyOpen(false);
-      showToast({ message: "그룹을 생성했습니다.", variant: "success" });
+      showToast({ message: "크루를 생성했습니다.", variant: "success" });
     } catch (error) {
       showToast({
-        message: error instanceof Error ? error.message : "그룹 생성에 실패했습니다.",
+        message: error instanceof Error ? error.message : "크루 생성에 실패했습니다.",
         variant: "error",
       });
     } finally {
@@ -285,30 +285,30 @@ function GroupSwitcher({
         type="button"
       >
         <span className="min-w-0 max-w-full truncate">
-          {activeFamily ? truncateFamilyName(activeFamily.name) : "그룹 선택"}
+          {activeFamily ? truncateFamilyName(activeFamily.name) : "크루 선택"}
         </span>
         {compact ? <CaretDown className="shrink-0 text-[var(--color-text-secondary)]" size={16} weight="bold" /> : null}
       </button>
-      <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="그룹 전환">
+      <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="크루 전환">
         <div className="grid gap-3" role="listbox">
           {families.length > 0 ? (
             <SegmentedControl
               onChange={setGroupTab}
               options={[
-                { label: `오너 그룹 ${ownerFamilies.length}`, value: "OWNER" },
-                { label: `그룹원 그룹 ${memberFamilies.length}`, value: "MEMBER" },
+                { label: `크루장 크루 ${ownerFamilies.length}`, value: "OWNER" },
+                { label: `멤버 크루 ${memberFamilies.length}`, value: "MEMBER" },
               ]}
               value={visibleGroupTab}
             />
           ) : null}
           {families.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              아직 참여 중인 그룹이 없습니다.
+              아직 참여 중인 크루가 없습니다.
             </p>
           ) : null}
           {families.length > 0 && visibleFamilies.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              {visibleGroupTab === "OWNER" ? "내가 오너인 그룹이 없습니다." : "그룹원으로 참여 중인 그룹이 없습니다."}
+              {visibleGroupTab === "OWNER" ? "내가 크루장인 크루가 없습니다." : "멤버로 참여 중인 크루가 없습니다."}
             </p>
           ) : null}
           {visibleFamilies.map((family) => (
@@ -325,7 +325,7 @@ function GroupSwitcher({
             >
               <span className="min-w-0 flex-1 truncate">{truncateFamilyName(family.name)}</span>
               <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--color-text-secondary)]">
-                {visibleGroupTab === "OWNER" ? "오너" : "그룹원"}
+                {visibleGroupTab === "OWNER" ? "크루장" : "멤버"}
               </span>
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </BottomSheetItem>
@@ -340,7 +340,7 @@ function GroupSwitcher({
               type="button"
             >
               <UsersThree size={18} weight="bold" />
-              그룹 생성하기
+              크루 생성하기
             </Button>
           </div>
         </div>
