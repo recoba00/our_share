@@ -29,6 +29,7 @@ export function ProfilePage() {
   const [editingFamilyName, setEditingFamilyName] = useState("");
   const [busyFamilyId, setBusyFamilyId] = useState("");
   const [activeTab, setActiveTab] = useState<"MY" | "GROUP">("MY");
+  const [groupRoleTab, setGroupRoleTab] = useState<"OWNER" | "MEMBER">("OWNER");
   const [isCreatingFamily, setIsCreatingFamily] = useState(false);
   const [newFamilyName, setNewFamilyName] = useState("");
   const [isCreating, setIsCreating] = useState(false);
@@ -134,6 +135,13 @@ export function ProfilePage() {
   function notify(message: string, variant: "error" | "info" | "success") {
     showToast({ message, variant });
   }
+
+  const ownerFamilies = families.filter((family) => family.role === "OWNER" || family.ownerId === user?.uid);
+  const memberFamilies = families.filter((family) => family.role !== "OWNER" && family.ownerId !== user?.uid);
+  const visibleGroupRoleTab = groupRoleTab === "OWNER" && ownerFamilies.length === 0 && memberFamilies.length > 0
+    ? "MEMBER"
+    : groupRoleTab;
+  const visibleFamilies = visibleGroupRoleTab === "OWNER" ? ownerFamilies : memberFamilies;
 
   return (
     <DesktopWorkspace
@@ -256,13 +264,24 @@ export function ProfilePage() {
           </form>
         ) : null}
 
+        <div className="mt-4">
+          <SegmentedControl
+            onChange={setGroupRoleTab}
+            options={[
+              { label: `오너 그룹 ${ownerFamilies.length}`, value: "OWNER" },
+              { label: `그룹원 그룹 ${memberFamilies.length}`, value: "MEMBER" },
+            ]}
+            value={visibleGroupRoleTab}
+          />
+        </div>
+
         <div className="mt-4 grid gap-2">
           {isFamilyLoading ? (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
               그룹을 불러오는 중입니다.
             </p>
-          ) : families.length > 0 ? (
-            families.map((family) => {
+          ) : visibleFamilies.length > 0 ? (
+            visibleFamilies.map((family) => {
               const isOwner = family.role === "OWNER" || family.ownerId === user?.uid;
               const isActive = activeFamily?.id === family.id;
               const isEditing = editingFamilyId === family.id;
@@ -365,7 +384,9 @@ export function ProfilePage() {
             })
           ) : (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              아직 참여한 그룹이 없습니다.
+              {visibleGroupRoleTab === "OWNER"
+                ? "내가 오너인 그룹이 없습니다."
+                : "그룹원으로 참여 중인 그룹이 없습니다."}
             </p>
           )}
         </div>

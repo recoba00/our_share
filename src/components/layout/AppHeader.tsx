@@ -19,7 +19,9 @@ import { useFamily } from "../../features/family/useFamily";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
+import { SegmentedControl } from "../common/SegmentedControl";
 import { useToast } from "../common/toastContext";
+import type { Family } from "../../features/family/types/familyTypes";
 import { mainNavigationItems } from "../navigation/navigationItems";
 
 type LocationState = {
@@ -77,6 +79,7 @@ export function AppHeader() {
                   families={families}
                   onCreateFamily={() => setIsCreateFamilyOpen(true)}
                   onSelect={selectFamily}
+                  userId={user?.uid}
                 />
               ) : null}
             </div>
@@ -246,15 +249,24 @@ function GroupSwitcher({
   families,
   onCreateFamily,
   onSelect,
+  userId,
 }: {
   activeFamilyId: string;
   compact?: boolean;
-  families: { id: string; name: string }[];
+  families: Family[];
   onCreateFamily: () => void;
   onSelect: (familyId: string) => void;
+  userId?: string;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [groupTab, setGroupTab] = useState<"OWNER" | "MEMBER">("OWNER");
   const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0] ?? null;
+  const ownerFamilies = families.filter((family) => family.role === "OWNER" || family.ownerId === userId);
+  const memberFamilies = families.filter((family) => family.role !== "OWNER" && family.ownerId !== userId);
+  const visibleGroupTab = groupTab === "OWNER" && ownerFamilies.length === 0 && memberFamilies.length > 0
+    ? "MEMBER"
+    : groupTab;
+  const visibleFamilies = visibleGroupTab === "OWNER" ? ownerFamilies : memberFamilies;
 
   return (
     <div className={`relative min-w-0 ${compact ? "max-w-[min(46vw,190px)]" : "max-w-[min(44vw,180px)]"}`}>
@@ -276,12 +288,27 @@ function GroupSwitcher({
       </button>
       <BottomSheet isOpen={isOpen} onClose={() => setIsOpen(false)} title="그룹 전환">
         <div className="grid gap-3" role="listbox">
+          {families.length > 0 ? (
+            <SegmentedControl
+              onChange={setGroupTab}
+              options={[
+                { label: `오너 그룹 ${ownerFamilies.length}`, value: "OWNER" },
+                { label: `그룹원 그룹 ${memberFamilies.length}`, value: "MEMBER" },
+              ]}
+              value={visibleGroupTab}
+            />
+          ) : null}
           {families.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
               아직 참여 중인 그룹이 없습니다.
             </p>
           ) : null}
-          {families.map((family) => (
+          {families.length > 0 && visibleFamilies.length === 0 ? (
+            <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
+              {visibleGroupTab === "OWNER" ? "내가 오너인 그룹이 없습니다." : "그룹원으로 참여 중인 그룹이 없습니다."}
+            </p>
+          ) : null}
+          {visibleFamilies.map((family) => (
             <BottomSheetItem
               aria-selected={family.id === activeFamilyId}
               active={family.id === activeFamilyId}
@@ -294,6 +321,9 @@ function GroupSwitcher({
               type="button"
             >
               <span className="min-w-0 truncate">{family.name}</span>
+              <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--color-text-secondary)]">
+                {visibleGroupTab === "OWNER" ? "오너" : "그룹원"}
+              </span>
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </BottomSheetItem>
           ))}
