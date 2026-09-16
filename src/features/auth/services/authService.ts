@@ -54,6 +54,29 @@ export async function syncRedirectLoginResult() {
 }
 
 export async function logout() {
+  const user = auth.currentUser;
+
+  if (user) {
+    try {
+      const memberSnapshot = await getDocs(
+        query(collection(db, "familyMembers"), where("userId", "==", user.uid))
+      );
+
+      await Promise.all(
+        memberSnapshot.docs.map((memberDoc) =>
+          clearUserRealtimeData(memberDoc.data().familyId as string, user.uid)
+        )
+      );
+      await Promise.all(
+        memberSnapshot.docs.map((memberDoc) =>
+          remove(ref(realtimeDb, `familyMembers/${memberDoc.data().familyId}/${user.uid}`))
+        )
+      );
+    } catch {
+      // 로그아웃은 정리 실패와 무관하게 완료되어야 한다.
+    }
+  }
+
   await signOut(auth);
 }
 
@@ -73,6 +96,13 @@ export async function deleteAccount({
   const memberSnapshot = await getDocs(
     query(collection(db, "familyMembers"), where("userId", "==", user.uid))
   );
+
+  await Promise.all(
+    memberSnapshot.docs.map((memberDoc) =>
+      clearUserRealtimeData(memberDoc.data().familyId as string, user.uid)
+    )
+  );
+
   const batch = writeBatch(db);
   batch.delete(doc(db, "users", user.uid));
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
@@ -84,6 +114,14 @@ export async function deleteAccount({
     )
   );
   await deleteUser(user);
+}
+
+async function clearUserRealtimeData(familyId: string, userId: string) {
+  await Promise.all([
+    remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`)),
+    remove(ref(realtimeDb, `onlinePresence/${familyId}/${userId}`)),
+    remove(ref(realtimeDb, `deviceStatus/${familyId}/${userId}`)),
+  ]);
 }
 
 export async function syncUserProfile(user: User) {
