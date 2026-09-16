@@ -31,18 +31,12 @@ export function PwaPrompt() {
       setIsUpdateReady(true);
     }
 
-    function handleControllerChange() {
-      window.location.reload();
-    }
-
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     window.addEventListener("our-share:pwa-update-ready", handleUpdateReady);
-    navigator.serviceWorker?.addEventListener("controllerchange", handleControllerChange);
 
     return () => {
       window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
       window.removeEventListener("our-share:pwa-update-ready", handleUpdateReady);
-      navigator.serviceWorker?.removeEventListener("controllerchange", handleControllerChange);
     };
   }, []);
 
@@ -64,8 +58,29 @@ export function PwaPrompt() {
 
   function reloadForUpdate() {
     void navigator.serviceWorker.getRegistration().then((registration) => {
-      registration?.waiting?.postMessage({ type: "SKIP_WAITING" });
-      window.setTimeout(() => window.location.reload(), 800);
+      const waitingWorker = registration?.waiting;
+
+      if (!waitingWorker || !navigator.serviceWorker) {
+        window.location.reload();
+        return;
+      }
+
+      let hasReloaded = false;
+      const reloadAfterActivation = () => {
+        if (hasReloaded) {
+          return;
+        }
+
+        hasReloaded = true;
+        navigator.serviceWorker.removeEventListener("controllerchange", reloadAfterActivation);
+        window.location.reload();
+      };
+
+      navigator.serviceWorker.addEventListener("controllerchange", reloadAfterActivation, {
+        once: true,
+      });
+      waitingWorker.postMessage({ type: "SKIP_WAITING" });
+      window.setTimeout(reloadAfterActivation, 5000);
     });
   }
 
