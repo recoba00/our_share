@@ -12,10 +12,10 @@ export function FamilyRoleIndicator({
     return (
       <span
         aria-label="크루장"
-        className={`inline-grid size-7 shrink-0 place-items-center rounded-full bg-brand-soft text-brand ${className}`}
+        className={`inline-flex size-5 shrink-0 items-center justify-center text-orange-500 ${className}`}
         title="크루장"
       >
-        <CrownSimple aria-hidden="true" size={16} weight="regular" />
+        <CrownSimple aria-hidden="true" size={14} weight="fill" />
       </span>
     );
   }

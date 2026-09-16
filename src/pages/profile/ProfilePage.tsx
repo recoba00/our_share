@@ -390,10 +390,10 @@ export function ProfilePage() {
                         type="button"
                       >
                         <span className="flex w-full min-w-0 items-center gap-2">
+                          <FamilyRoleIndicator role={isOwner ? "OWNER" : "MEMBER"} />
                           <strong className="min-w-0 flex-1 truncate text-base">
                             {truncateFamilyName(family.name)}
                           </strong>
-                          <FamilyRoleIndicator role={isOwner ? "OWNER" : "MEMBER"} />
                         </span>
                         <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
                           {isOwner

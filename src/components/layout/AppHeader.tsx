@@ -329,8 +329,8 @@ function GroupSwitcher({
               role="option"
               type="button"
             >
-              <span className="min-w-0 flex-1 truncate">{truncateFamilyName(family.name)}</span>
               <FamilyRoleIndicator role={visibleGroupTab === "OWNER" ? "OWNER" : "MEMBER"} />
+              <span className="min-w-0 flex-1 truncate">{truncateFamilyName(family.name)}</span>
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </BottomSheetItem>
           ))}

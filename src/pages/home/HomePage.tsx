@@ -606,18 +606,12 @@ export function HomePage() {
       <Card>
         <div className="grid gap-3">
           {activeFamily ? (
-            <div
-              className={`min-w-0 rounded-2xl border p-3 ${
-                isFamilyOwner
-                  ? "border-[var(--color-owner-border)] bg-brand-soft/40"
-                  : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
-              }`}
-            >
+            <div className="min-w-0">
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-1.5">
                       <FamilyRoleIndicator role={isFamilyOwner ? "OWNER" : "MEMBER"} />
-                      <strong className="mt-0.5 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
+                      <strong className="min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
                     </div>
                     {isFamilyOwner ? (
                       <div className="flex shrink-0 items-center gap-1">
