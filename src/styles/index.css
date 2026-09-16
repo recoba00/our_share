@@ -146,6 +146,41 @@ a {
   transition: opacity 160ms ease-out, transform 180ms ease-out;
 }
 
+.policy-scroll-mask {
+  position: relative;
+  max-height: min(56dvh, 32rem);
+  min-height: 12rem;
+  overflow: hidden;
+}
+
+.policy-scroll-region {
+  height: 100%;
+  max-height: inherit;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1px 0 1.5rem;
+  scroll-behavior: smooth;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black 1.25rem,
+    black calc(100% - 1.25rem),
+    transparent 100%
+  );
+}
+
+.policy-scroll-region::-webkit-scrollbar {
+  display: none;
+}
+
+.policy-scroll-region:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: -2px;
+  border-radius: 0.75rem;
+}
+
 .animated-checkbox-check path {
   stroke-dasharray: 24;
   stroke-dashoffset: 24;
