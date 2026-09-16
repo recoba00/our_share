@@ -3,6 +3,7 @@ import type { PropsWithChildren } from "react";
 import { useCallback, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
+import { DialogSurface } from "./DialogSurface";
 import {
   ConfirmDialogContext,
   type ConfirmDialogInput,
@@ -35,7 +36,7 @@ export function ConfirmDialogProvider({ children }: PropsWithChildren) {
         ? createPortal(
             <div
               aria-modal="true"
-              className="fixed inset-0 z-[70] grid place-items-center bg-slate-950/45 p-4"
+              className="fixed inset-0 z-[70] flex items-end bg-slate-950/45 p-4 sm:items-center"
               role="dialog"
             >
               <button
@@ -44,7 +45,27 @@ export function ConfirmDialogProvider({ children }: PropsWithChildren) {
                 onClick={() => closeDialog(false)}
                 type="button"
               />
-              <section className="relative w-full max-w-sm rounded-card border border-white/70 bg-white/95 p-5 shadow-xl backdrop-blur-xl">
+              <DialogSurface
+                closeLabel="닫기"
+                footer={
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <Button onClick={() => closeDialog(false)} type="button" variant="secondary">
+                      {dialog.cancelLabel ?? "취소"}
+                    </Button>
+                    <Button
+                      onClick={() => closeDialog(true)}
+                      type="button"
+                      variant={dialog.tone === "danger" ? "danger" : "primary"}
+                    >
+                      {dialog.confirmLabel ?? "확인"}
+                    </Button>
+                  </div>
+                }
+                onClose={() => closeDialog(false)}
+                size="compact"
+                title={dialog.title}
+                variant="modal"
+              >
                 <div className="flex items-start gap-3">
                   <span
                     className={`grid size-10 shrink-0 place-items-center rounded-full ${
@@ -55,26 +76,11 @@ export function ConfirmDialogProvider({ children }: PropsWithChildren) {
                   >
                     <WarningCircle size={22} weight="regular" />
                   </span>
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-semibold leading-6">{dialog.title}</h2>
-                    <div className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                      {dialog.description}
-                    </div>
-                  </div>
+                  <p className="min-w-0 text-sm leading-6 text-[var(--color-text-secondary)]">
+                    {dialog.description}
+                  </p>
                 </div>
-                <div className="mt-6 grid grid-cols-2 gap-2">
-                  <Button onClick={() => closeDialog(false)} type="button" variant="secondary">
-                    {dialog.cancelLabel ?? "취소"}
-                  </Button>
-                  <Button
-                    onClick={() => closeDialog(true)}
-                    type="button"
-                    variant={dialog.tone === "danger" ? "danger" : "primary"}
-                  >
-                    {dialog.confirmLabel ?? "확인"}
-                  </Button>
-                </div>
-              </section>
+              </DialogSurface>
             </div>,
             document.body
           )

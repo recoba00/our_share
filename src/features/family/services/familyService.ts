@@ -68,11 +68,11 @@ export async function createFamily({ name, owner }: CreateFamilyInput) {
   const normalizedName = name.trim();
 
   if (!normalizedName) {
-    throw new Error("크루 이름을 입력해주세요.");
+    throw new Error("크루 이름을 적어주세요.");
   }
 
   if (Array.from(normalizedName).length > MAX_FAMILY_NAME_LENGTH) {
-    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자 이내로 입력해주세요.`);
+    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자까지 입력할 수 있어요.`);
   }
 
   const familyRef = doc(collection(db, "families"));
@@ -141,7 +141,7 @@ async function joinFamilyByInviteCodeInternal({
   const inviteSnapshot = await getDoc(doc(db, "familyInvites", normalizedInviteCode));
 
   if (!inviteSnapshot.exists()) {
-    throw new Error("초대 코드를 찾을 수 없습니다.");
+    throw new Error("초대 코드가 맞는지 확인해주세요.");
   }
 
   const invite = inviteSnapshot.data();
@@ -181,11 +181,11 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
   const normalizedName = name.trim();
 
   if (!normalizedName) {
-    throw new Error("크루 이름을 입력해주세요.");
+    throw new Error("크루 이름을 적어주세요.");
   }
 
   if (Array.from(normalizedName).length > MAX_FAMILY_NAME_LENGTH) {
-    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자 이내로 입력해주세요.`);
+    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자까지 입력할 수 있어요.`);
   }
 
   await updateDoc(doc(db, "families", familyId), {
@@ -198,7 +198,7 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   const familySnapshot = await getDoc(doc(db, "families", familyId));
 
   if (!familySnapshot.exists()) {
-    throw new Error("삭제할 크루를 찾을 수 없습니다.");
+    throw new Error("삭제할 크루를 찾을 수 없어요.");
   }
 
   const memberSnapshot = await getDocs(
@@ -209,7 +209,7 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   );
 
   if (!ownerMember) {
-    throw new Error("크루 삭제는 크루장만 할 수 있습니다.");
+    throw new Error("크루 삭제는 크루장만 할 수 있어요.");
   }
 
   const inviteCode = familySnapshot.data().inviteCode as string | undefined;
@@ -241,11 +241,11 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
   const memberSnapshot = await getDoc(memberRef);
 
   if (!memberSnapshot.exists()) {
-    throw new Error("이미 참여하지 않은 크루입니다.");
+    throw new Error("이미 나간 크루예요.");
   }
 
   if (memberSnapshot.data().role === "OWNER") {
-    throw new Error("크루장은 크루를 나갈 수 없습니다. 크루를 삭제하거나 크루장 권한을 넘겨주세요.");
+    throw new Error("크루장은 바로 나갈 수 없어요. 크루를 삭제하거나 권한을 넘겨주세요.");
   }
 
   await clearMemberRealtimeData(familyId, userId);
@@ -369,15 +369,15 @@ export async function updateFamilyMemberRole({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("크루 역할은 크루장만 변경할 수 있습니다.");
+    throw new Error("멤버 역할은 크루장만 바꿀 수 있어요.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("변경할 크루 멤버를 찾을 수 없습니다.");
+    throw new Error("변경할 멤버를 찾을 수 없어요.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
-    throw new Error("OWNER 역할은 이 화면에서 변경할 수 없습니다.");
+    throw new Error("크루장 역할은 여기서 바꿀 수 없어요.");
   }
 
   await updateDoc(targetRef, {
@@ -402,15 +402,15 @@ export async function deleteFamilyMember({
   const targetSnapshot = await getDoc(targetRef);
 
   if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("크루 멤버 삭제는 크루장만 할 수 있습니다.");
+    throw new Error("멤버 삭제는 크루장만 할 수 있어요.");
   }
 
   if (!targetSnapshot.exists()) {
-    throw new Error("삭제할 크루 멤버를 찾을 수 없습니다.");
+    throw new Error("삭제할 멤버를 찾을 수 없어요.");
   }
 
   if (targetSnapshot.data().role === "OWNER") {
-    throw new Error("OWNER는 삭제할 수 없습니다.");
+    throw new Error("크루장은 삭제할 수 없어요.");
   }
 
   await deleteDoc(targetRef);

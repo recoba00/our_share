@@ -135,16 +135,16 @@ export function CalendarPage() {
     try {
       if (editingEventId) {
         await updateCalendarEvent({ eventId: editingEventId, input });
-        notify("일정을 수정했습니다.", "success");
+        notify("일정을 바꿨어요.", "success");
       } else {
         await createCalendarEvent(input);
-        notify("일정을 등록했습니다.", "success");
+        notify("일정을 등록했어요.", "success");
       }
 
       resetForm();
       setIsCreateOpen(false);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "일정 저장에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "일정을 저장하지 못했어요.", "error");
     }
   }
 
@@ -155,7 +155,7 @@ export function CalendarPage() {
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: "선택한 일정을 삭제합니다. 삭제한 일정은 되돌릴 수 없습니다.",
+      description: "선택한 일정을 삭제해요. 되돌릴 수 없어요.",
       title: "일정을 삭제할까요?",
       tone: "danger",
     });
@@ -172,9 +172,9 @@ export function CalendarPage() {
       resetForm();
       setDetailEventId("");
       setIsCreateOpen(false);
-      notify("일정을 삭제했습니다.", "success");
+      notify("일정을 삭제했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "일정을 삭제하지 못했어요.", "error");
     }
   }
 
@@ -185,7 +185,7 @@ export function CalendarPage() {
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `'${event.title}' 일정을 삭제합니다. 삭제한 일정은 되돌릴 수 없습니다.`,
+      description: `'${event.title}' 일정을 삭제해요. 되돌릴 수 없어요.`,
       title: "일정을 삭제할까요?",
       tone: "danger",
     });
@@ -204,9 +204,9 @@ export function CalendarPage() {
       }
       setDetailEventId("");
       setIsCreateOpen(false);
-      notify("일정을 삭제했습니다.", "success");
+      notify("일정을 삭제했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "일정 삭제에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "일정을 삭제하지 못했어요.", "error");
     }
   }
 
@@ -231,9 +231,9 @@ export function CalendarPage() {
       setVoteTitle("");
       setVoteDescription("");
       setVoteSelectedDates([]);
-      notify("날짜 투표를 만들었습니다. 투표 메뉴에서 채팅방으로 전송할 수 있어요.", "success");
+      notify("날짜 투표를 만들었어요. 투표 메뉴에서 채팅방에 보낼 수 있어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "날짜 투표 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "날짜 투표를 만들지 못했어요.", "error");
     }
   }
 
@@ -288,7 +288,7 @@ export function CalendarPage() {
   }
 
   if (isFamilyLoading) {
-    return <LoadingState title="캘린더 정보를 불러오는 중입니다." />;
+    return <LoadingState title="캘린더를 불러오는 중이에요." />;
   }
 
   if (!activeFamily) {
@@ -331,7 +331,7 @@ export function CalendarPage() {
                 </p>
               ) : (
                 <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-                  등록된 설명이 없습니다.
+                  등록된 설명이 없어요.
                 </p>
               )}
             </div>
@@ -542,7 +542,7 @@ export function CalendarPage() {
         <div className="mt-5 grid gap-3">
           {monthEvents.length === 0 ? (
             <p className="rounded-2xl bg-slate-50 p-4 text-sm text-[var(--color-text-secondary)]">
-              이번 달 등록된 일정이 없습니다.
+              이번 달 일정이 없어요.
             </p>
           ) : (
             monthEvents.map((event) => (

@@ -32,7 +32,7 @@ type DiagnosticItem = {
 const smokeChecklistItems = [
   "진단 화면에서 Firebase 프로젝트가 our-share-6baf5로 보인다",
   "진단 화면의 Build Commit이 최신 GitHub 커밋과 일치한다",
-  "진단 저장 권한 검사에서 위치 공유, 크루방, 1:1 채팅방 준비가 통과한다",
+  "진단 저장 권한 검사에서 위치 공유, 크루 채팅방, 1:1 채팅방 준비가 통과한다",
   "Google 로그인에 성공한다",
   "로그아웃에 성공한다",
   "크루를 생성하고 초대 코드가 표시된다",
@@ -58,9 +58,9 @@ const smokeChecklistItems = [
   "일반 투표를 생성하고 투표할 수 있다",
   "투표를 삭제할 수 있다",
   "투표를 채팅방으로 전송할 수 있다",
-  "크루방 텍스트 메시지를 전송할 수 있다",
+  "크루 채팅방에서 텍스트 메시지를 보낼 수 있다",
   "내 채팅 메시지를 수정하고 삭제할 수 있다",
-  "1:1 채팅방과 크루방을 열 수 있다",
+  "1:1 채팅방과 크루 채팅방을 열 수 있다",
   "채팅방을 삭제할 수 있다",
   "모바일 채팅방 상세에서 하단 네비게이션이 숨겨진다",
   "PWA 설치 안내와 업데이트 안내가 노출된다",
@@ -113,7 +113,7 @@ export function DiagnosticsPage() {
     if (!user) {
       setProbeResults([
         {
-          detail: "저장 권한 검사는 Google 로그인 후 실행할 수 있습니다.",
+          detail: "저장 권한 검사는 Google 로그인 후 실행할 수 있어요.",
           label: "로그인 상태",
           ok: false,
         },
@@ -129,7 +129,7 @@ export function DiagnosticsPage() {
     } catch (error) {
       setProbeResults([
         {
-          detail: error instanceof Error ? error.message : "저장 권한 검사에 실패했습니다.",
+          detail: error instanceof Error ? error.message : "저장 권한을 확인하지 못했어요.",
           label: "저장 권한 검사",
           ok: false,
         },
@@ -195,7 +195,7 @@ export function DiagnosticsPage() {
               <h3 className="text-base font-semibold">저장 권한 검사</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
                 현재 로그인 계정으로 캘린더, 메모, 투표, 위치 공유, 채팅방
-                저장과 크루방 준비 흐름을 실제로 확인합니다.
+                저장과 크루 채팅방 준비 흐름을 실제로 확인해요.
               </p>
             </div>
           </div>
@@ -334,8 +334,8 @@ function createDiagnostics(authStatus: string, userId?: string) {
     browser: [
       {
         detail: isSecure
-          ? "현재 환경에서 보안 컨텍스트가 활성화되어 있습니다."
-          : "Dothome HTTP에서는 서비스 워커와 알림이 제한될 수 있습니다.",
+          ? "현재 환경에서 보안 연결이 활성화되어 있어요."
+          : "HTTP 환경에서는 서비스 워커와 알림이 제한될 수 있어요.",
         label: "Secure Context",
         status: isSecure ? "ok" : "warning",
       },
@@ -343,15 +343,15 @@ function createDiagnostics(authStatus: string, userId?: string) {
         detail:
           "serviceWorker" in navigator
             ? "브라우저가 서비스 워커를 지원합니다."
-            : "이 브라우저는 서비스 워커를 지원하지 않습니다.",
+            : "이 브라우저에서는 서비스 워커를 사용할 수 없어요.",
         label: "Service Worker",
         status: "serviceWorker" in navigator ? "ok" : "warning",
       },
       {
         detail:
           notificationPermission === "unsupported"
-            ? "이 브라우저는 알림을 지원하지 않습니다."
-            : `현재 알림 권한은 ${notificationPermission} 상태입니다.`,
+            ? "이 브라우저에서는 알림을 사용할 수 없어요."
+            : `현재 알림 권한은 ${notificationPermission} 상태예요.`,
         label: "Notification",
         status:
           notificationPermission === "granted" ||
@@ -380,8 +380,8 @@ function createDiagnostics(authStatus: string, userId?: string) {
         detail: userId
           ? `로그인됨: ${userId}`
           : authStatus === "loading"
-            ? "로그인 상태를 확인하는 중입니다."
-            : "현재 로그인 전 상태입니다.",
+            ? "로그인 상태를 확인하고 있어요."
+            : "아직 로그인하지 않았어요.",
         label: "Auth State",
         status: authStatus === "authenticated" ? "ok" : "warning",
       },
@@ -420,7 +420,7 @@ function createDiagnostics(authStatus: string, userId?: string) {
         detail:
           "geolocation" in navigator
             ? "브라우저가 위치 권한 요청을 지원합니다."
-            : "이 브라우저는 위치 API를 지원하지 않습니다.",
+            : "이 브라우저에서는 위치 기능을 사용할 수 없어요.",
         label: "Geolocation",
         status: "geolocation" in navigator ? "ok" : "warning",
       },
@@ -428,13 +428,13 @@ function createDiagnostics(authStatus: string, userId?: string) {
         detail:
           "getBattery" in navigator
             ? "브라우저가 배터리 상태 조회를 지원합니다."
-            : "배터리 상태 조회 미지원 브라우저입니다.",
+            : "이 브라우저에서는 배터리 상태를 확인할 수 없어요.",
         label: "Battery API",
         status: "ok",
       },
       {
         detail:
-          "PWA 웹에서는 OS가 브라우저를 강제 종료하면 GPS와 watchPosition 실행을 보장할 수 없습니다. 앱이 열려 있거나 백그라운드 탭인 동안에만 이동 감지 위치 공유가 동작합니다.",
+          "PWA는 브라우저가 완전히 종료되면 위치 공유를 계속할 수 없어요. 앱이 열려 있거나 백그라운드에 있을 때 이동을 확인해요.",
         label: "Background Location",
         status: "warning",
       },

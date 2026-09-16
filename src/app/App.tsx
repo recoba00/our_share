@@ -73,7 +73,7 @@ export function App() {
 function RouteLoading() {
   return (
     <div className="grid min-h-[12rem] place-items-center">
-      <p className="text-sm font-semibold text-[var(--color-text-secondary)]">화면을 불러오는 중입니다.</p>
+      <p className="text-sm font-semibold text-[var(--color-text-secondary)]">불러오는 중이에요.</p>
     </div>
   );
 }

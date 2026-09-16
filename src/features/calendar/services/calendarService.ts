@@ -158,14 +158,14 @@ export function subscribeCalendarEvents({
 
 function validateCalendarEvent(input: SaveCalendarEventInput) {
   if (!input.title.trim()) {
-    throw new Error("일정 제목을 입력해주세요.");
+    throw new Error("일정 제목을 적어주세요.");
   }
 
   if (!input.startDate) {
-    throw new Error("시작일을 선택해주세요.");
+    throw new Error("시작일을 골라주세요.");
   }
 
   if (input.endDate && input.endDate < input.startDate) {
-    throw new Error("종료일은 시작일보다 빠를 수 없습니다.");
+    throw new Error("종료일은 시작일보다 빠를 수 없어요.");
   }
 }

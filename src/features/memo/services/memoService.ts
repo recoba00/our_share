@@ -27,11 +27,11 @@ export async function createMemo(input: CreateMemoInput) {
   const normalizedContent = input.content.trim();
 
   if (!normalizedTitle) {
-    throw new Error("메모 제목을 입력해주세요.");
+    throw new Error("메모 제목을 적어주세요.");
   }
 
   if (!normalizedContent) {
-    throw new Error("메모 내용을 입력해주세요.");
+    throw new Error("메모 내용을 적어주세요.");
   }
 
   const memoRef = doc(collection(db, "families", input.familyId, "memos"));
@@ -153,7 +153,7 @@ export async function revealSensitiveMemo({
   }
 
   if (!memo.encryptedContent || !memo.encryptionIv || !memo.encryptionSalt) {
-    throw new Error("열람할 민감 메모 데이터가 없습니다.");
+    throw new Error("열어볼 민감 메모가 없어요.");
   }
 
   try {
@@ -164,7 +164,7 @@ export async function revealSensitiveMemo({
       salt: memo.encryptionSalt,
     });
   } catch {
-    throw new Error("비밀번호가 맞지 않거나 메모를 열 수 없습니다.");
+    throw new Error("비밀번호가 맞지 않거나 메모를 열 수 없어요.");
   }
 }
 
@@ -176,7 +176,7 @@ async function encryptSensitiveContent({
   password: string;
 }) {
   if (!password.trim()) {
-    throw new Error("민감 메모 비밀번호를 입력해주세요.");
+    throw new Error("민감 메모 비밀번호를 적어주세요.");
   }
 
   const salt = crypto.getRandomValues(new Uint8Array(16));

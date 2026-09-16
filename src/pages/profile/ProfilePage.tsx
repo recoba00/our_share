@@ -60,9 +60,9 @@ export function ProfilePage() {
       await updateUserProfile({ displayName, photoURL, user });
       await user.reload();
       refreshUser();
-      notify("내 정보를 저장했습니다.", "success");
+      notify("내 정보를 저장했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "내 정보 저장에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "내 정보를 저장하지 못했어요.", "error");
     } finally {
       setIsSaving(false);
     }
@@ -70,7 +70,7 @@ export function ProfilePage() {
 
   async function handleRenameFamily(familyId: string) {
     if (!editingFamilyName.trim()) {
-      notify("크루 이름을 입력해주세요.", "info");
+      notify("크루 이름을 적어주세요.", "info");
       return;
     }
 
@@ -81,7 +81,7 @@ export function ProfilePage() {
       await refreshFamilies(familyId);
       setEditingFamilyId("");
       setEditingFamilyName("");
-      notify("크루 이름을 수정했습니다.", "success");
+      notify("크루 이름을 바꿨어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -97,7 +97,7 @@ export function ProfilePage() {
     }
 
     if (!newFamilyName.trim()) {
-      notify("크루 이름을 입력해주세요.", "info");
+      notify("크루 이름을 적어주세요.", "info");
       return;
     }
 
@@ -108,7 +108,7 @@ export function ProfilePage() {
       await refreshFamilies(result.id);
       setNewFamilyName("");
       setIsCreatingFamily(false);
-      notify("크루를 생성했습니다.", "success");
+      notify("크루를 만들었어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -123,7 +123,7 @@ export function ProfilePage() {
 
     const confirmed = await confirm({
       confirmLabel: "크루 삭제",
-      description: `${familyName} 크루의 멤버 연결을 삭제합니다. 일정, 메모, 투표, 채팅 데이터는 복구할 수 없습니다.`,
+      description: `${familyName} 크루와 멤버 연결을 삭제해요. 일정·메모·투표·채팅은 복구할 수 없어요.`,
       title: `'${familyName}' 크루를 삭제할까요?`,
       tone: "danger",
     });
@@ -137,7 +137,7 @@ export function ProfilePage() {
     try {
       await deleteFamily({ familyId, ownerId: user.uid });
       await refreshFamilies();
-      notify("크루를 삭제했습니다.", "success");
+      notify("크루를 삭제했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -152,7 +152,7 @@ export function ProfilePage() {
 
     const confirmed = await confirm({
       confirmLabel: "크루 나가기",
-      description: `${familyName} 크루의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      description: `${familyName} 크루의 일정·메모·투표·채팅을 더 이상 볼 수 없어요.`,
       title: `'${familyName}' 크루에서 나갈까요?`,
       tone: "danger",
     });
@@ -166,7 +166,7 @@ export function ProfilePage() {
     try {
       await leaveFamily({ familyId, userId: user.uid });
       await refreshFamilies();
-      notify("크루에서 나갔습니다.", "success");
+      notify("크루에서 나갔어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -288,7 +288,7 @@ export function ProfilePage() {
               <h2 className="text-lg font-semibold">내 크루</h2>
             </div>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              내 크루의 초대코드와 멤버를 관리하고, 참여 중인 크루를 확인할 수 있습니다.
+              내 크루의 초대코드와 멤버를 관리하고, 참여 중인 크루를 확인할 수 있어요.
             </p>
           </div>
         </div>
@@ -302,7 +302,7 @@ export function ProfilePage() {
               label="크루 이름"
               maxLength={MAX_FAMILY_NAME_LENGTH}
               onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
-              placeholder="새 크루 이름을 입력해주세요"
+              placeholder="새 크루 이름을 적어주세요"
               value={newFamilyName}
             />
             <div className="grid grid-cols-2 gap-2">
@@ -338,7 +338,7 @@ export function ProfilePage() {
         <div className="mt-4 grid gap-2">
           {isFamilyLoading ? (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              크루를 불러오는 중입니다.
+              크루를 불러오는 중이에요.
             </p>
           ) : visibleFamilies.length > 0 ? (
             visibleFamilies.map((family) => {
@@ -450,8 +450,8 @@ export function ProfilePage() {
           ) : (
             <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
               {visibleGroupRoleTab === "OWNER"
-                ? "만든 크루가 없습니다."
-                : "참여 중인 크루가 없습니다."}
+                ? "만든 크루가 없어요."
+                : "참여 중인 크루가 없어요."}
             </p>
           )}
         </div>
@@ -472,5 +472,5 @@ export function ProfilePage() {
 }
 
 function getErrorMessage(error: unknown) {
-  return error instanceof Error ? error.message : "처리 중 오류가 발생했습니다.";
+  return error instanceof Error ? error.message : "잠시 문제가 생겼어요. 다시 시도해주세요.";
 }

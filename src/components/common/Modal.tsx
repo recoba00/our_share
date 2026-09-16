@@ -1,8 +1,7 @@
-import { X } from "@phosphor-icons/react";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect } from "react";
 import { createPortal } from "react-dom";
-import { IconButton } from "./IconButton";
+import { DialogSurface } from "./DialogSurface";
 
 type ModalProps = PropsWithChildren<{
   closeLabel?: string;
@@ -42,7 +41,7 @@ export function Modal({
   return createPortal(
     <div
       aria-modal="true"
-      className="fixed inset-0 z-50 grid place-items-center bg-slate-950/45 p-4"
+      className="fixed inset-0 z-50 flex items-end bg-slate-950/45 p-4 sm:items-center"
       role="dialog"
     >
       <button
@@ -51,18 +50,15 @@ export function Modal({
         onClick={onClose}
         type="button"
       />
-      <section className="relative grid max-h-[calc(100vh-32px)] w-full max-w-lg overflow-hidden rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] shadow-xl">
-        <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
-          <h2 className="min-w-0 truncate text-lg font-semibold leading-none">{title}</h2>
-          <IconButton label={closeLabel} onClick={onClose} variant="ghost">
-            <X size={18} weight="bold" />
-          </IconButton>
-        </header>
-        <div className="overflow-y-auto p-4">{children}</div>
-        {footer ? (
-          <footer className="border-t border-[var(--color-border)] p-4">{footer}</footer>
-        ) : null}
-      </section>
+      <DialogSurface
+        closeLabel={closeLabel}
+        footer={footer}
+        onClose={onClose}
+        title={title}
+        variant="modal"
+      >
+        {children}
+      </DialogSurface>
     </div>,
     document.body
   );

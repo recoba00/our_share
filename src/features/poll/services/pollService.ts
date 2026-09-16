@@ -31,15 +31,15 @@ export async function createPoll(input: CreatePollInput) {
   const uniqueOptions = Array.from(new Set(normalizedOptions));
 
   if (!input.title.trim()) {
-    throw new Error("투표 제목을 입력해주세요.");
+    throw new Error("투표 제목을 적어주세요.");
   }
 
   if (uniqueOptions.length < 2) {
-    throw new Error("투표 보기는 2개 이상 필요합니다.");
+    throw new Error("선택지는 2개 이상 필요해요.");
   }
 
   if (uniqueOptions.length !== normalizedOptions.length) {
-    throw new Error("중복된 투표 보기가 있습니다.");
+    throw new Error("같은 선택지가 있어요.");
   }
 
   await setDoc(pollRef, {
@@ -122,7 +122,7 @@ export async function votePoll({
     : selectedOptions.slice(0, 1);
 
   if (normalizedSelections.length === 0) {
-    throw new Error("투표할 보기를 선택해주세요.");
+    throw new Error("선택지를 골라주세요.");
   }
 
   await setDoc(

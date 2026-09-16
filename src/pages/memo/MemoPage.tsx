@@ -77,9 +77,9 @@ export function MemoPage() {
       setMemoType("PUBLIC");
       setSelectedMemoId(memoId);
       setIsCreateOpen(false);
-      notify("메모를 저장했습니다.", "success");
+      notify("메모를 저장했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "메모 저장에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메모를 저장하지 못했어요.", "error");
     }
   }
 
@@ -97,7 +97,7 @@ export function MemoPage() {
       });
       setRevealedContent(sensitiveContent);
     } catch (error) {
-      notify(error instanceof Error ? error.message : "메모 열람에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메모를 열지 못했어요.", "error");
     }
   }
 
@@ -114,7 +114,7 @@ export function MemoPage() {
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `'${memo.title}' 메모를 삭제합니다. 삭제한 메모는 되돌릴 수 없습니다.`,
+      description: `'${memo.title}' 메모를 삭제해요. 되돌릴 수 없어요.`,
       title: "메모를 삭제할까요?",
       tone: "danger",
     });
@@ -133,9 +133,9 @@ export function MemoPage() {
         setRevealedContent("");
         setRevealPassword("");
       }
-      notify("메모를 삭제했습니다.", "success");
+      notify("메모를 삭제했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "메모 삭제에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메모를 삭제하지 못했어요.", "error");
     }
   }
 
@@ -144,7 +144,7 @@ export function MemoPage() {
   }
 
   if (isFamilyLoading) {
-    return <LoadingState title="메모 정보를 불러오는 중입니다." />;
+    return <LoadingState title="메모를 불러오는 중이에요." />;
   }
 
   if (!activeFamily) {
@@ -230,7 +230,7 @@ export function MemoPage() {
         <div className="mt-4 grid gap-3">
           {memos.length === 0 ? (
             <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
-              <strong>아직 메모가 없습니다.</strong>
+              <strong>아직 메모가 없어요.</strong>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
                 첫 크루 메모를 작성해보세요.
               </p>
@@ -261,7 +261,7 @@ export function MemoPage() {
                   <p className="mt-1 line-clamp-2 text-sm text-[var(--color-text-secondary)]">
                     {memo.type === "PUBLIC"
                       ? memo.content
-                      : "개인 비밀번호 확인 후 열람할 수 있습니다."}
+                      : "개인 비밀번호를 확인하면 열어볼 수 있어요."}
                   </p>
                 </button>
                 <div className="mt-3 flex justify-end">

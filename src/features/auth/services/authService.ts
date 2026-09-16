@@ -81,7 +81,7 @@ export async function deleteAccount({
   user: User;
 }) {
   if (ownedFamilyIds.length > 0) {
-    throw new Error("크루장인 계정은 먼저 크루를 삭제한 뒤 탈퇴할 수 있습니다.");
+    throw new Error("크루장인 크루를 먼저 삭제한 뒤 탈퇴할 수 있어요.");
   }
 
   await reauthenticateWithPopup(user, googleProvider);
@@ -148,7 +148,7 @@ export async function updateUserProfile({
   const normalizedPhotoURL = photoURL.trim();
 
   if (!normalizedDisplayName) {
-    throw new Error("닉네임을 입력해주세요.");
+    throw new Error("닉네임을 적어주세요.");
   }
 
   await updateProfile(user, {
@@ -175,30 +175,30 @@ export function getAuthErrorMessage(error: unknown) {
   if (code === "auth/unauthorized-domain") {
     const currentHost = typeof window !== "undefined" ? window.location.hostname : "our-share-6baf5.web.app";
 
-    return `Firebase Auth 승인 도메인에 현재 접속 도메인(${currentHost})을 추가해야 합니다. Firebase Console > Authentication > Settings > 승인된 도메인에서 확인해주세요.`;
+    return `현재 주소(${currentHost})에서는 로그인할 수 없어요. Firebase 승인된 도메인에 추가해주세요.`;
   }
 
   if (code === "auth/operation-not-allowed") {
-    return "Firebase Console > Authentication > Sign-in method에서 Google 로그인을 활성화해야 합니다.";
+    return "Google 로그인이 아직 켜지지 않았어요. Firebase 설정을 확인해주세요.";
   }
 
   if (code === "auth/popup-closed-by-user") {
-    return "Google 로그인 창이 완료 전에 닫혔습니다. 다시 시도해주세요.";
+    return "로그인 창이 닫혔어요. 다시 시도해주세요.";
   }
 
   if (code === "auth/popup-blocked") {
-    return "브라우저가 로그인 팝업을 차단했습니다. redirect 로그인으로 다시 시도합니다.";
+    return "로그인 창을 열 수 없어요. 다시 시도해주세요.";
   }
 
   if (code === "auth/requires-recent-login") {
-    return "보안을 위해 Google 로그인을 다시 인증해주세요.";
+    return "보안을 위해 Google 로그인을 다시 확인해주세요.";
   }
 
-  if (error instanceof Error) {
+  if (error instanceof Error && error.message && !error.message.startsWith("Firebase:")) {
     return error.message;
   }
 
-  return "Google 로그인 중 오류가 발생했습니다.";
+  return "로그인에 문제가 생겼어요. 다시 시도해주세요.";
 }
 
 function shouldFallbackToRedirect(error: unknown) {

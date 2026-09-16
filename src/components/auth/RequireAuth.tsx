@@ -10,7 +10,7 @@ export function RequireAuth({ children }: PropsWithChildren) {
     return (
       <Card>
         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-          로그인 상태를 확인하고 있습니다.
+          로그인 상태를 확인하고 있어요.
         </p>
       </Card>
     );
@@ -19,9 +19,9 @@ export function RequireAuth({ children }: PropsWithChildren) {
   if (status === "guest") {
     return (
       <Card className="mx-auto max-w-md">
-        <h2 className="text-xl font-semibold">로그인이 필요합니다</h2>
+        <h2 className="text-xl font-semibold">로그인이 필요해요</h2>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-          크루 정보와 개인 데이터를 보호하기 위해 Google 로그인 후 이용할 수 있습니다.
+          크루 정보와 개인 데이터를 보호하기 위해 Google 로그인 후 이용할 수 있어요.
         </p>
         <Button className="mt-5 w-full" onClick={signIn}>
           Google로 로그인

@@ -22,17 +22,17 @@ const toastStyles: Record<
 > = {
   error: {
     icon: <WarningCircle className="text-red-500" size={22} weight="fill" />,
-    ring: "border-red-100 bg-red-50 text-red-900",
+    ring: "border-red-200 bg-red-50 text-[var(--color-text-primary)]",
     title: "오류",
   },
   info: {
     icon: <Info className="text-slate-500" size={22} weight="fill" />,
-    ring: "border-slate-200 bg-white text-[var(--color-text-primary)]",
+    ring: "border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text-primary)]",
     title: "알림",
   },
   success: {
     icon: <CheckCircle className="text-brand" size={22} weight="fill" />,
-    ring: "border-emerald-100 bg-emerald-50 text-emerald-950",
+    ring: "border-emerald-200 bg-emerald-50 text-[var(--color-text-primary)]",
     title: "완료",
   },
 };
@@ -105,9 +105,10 @@ function ToastViewport({
               <p className="mt-1 text-sm leading-5">{toast.message}</p>
             </div>
             <IconButton
-              className="size-9 bg-white/60"
+              className="size-8 rounded-none bg-transparent"
               label="알림 닫기"
               onClick={() => dismissToast(toast.id)}
+              variant="ghost"
             >
               <X size={16} weight="bold" />
             </IconButton>

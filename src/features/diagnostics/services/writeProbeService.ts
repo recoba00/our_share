@@ -27,7 +27,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
   if (!family) {
     return [
       {
-        detail: "로그인 계정에 연결된 크루가 없습니다. 홈에서 크루 생성 또는 초대 참여가 먼저 필요합니다.",
+        detail: "로그인 계정에 연결된 크루가 없어요. 홈에서 크루를 만들거나 초대받아 참여해주세요.",
         label: "크루 멤버십",
         ok: false,
       },
@@ -47,7 +47,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       allDay: true,
       category: "ETC",
       createdBy: userId,
-      description: "진단 후 자동 삭제되는 일정입니다.",
+      description: "진단 후 자동 삭제되는 일정이에요.",
       endDate: getToday(),
       familyId: family.id,
       isDayOff: false,
@@ -62,7 +62,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
 
   await runProbeStep(results, "메모 저장", async () => {
     const memoId = await createMemo({
-      content: "진단 후 자동 삭제되는 메모입니다.",
+      content: "진단 후 자동 삭제되는 메모예요.",
       createdBy: userId,
       familyId: family.id,
       password: "",
@@ -77,7 +77,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
   await runProbeStep(results, "투표 저장", async () => {
     const pollId = await createPoll({
       createdBy: userId,
-      description: "진단 후 자동 삭제되는 투표입니다.",
+      description: "진단 후 자동 삭제되는 투표예요.",
       familyId: family.id,
       multipleChoice: false,
       options: ["가능", "불가"],
@@ -147,7 +147,7 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
     const otherMember = familyMembers.find((member) => member.userId !== userId);
 
     if (!otherMember) {
-      return "다른 크루 멤버가 없어 비밀방 생성 검사를 생략했습니다.";
+      return "다른 크루 멤버가 없어 비밀방 검사를 건너뛰었어요.";
     }
 
     const roomId = await createSecretRoom({

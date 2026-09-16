@@ -48,7 +48,7 @@ export function useMyLocationShare({
   const shareCurrentLocation = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
-      setMessage("크루 생성 또는 참여 후 위치를 공유할 수 있습니다.");
+      setMessage("크루에 참여한 뒤 위치를 공유할 수 있어요.");
       return;
     }
 
@@ -82,7 +82,7 @@ export function useMyLocationShare({
       setSharedFamilyId(familyId);
       writeSharingPreference(userId, familyId, true);
       setStatus("success");
-      setMessage("현재 위치를 Realtime Database에 공유했습니다.");
+      setMessage("현재 위치를 공유하고 있어요.");
     } catch (error) {
       setStatus("error");
       setMessage(getLocationErrorMessage(error));
@@ -92,7 +92,7 @@ export function useMyLocationShare({
   const stopCurrentLocationShare = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
-      setMessage("크루 생성 또는 참여 후 위치 공유를 끊을 수 있습니다.");
+      setMessage("크루에 참여한 뒤 위치 공유를 끌 수 있어요.");
       return;
     }
 
@@ -105,10 +105,10 @@ export function useMyLocationShare({
       lastSentPositionRef.current = null;
       writeSharingPreference(userId, familyId, false);
       setStatus("idle");
-      setMessage("위치 공유를 끊었습니다.");
+      setMessage("위치 공유를 껐어요.");
     } catch (error) {
       setStatus("error");
-      setMessage(error instanceof Error ? error.message : "위치 공유 해제에 실패했습니다.");
+      setMessage(error instanceof Error ? error.message : "위치 공유를 끄지 못했어요.");
     }
   }, [familyId, userId]);
 
@@ -170,7 +170,7 @@ export function useMyLocationShare({
       } catch (error) {
         if (active) {
           setStatus("error");
-          setMessage(error instanceof Error ? error.message : "위치 업데이트에 실패했습니다.");
+          setMessage(error instanceof Error ? error.message : "위치를 업데이트하지 못했어요.");
         }
       } finally {
         isSendingRef.current = false;
@@ -291,11 +291,11 @@ function writeSharingPreference(userId: string, familyId: string, isSharing: boo
 function getLocationErrorMessage(error: unknown) {
   if (error instanceof GeolocationPositionError) {
     if (error.code === error.PERMISSION_DENIED) {
-      return "위치 권한이 거부되었습니다.";
+      return "위치 권한이 꺼져 있어요. 브라우저 설정에서 허용해주세요.";
     }
 
     if (error.code === error.TIMEOUT) {
-      return "위치 확인 시간이 초과되었습니다.";
+      return "위치를 확인하지 못했어요. 다시 시도해주세요.";
     }
   }
 
@@ -303,5 +303,5 @@ function getLocationErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "위치 공유 중 오류가 발생했습니다.";
+  return "위치 공유에 문제가 생겼어요. 다시 시도해주세요.";
 }

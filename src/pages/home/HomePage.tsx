@@ -282,7 +282,7 @@ export function HomePage() {
     return (
       <Card>
         <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-          로그인 상태를 확인하고 있습니다.
+          로그인 상태를 확인하고 있어요.
         </p>
       </Card>
     );
@@ -321,7 +321,7 @@ export function HomePage() {
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
     if (!activeFamily || !user) {
-      notify("크루 정보를 먼저 불러와주세요.", "info");
+      notify("크루를 먼저 선택해주세요.", "info");
       return;
     }
 
@@ -340,7 +340,7 @@ export function HomePage() {
         text: createQuickMessageText(member, message),
       });
 
-      notify("크루 전체방으로 빠른 메시지를 보냈습니다.", "success");
+      notify("전체 채팅방으로 메시지를 보냈어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -353,7 +353,7 @@ export function HomePage() {
     nextRole: Exclude<FamilyRole, "OWNER">
   ) {
     if (!activeFamily || !user) {
-      notify("크루 정보를 먼저 불러와주세요.", "info");
+      notify("크루를 먼저 선택해주세요.", "info");
       return;
     }
 
@@ -371,7 +371,7 @@ export function HomePage() {
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
       setPendingMemberRole(null);
-      notify(`${member.displayName ?? member.nickname}님의 역할을 변경했습니다.`, "success");
+      notify(`${member.displayName ?? member.nickname}님의 역할을 바꿨어요.`, "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -381,13 +381,13 @@ export function HomePage() {
 
   async function handleDeleteMember(member: FamilyMemberProfile) {
     if (!activeFamily || !user) {
-      notify("크루 정보를 먼저 불러와주세요.", "info");
+      notify("크루를 먼저 선택해주세요.", "info");
       return;
     }
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `${member.displayName ?? member.nickname}님을 크루에서 삭제합니다. 삭제된 멤버는 초대 코드로 다시 참여해야 합니다.`,
+      description: `${member.displayName ?? member.nickname}님을 크루에서 삭제해요. 다시 참여하려면 초대 코드가 필요해요.`,
       title: "크루 멤버를 삭제할까요?",
       tone: "danger",
     });
@@ -407,7 +407,7 @@ export function HomePage() {
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
       setPendingMemberRole(null);
-      notify("크루 멤버를 삭제했습니다.", "success");
+      notify("크루에서 멤버를 삭제했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -422,7 +422,7 @@ export function HomePage() {
 
     const confirmed = await confirm({
       confirmLabel: "크루 나가기",
-      description: `${activeFamily.name} 크루의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      description: `${activeFamily.name} 크루의 일정·메모·투표·채팅을 더 이상 볼 수 없어요.`,
       title: `'${activeFamily.name}' 크루에서 나갈까요?`,
       tone: "danger",
     });
@@ -436,7 +436,7 @@ export function HomePage() {
     try {
       await leaveFamily({ familyId: activeFamily.id, userId: user.uid });
       await refreshFamilies();
-      notify("크루에서 나갔습니다.", "success");
+      notify("크루에서 나갔어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -446,18 +446,18 @@ export function HomePage() {
 
   async function handleCopyInviteCode() {
     if (!activeFamily) {
-      notify("복사할 초대 코드가 없습니다.", "info");
+      notify("복사할 초대 코드가 없어요.", "info");
       return;
     }
 
     if (!navigator.clipboard || !window.isSecureContext) {
-      notify("현재 브라우저에서는 클립보드 복사를 사용할 수 없습니다.", "error");
+      notify("이 브라우저에서는 코드를 복사할 수 없어요.", "error");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(activeFamily.inviteCode);
-      notify("초대 코드를 복사했습니다.", "success");
+      notify("초대 코드를 복사했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     }
@@ -465,18 +465,18 @@ export function HomePage() {
 
   async function handleCopyInviteLink() {
     if (!activeFamily) {
-      notify("복사할 초대 링크가 없습니다.", "info");
+      notify("복사할 초대 링크가 없어요.", "info");
       return;
     }
 
     if (!navigator.clipboard || !window.isSecureContext) {
-      notify("현재 브라우저에서는 링크 복사를 사용할 수 없습니다.", "error");
+      notify("이 브라우저에서는 링크를 복사할 수 없어요.", "error");
       return;
     }
 
     try {
       await navigator.clipboard.writeText(getInviteUrl(activeFamily.inviteCode));
-      notify("초대 링크를 복사했습니다.", "success");
+      notify("초대 링크를 복사했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     }
@@ -484,7 +484,7 @@ export function HomePage() {
 
   async function handleShareInviteLink() {
     if (!activeFamily) {
-      notify("공유할 초대 링크가 없습니다.", "info");
+      notify("공유할 초대 링크가 없어요.", "info");
       return;
     }
 
@@ -501,12 +501,12 @@ export function HomePage() {
       }
 
       if (!navigator.clipboard || !window.isSecureContext) {
-        notify("현재 브라우저에서는 초대 링크 공유를 사용할 수 없습니다.", "error");
+        notify("이 브라우저에서는 링크를 공유할 수 없어요.", "error");
         return;
       }
 
       await navigator.clipboard.writeText(inviteUrl);
-      notify("초대 링크를 복사했습니다.", "success");
+      notify("초대 링크를 복사했어요.", "success");
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         return;
@@ -518,7 +518,7 @@ export function HomePage() {
 
   async function handleJoinFamily() {
     if (!user || !inviteCode.trim()) {
-      notify("초대 코드를 입력해주세요.", "info");
+      notify("초대 코드를 적어주세요.", "info");
       return;
     }
 
@@ -530,7 +530,7 @@ export function HomePage() {
       setInviteCode("");
       notify(
         result.alreadyMember
-          ? `이미 ${result.name} 크루에 참여 중입니다.`
+          ? `이미 ${result.name} 크루에 참여 중이에요.`
           : `${result.name} 크루에 참여했어요. 헤더에서 전환할 수 있어요.`,
         result.alreadyMember ? "info" : "success"
       );
@@ -950,7 +950,7 @@ function DashboardSwipeSection({
 }) {
   const cards = [
     {
-      emptyText: "이번 달 일정이 없습니다.",
+      emptyText: "이번 달 일정이 없어요.",
       icon: <CalendarDots className="text-brand" size={22} weight="bold" />,
       items: getThisMonthEvents(calendarEvents).slice(0, 4).map((event) => ({
         label: event.title,
@@ -959,7 +959,7 @@ function DashboardSwipeSection({
       title: "이달의 일정",
     },
     {
-      emptyText: "최근 메모나 투표가 없습니다.",
+      emptyText: "최근 메모나 투표가 없어요.",
       icon: <Note className="text-brand" size={22} weight="bold" />,
       items: [
         ...memos.slice(0, 2).map((memo) => ({
@@ -974,11 +974,11 @@ function DashboardSwipeSection({
       title: "최근 메모와 투표",
     },
     {
-      emptyText: "최근 채팅이 없습니다.",
+      emptyText: "최근 채팅이 없어요.",
       icon: <ChatCircleDots className="text-brand" size={22} weight="bold" />,
       items: chatRooms.slice(0, 4).map((room) => ({
         label: room.name,
-        meta: room.lastMessageText ?? "아직 대화가 없습니다.",
+        meta: room.lastMessageText ?? "아직 대화가 없어요.",
       })),
       title: "최근 채팅",
     },
@@ -1401,7 +1401,7 @@ function FamilyLocationPin({
         <p className="mt-1 text-sm font-semibold text-[var(--color-text-secondary)]">
           {location
             ? formatLocationPreview(location, address)
-            : "아직 공유된 위치가 없습니다."}
+            : "아직 공유된 위치가 없어요."}
         </p>
         {location ? (
           <div className="mt-2 flex flex-wrap gap-2 text-xs font-semibold text-[var(--color-text-secondary)]">
@@ -1472,7 +1472,7 @@ function loadKakaoMapScript() {
   const scriptPromise = new Promise<void>((resolve, reject) => {
     const handleScriptReady = () => {
       if (!window.kakao?.maps?.load) {
-        reject(new Error("Kakao Map SDK가 현재 도메인을 허용하지 않았습니다."));
+        reject(new Error("현재 주소에서는 지도를 사용할 수 없어요. Kakao 지도 키 설정을 확인해주세요."));
         return;
       }
 
@@ -1505,7 +1505,7 @@ function loadKakaoMapScript() {
 
 function getKakaoMaps() {
   if (!window.kakao?.maps) {
-    throw new Error("Kakao Map SDK를 불러오지 못했습니다.");
+    throw new Error("지도를 불러오지 못했어요. 잠시 후 다시 시도해주세요.");
   }
 
   return window.kakao.maps;
@@ -1627,5 +1627,5 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "처리 중 오류가 발생했습니다.";
+  return "잠시 문제가 생겼어요. 다시 시도해주세요.";
 }

@@ -197,7 +197,7 @@ export function ChatPage() {
         setSelectedRoomId(familyRoomResult.value);
       } else {
         reportError(
-          `크루 전체방 확인에 실패했습니다. ${getErrorMessage(familyRoomResult.reason)}`
+          `전체 채팅방을 확인하지 못했어요. ${getErrorMessage(familyRoomResult.reason)}`
         );
       }
     });
@@ -234,9 +234,9 @@ export function ChatPage() {
 
       setSelectedRoomId(roomId);
       openRoom(roomId);
-      notify("1:1 채팅방을 열었습니다.", "success");
+      notify("1:1 채팅을 열었어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "1:1 채팅방 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "1:1 채팅을 열지 못했어요.", "error");
     }
   }
 
@@ -260,9 +260,9 @@ export function ChatPage() {
       setSelectedRoomId(roomId);
       openRoom(roomId);
       setIsCreateOpen(false);
-      notify("크루방을 만들었어요.", "success");
+      notify("크루 채팅방을 만들었어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "크루방 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "크루 채팅방을 만들지 못했어요.", "error");
     }
   }
 
@@ -395,7 +395,7 @@ export function ChatPage() {
       setIsCreateOpen(false);
       notify("비밀방을 만들었어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "비밀방 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "비밀방을 만들지 못했어요.", "error");
     }
   }
 
@@ -417,7 +417,7 @@ export function ChatPage() {
       setMessageText("");
     } catch (error) {
       shouldScrollToLatestRef.current = false;
-      notify(error instanceof Error ? error.message : "메시지 전송에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메시지를 보내지 못했어요.", "error");
     }
   }
 
@@ -440,7 +440,7 @@ export function ChatPage() {
     const nextText = editingMessageText.trim();
 
     if (!nextText) {
-      notify("수정할 메시지를 입력해주세요.", "info");
+      notify("수정할 메시지를 적어주세요.", "info");
       return;
     }
 
@@ -452,9 +452,9 @@ export function ChatPage() {
       });
       setEditingMessageId("");
       setEditingMessageText("");
-      notify("메시지를 수정했습니다.", "success");
+      notify("메시지를 바꿨어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "메시지 수정에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메시지를 바꾸지 못했어요.", "error");
     }
   }
 
@@ -465,7 +465,7 @@ export function ChatPage() {
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: "선택한 메시지를 삭제합니다. 삭제한 메시지는 되돌릴 수 없습니다.",
+      description: "선택한 메시지를 삭제해요. 되돌릴 수 없어요.",
       title: "메시지를 삭제할까요?",
       tone: "danger",
     });
@@ -481,9 +481,9 @@ export function ChatPage() {
         familyId: activeFamily.id,
         messageId: message.id,
       });
-      notify("메시지를 삭제했습니다.", "success");
+      notify("메시지를 삭제했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "메시지 삭제에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "메시지를 삭제하지 못했어요.", "error");
     } finally {
       setBusyMessageId("");
     }
@@ -493,7 +493,7 @@ export function ChatPage() {
     event.preventDefault();
 
     if (!activeFamily || !selectedRoom || !user) {
-      notify("채팅방을 먼저 선택해주세요.", "info");
+      notify("채팅방을 먼저 골라주세요.", "info");
       return;
     }
 
@@ -524,10 +524,10 @@ export function ChatPage() {
       setPollOptions(["치킨", "피자", "삼겹살"]);
       setPollDateOptions([]);
       setIsPollCreateOpen(false);
-      notify("투표를 만들고 채팅방에 전송했습니다.", "success");
+      notify("투표를 만들어 채팅방에 보냈어요.", "success");
     } catch (error) {
       shouldScrollToLatestRef.current = false;
-      notify(error instanceof Error ? error.message : "투표 생성에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "투표를 만들지 못했어요.", "error");
     }
   }
 
@@ -557,9 +557,9 @@ export function ChatPage() {
         navigate("/chat");
         setMessages([]);
       }
-      notify("채팅방을 삭제했습니다.", "success");
+      notify("채팅방을 삭제했어요.", "success");
     } catch (error) {
-      notify(error instanceof Error ? error.message : "채팅방 삭제에 실패했습니다.", "error");
+      notify(error instanceof Error ? error.message : "채팅방을 삭제하지 못했어요.", "error");
     }
   }
 
@@ -592,7 +592,7 @@ export function ChatPage() {
   }
 
   if (isFamilyLoading) {
-    return <LoadingState title="채팅 정보를 불러오는 중입니다." />;
+    return <LoadingState title="채팅을 불러오는 중이에요." />;
   }
 
   if (!activeFamily) {
@@ -619,7 +619,7 @@ export function ChatPage() {
         onChange={setChatCreateTab}
         options={[
           { icon: <LockKey size={16} weight="bold" />, label: "비밀방", value: "SECRET" },
-          { icon: <Users size={16} weight="bold" />, label: "크루방", value: "GROUP" },
+          { icon: <Users size={16} weight="bold" />, label: "크루 채팅방", value: "GROUP" },
         ]}
         value={chatCreateTab}
       />
@@ -662,7 +662,7 @@ export function ChatPage() {
             description="선택한 멤버와 함께 사용할 방을 만들어요."
             icon={<Users size={20} weight="bold" />}
             level="h3"
-            title="크루방 만들기"
+            title="크루 채팅방 만들기"
           />
           <Input
             label="방 이름"
@@ -692,7 +692,7 @@ export function ChatPage() {
             variant="secondary"
           >
             <Users size={18} weight="bold" />
-            크루방 만들기
+            크루 채팅방 만들기
           </Button>
         </form>
       )}
@@ -795,7 +795,7 @@ export function ChatPage() {
           {!canCreateRoomPoll ? (
             <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
               {pollType === "GENERAL" && hasDuplicatePollDraftOptions
-                ? "중복된 후보 항목은 사용할 수 없습니다."
+                ? "같은 선택지는 사용할 수 없어요."
                 : `제목과 후보 ${pollType === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.`}
             </p>
           ) : null}
@@ -924,8 +924,8 @@ export function ChatPage() {
             {visibleRooms.length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
                 {roomQuery || roomFilter !== "ALL"
-                  ? "조건에 맞는 채팅방이 없습니다."
-                  : "아직 채팅방이 없습니다."}
+                  ? "조건에 맞는 채팅방이 없어요."
+                  : "아직 채팅방이 없어요."}
               </p>
             ) : (
               visibleRooms.map((room) => (
@@ -1151,7 +1151,7 @@ function MemberSelectionList({
   if (selectableMembers.length === 0) {
     return (
       <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-        함께할 크루 멤버가 없습니다.
+        함께할 멤버가 없어요.
       </p>
     );
   }
@@ -1350,5 +1350,5 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "처리 중 오류가 발생했습니다.";
+  return "잠시 문제가 생겼어요. 다시 시도해주세요.";
 }

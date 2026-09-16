@@ -126,7 +126,7 @@ export function PollPage() {
 
         setSelectedRoomId("");
         notify(
-          `투표는 만들 수 있지만 채팅방 연결 확인에 실패했습니다. ${getErrorMessage(roomError)}`,
+          `투표는 만들었지만 채팅방 연결을 확인하지 못했어요. ${getErrorMessage(roomError)}`,
           "error"
         );
       }
@@ -169,7 +169,7 @@ export function PollPage() {
 
   async function handleCreatePoll() {
     if (!user || !family) {
-      notify("크루 정보를 먼저 불러와주세요.", "info");
+      notify("크루를 먼저 선택해주세요.", "info");
       return;
     }
 
@@ -193,7 +193,7 @@ export function PollPage() {
       setMultipleChoice(false);
       setIsCreateOpen(false);
       await loadPollData(user.uid);
-      notify("투표를 만들었습니다.", "success");
+      notify("투표를 만들었어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -215,7 +215,7 @@ export function PollPage() {
         userId: user.uid,
       });
       await loadPollData(user.uid);
-      notify("투표를 반영했습니다.", "success");
+      notify("투표를 반영했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -225,7 +225,7 @@ export function PollPage() {
 
   async function handleSendPollToChat(poll: Poll) {
     if (!user || !family || !selectedRoomId) {
-      notify("투표를 보낼 채팅방을 선택해주세요.", "info");
+      notify("투표를 보낼 채팅방을 골라주세요.", "info");
       return;
     }
 
@@ -239,7 +239,7 @@ export function PollPage() {
         pollTitle: poll.title,
         roomId: selectedRoomId,
       });
-      notify("투표를 채팅방으로 전송했습니다.", "success");
+      notify("투표를 채팅방에 보냈어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -254,7 +254,7 @@ export function PollPage() {
 
     const confirmed = await confirm({
       confirmLabel: "삭제",
-      description: `'${poll.title}' 투표와 참여 내역을 삭제합니다.`,
+      description: `'${poll.title}' 투표와 참여 내역을 삭제해요.`,
       title: "투표를 삭제할까요?",
       tone: "danger",
     });
@@ -271,7 +271,7 @@ export function PollPage() {
         pollId: poll.id,
       });
       await loadPollData(user?.uid ?? "");
-      notify("투표를 삭제했습니다.", "success");
+      notify("투표를 삭제했어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
@@ -391,7 +391,7 @@ export function PollPage() {
           {!canCreatePoll ? (
             <p className="text-xs leading-5 text-[var(--color-text-secondary)]">
               {type === "GENERAL" && hasDuplicateOptions
-                ? "중복된 후보 항목은 사용할 수 없습니다."
+                ? "같은 선택지는 사용할 수 없어요."
                 : `제목과 후보 ${type === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.`}
             </p>
           ) : null}
@@ -440,7 +440,7 @@ export function PollPage() {
               새로고침
             </Button>
           }
-          description="투표 메뉴에서 만들고 이후 채팅방으로 보낼 수 있습니다."
+          description="투표를 만든 뒤 채팅방에 보낼 수 있어요."
           icon={<ChartBar size={20} weight="bold" />}
           title="진행 중인 투표"
         />
@@ -449,7 +449,7 @@ export function PollPage() {
         {polls.length === 0 ? (
           <Card>
             <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-              아직 생성된 투표가 없습니다.
+              아직 투표가 없어요.
             </p>
           </Card>
         ) : (
@@ -603,5 +603,5 @@ function getErrorMessage(error: unknown) {
     return error.message;
   }
 
-  return "처리 중 오류가 발생했습니다.";
+  return "잠시 문제가 생겼어요. 다시 시도해주세요.";
 }

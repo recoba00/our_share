@@ -77,7 +77,7 @@ export function DatePollPicker({
       <div className="flex min-h-10 flex-wrap gap-2">
         {selectedDates.length === 0 ? (
           <p className="text-sm text-[var(--color-text-secondary)]">
-            날짜를 터치해서 후보를 선택해주세요.
+            날짜를 눌러 후보를 골라주세요.
           </p>
         ) : (
           selectedDates.map((date) => (

@@ -100,11 +100,11 @@ export async function createSecretRoom({
   const normalizedMemberIds = Array.from(new Set([createdBy, ...memberIds]));
 
   if (!normalizedName) {
-    throw new Error("비밀방 이름을 입력해주세요.");
+    throw new Error("비밀방 이름을 적어주세요.");
   }
 
   if (normalizedMemberIds.length < 2) {
-    throw new Error("비밀방에는 본인 외 멤버 1명 이상이 필요합니다.");
+    throw new Error("비밀방에는 나 외에 멤버 1명 이상이 필요해요.");
   }
 
   const roomRef = doc(collection(db, "families", familyId, "chatRooms"));
@@ -132,7 +132,7 @@ export async function getOrCreateDirectRoom({
   targetUserName,
 }: CreateDirectRoomInput) {
   if (createdBy === targetUserId) {
-    throw new Error("본인과의 1:1 채팅방은 만들 수 없습니다.");
+    throw new Error("나와의 1:1 채팅방은 만들 수 없어요.");
   }
 
   const memberIds = [createdBy, targetUserId].sort();
@@ -170,11 +170,11 @@ export async function createPrivateGroupRoom({
   const normalizedMemberIds = Array.from(new Set([createdBy, ...memberIds]));
 
   if (!normalizedName) {
-    throw new Error("크루방 이름을 입력해주세요.");
+    throw new Error("크루 채팅방 이름을 적어주세요.");
   }
 
   if (normalizedMemberIds.length < 2) {
-    throw new Error("크루방에는 본인 외 멤버 1명 이상이 필요합니다.");
+    throw new Error("크루 채팅방에는 나 외에 멤버 1명 이상이 필요해요.");
   }
 
   const roomRef = doc(collection(db, "families", familyId, "chatRooms"));
@@ -329,7 +329,7 @@ export async function sendTextMessage({
   const normalizedText = text.trim();
 
   if (!normalizedText) {
-    throw new Error("메시지를 입력해주세요.");
+    throw new Error("메시지를 적어주세요.");
   }
 
   const messageRef = doc(collection(db, "families", familyId, "messages"));
@@ -363,7 +363,7 @@ export async function sendPollMessage({
   const normalizedTitle = pollTitle.trim();
 
   if (!pollId) {
-    throw new Error("전송할 투표를 찾을 수 없습니다.");
+    throw new Error("보낼 투표를 찾을 수 없어요.");
   }
 
   const messageRef = doc(collection(db, "families", familyId, "messages"));
@@ -396,7 +396,7 @@ export async function updateTextMessage({
   const normalizedText = text.trim();
 
   if (!normalizedText) {
-    throw new Error("수정할 메시지를 입력해주세요.");
+    throw new Error("수정할 메시지를 적어주세요.");
   }
 
   await updateDoc(doc(db, "families", familyId, "messages", messageId), {

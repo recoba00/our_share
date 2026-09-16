@@ -25,7 +25,7 @@ export function SettingsPage() {
 
     const confirmed = await confirm({
       confirmLabel: "회원탈퇴",
-      description: "프로필과 크루 연결이 삭제되고 Firebase 계정에서 로그아웃됩니다. 이 작업은 되돌릴 수 없습니다.",
+      description: "프로필과 크루 연결을 삭제하고 로그아웃해요. 되돌릴 수 없어요.",
       title: "회원탈퇴를 진행할까요?",
       tone: "danger",
     });
@@ -43,7 +43,7 @@ export function SettingsPage() {
           .map((family) => family.id),
         user,
       });
-      showToast({ message: "회원탈퇴가 완료되었습니다.", variant: "success" });
+      showToast({ message: "회원탈퇴를 완료했어요.", variant: "success" });
     } catch (error) {
       showToast({ message: getAuthErrorMessage(error), variant: "error" });
     } finally {

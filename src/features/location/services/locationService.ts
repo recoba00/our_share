@@ -72,7 +72,7 @@ export async function stopMyLiveLocationShare({
 export function getCurrentPosition() {
   return new Promise<GeolocationPosition>((resolve, reject) => {
     if (!navigator.geolocation) {
-      reject(new Error("이 브라우저는 위치 공유를 지원하지 않습니다."));
+      reject(new Error("이 브라우저에서는 위치 공유를 사용할 수 없어요."));
       return;
     }
 

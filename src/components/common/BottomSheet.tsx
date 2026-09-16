@@ -1,8 +1,7 @@
-import { X } from "@phosphor-icons/react";
 import type { PropsWithChildren, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { IconButton } from "./IconButton";
+import { DialogSurface } from "./DialogSurface";
 
 type BottomSheetProps = PropsWithChildren<{
   closeLabel?: string;
@@ -71,31 +70,22 @@ export function BottomSheet({
         onClick={onClose}
         type="button"
       />
-      <section
-        className={`relative grid max-h-[calc(100vh-48px)] w-full overflow-hidden rounded-t-[28px] border border-[var(--color-border)] bg-[var(--color-surface)] pb-[calc(16px+env(safe-area-inset-bottom))] shadow-xl sm:mx-auto sm:mb-4 sm:max-w-lg sm:rounded-card ${
+      <div
+        className={`relative w-full ${
           isClosing ? "sheet-panel-exit" : "sheet-panel-enter"
         }`}
       >
-        <div className="mx-auto mt-3 h-1 w-12 rounded-full bg-slate-300" />
-        <header className="flex h-16 shrink-0 items-center justify-between gap-3 px-4">
-          <div className="flex min-w-0 items-center gap-2">
-            {titleAction}
-            <h2 className="min-w-0 truncate text-lg font-semibold leading-none">{title}</h2>
-          </div>
-          <IconButton
-            className="bg-transparent hover:bg-transparent"
-            label={closeLabel}
-            onClick={onClose}
-            variant="ghost"
-          >
-            <X size={18} weight="bold" />
-          </IconButton>
-        </header>
-        <div className="overflow-y-auto p-4">{children}</div>
-        {footer ? (
-          <footer className="border-t border-[var(--color-border)] p-4">{footer}</footer>
-        ) : null}
-      </section>
+        <DialogSurface
+          closeLabel={closeLabel}
+          footer={footer}
+          onClose={onClose}
+          title={title}
+          titleAction={titleAction}
+          variant="sheet"
+        >
+          {children}
+        </DialogSurface>
+      </div>
     </div>,
     document.body
   );

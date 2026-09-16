@@ -206,7 +206,7 @@ export function AppHeader() {
               label="크루 이름"
               maxLength={MAX_FAMILY_NAME_LENGTH}
               onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
-              placeholder="새 크루 이름을 입력해주세요"
+              placeholder="새 크루 이름을 적어주세요"
               value={newFamilyName}
             />
             <Button disabled={isCreatingFamily} loading={isCreatingFamily} type="submit">
@@ -229,7 +229,7 @@ export function AppHeader() {
     const normalizedName = newFamilyName.trim();
 
     if (!normalizedName) {
-      showToast({ message: "크루 이름을 입력해주세요.", variant: "info" });
+      showToast({ message: "크루 이름을 적어주세요.", variant: "info" });
       return;
     }
 
@@ -240,10 +240,10 @@ export function AppHeader() {
       await refreshFamilies(result.id);
       setNewFamilyName("");
       setIsCreateFamilyOpen(false);
-      showToast({ message: "크루를 생성했습니다.", variant: "success" });
+      showToast({ message: "크루를 만들었어요.", variant: "success" });
     } catch (error) {
       showToast({
-        message: error instanceof Error ? error.message : "크루 생성에 실패했습니다.",
+        message: error instanceof Error ? error.message : "크루를 만들지 못했어요.",
         variant: "error",
       });
     } finally {
@@ -309,12 +309,12 @@ function GroupSwitcher({
           ) : null}
           {families.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              아직 참여 중인 크루가 없습니다.
+              아직 참여 중인 크루가 없어요.
             </p>
           ) : null}
           {families.length > 0 && visibleFamilies.length === 0 ? (
             <p className="rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm text-[var(--color-text-secondary)]">
-              {visibleGroupTab === "OWNER" ? "만든 크루가 없습니다." : "참여 중인 크루가 없습니다."}
+              {visibleGroupTab === "OWNER" ? "만든 크루가 없어요." : "참여 중인 크루가 없어요."}
             </p>
           ) : null}
           {visibleFamilies.map((family) => (

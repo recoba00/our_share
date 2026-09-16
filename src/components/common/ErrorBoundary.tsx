@@ -46,9 +46,9 @@ export class ErrorBoundary extends Component<
               <WarningCircle size={28} weight="bold" />
             </span>
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold">화면을 불러오지 못했습니다</h1>
+              <h1 className="text-xl font-semibold">화면을 불러오지 못했어요</h1>
               <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                일시적인 화면 오류가 발생했습니다. 새로고침 후에도 반복되면
+                잠시 문제가 생겼어요. 새로고침 후에도 반복되면
                 현재 화면과 로그인/크루 상태를 확인해주세요.
               </p>
             </div>

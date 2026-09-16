@@ -50,15 +50,15 @@ export function InvitePage() {
         clearPendingInviteCode();
         showToast({
           message: result.alreadyMember
-            ? `${result.name} 크루에 이미 참여 중입니다.`
-            : `${result.name} 크루에 참여했습니다.`,
+            ? `이미 ${result.name} 크루에 참여 중이에요.`
+            : `${result.name} 크루에 참여했어요.`,
           variant: result.alreadyMember ? "info" : "success",
         });
         navigate("/", { replace: true });
       })
       .catch((error: unknown) => {
         attemptedCodeRef.current = "";
-        setJoinError(error instanceof Error ? error.message : "크루 참여에 실패했습니다.");
+        setJoinError(error instanceof Error ? error.message : "크루에 참여하지 못했어요.");
       });
   }, [isValidCode, joinAttempt, navigate, normalizedInviteCode, refreshFamilies, showToast, status, user]);
 
@@ -67,7 +67,7 @@ export function InvitePage() {
       <Card className="mx-auto mt-8 max-w-md">
         <InviteHeader />
         <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
-          유효하지 않은 초대 링크입니다. 크루장에게 새 초대 링크를 요청해주세요.
+          초대 링크가 만료됐거나 잘못됐어요. 크루장에게 새 링크를 받아주세요.
         </p>
       </Card>
     );
@@ -79,8 +79,8 @@ export function InvitePage() {
         <InviteHeader />
         <div className="mt-6 rounded-2xl bg-[var(--color-surface-muted)] p-4 text-sm leading-6 text-[var(--color-text-secondary)]">
           {status === "authenticated"
-            ? "초대 크루에 참여하는 중입니다."
-            : "로그인 상태를 확인하고 있습니다."}
+            ? "초대받은 크루에 참여하는 중이에요."
+            : "로그인 상태를 확인하고 있어요."}
         </div>
       </Card>
     );
@@ -96,7 +96,7 @@ export function InvitePage() {
         </p>
       </div>
       <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
-        Google 계정으로 가입하거나 로그인하면 초대 코드를 다시 입력하지 않고 바로 크루에 참여합니다.
+        Google로 로그인하면 초대 코드를 다시 입력하지 않고 바로 크루에 참여해요.
       </p>
       {status === "authenticated" ? (
         <Button

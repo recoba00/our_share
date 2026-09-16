@@ -97,10 +97,10 @@ export function PwaPrompt() {
           </p>
           <p className="mt-1 text-sm font-normal leading-6 text-[var(--color-text-secondary)]">
             {isUpdateReady
-              ? "업데이트 후 새로고침하면 최신 변경사항을 바로 볼 수 있습니다."
+              ? "업데이트 후 새로고침하면 최신 변경사항을 바로 볼 수 있어요."
               : platform === "ios"
-                ? "공유 버튼을 누른 뒤 '홈 화면에 추가'를 선택하세요."
-                : "앱처럼 빠르게 열 수 있도록 홈 화면에 설치할 수 있습니다."}
+                ? "공유 버튼을 누른 뒤 '홈 화면에 추가'를 선택해주세요."
+                : "앱처럼 빠르게 열 수 있도록 홈 화면에 설치할 수 있어요."}
           </p>
         </div>
         {!isUpdateReady ? (
