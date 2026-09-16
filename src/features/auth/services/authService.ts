@@ -30,7 +30,6 @@ export function subscribeAuthState(callback: (user: User | null) => void) {
 export async function signInWithGoogle() {
   try {
     const result = await signInWithPopup(auth, googleProvider);
-    await syncUserProfile(result.user);
     return result.user;
   } catch (error) {
     if (shouldFallbackToRedirect(error)) {
@@ -44,13 +43,7 @@ export async function signInWithGoogle() {
 
 export async function syncRedirectLoginResult() {
   const result = await getRedirectResult(auth);
-
-  if (!result?.user) {
-    return null;
-  }
-
-  await syncUserProfile(result.user);
-  return result.user;
+  return result?.user ?? null;
 }
 
 export async function logout() {

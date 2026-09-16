@@ -22,12 +22,14 @@ export function AuthProvider({ children }: PropsWithChildren) {
       setAuthError(getAuthErrorMessage(error));
     });
 
-    return subscribeAuthState(async (nextUser) => {
+    return subscribeAuthState((nextUser) => {
       setUser(nextUser);
       setStatus(nextUser ? "authenticated" : "guest");
 
       if (nextUser) {
-        await syncUserProfile(nextUser);
+        void syncUserProfile(nextUser).catch((error: unknown) => {
+          setAuthError(getAuthErrorMessage(error));
+        });
       }
     });
   }, []);
