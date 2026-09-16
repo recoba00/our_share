@@ -634,9 +634,9 @@ export function HomePage() {
           </Button>
           <div className="mt-3 grid gap-2">
             <div>
-              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">새 그룹 참여</p>
+              <p className="text-xs font-semibold text-[var(--color-text-secondary)]">다른 그룹 추가</p>
               <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
-                초대코드로 새로운 그룹을 추가할 수 있어요.
+                초대코드를 입력하면 현재 그룹은 유지되고 새 그룹이 추가돼요.
               </p>
             </div>
             <div className="flex min-w-0 items-end gap-2">
@@ -656,7 +656,7 @@ export function HomePage() {
                 variant="secondary"
               >
                 <UserPlus size={18} weight="bold" />
-                그룹 참여
+                그룹 추가
               </Button>
             </div>
           </div>
