@@ -207,12 +207,13 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
 
   await batch.commit();
 
-  await Promise.all(
-    memberSnapshot.docs.map((memberDoc) => {
-      const memberUserId = memberDoc.data().userId as string;
+  const memberUserIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().userId as string);
 
-      return remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`));
-    })
+  await Promise.all(
+    memberUserIds.map((memberUserId) => clearMemberRealtimeData(familyId, memberUserId))
+  );
+  await Promise.all(
+    memberUserIds.map((memberUserId) => remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`)))
   );
 }
 
@@ -228,13 +229,17 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
     throw new Error("오너는 그룹을 나갈 수 없습니다. 그룹을 삭제하거나 오너 권한을 넘겨주세요.");
   }
 
+  await clearMemberRealtimeData(familyId, userId);
+  await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
+  await deleteDoc(memberRef);
+}
+
+async function clearMemberRealtimeData(familyId: string, userId: string) {
   await Promise.all([
     remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`)),
     remove(ref(realtimeDb, `onlinePresence/${familyId}/${userId}`)),
     remove(ref(realtimeDb, `deviceStatus/${familyId}/${userId}`)),
   ]);
-  await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
-  await deleteDoc(memberRef);
 }
 
 export async function getFamiliesForUser(userId: string) {

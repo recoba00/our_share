@@ -201,6 +201,31 @@ describe("Realtime Database live location rules", () => {
       })
     );
   });
+
+  it("allows an owner to delete member runtime data but blocks member cleanup of others", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+
+      await set(ref(db, "liveLocations/familyA/bob"), createLiveLocation());
+      await set(ref(db, "onlinePresence/familyA/bob"), { status: "online" });
+      await set(ref(db, "deviceStatus/familyA/bob"), { battery: 80 });
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+    const bobDb = testEnv.authenticatedContext("bob").database();
+
+    await assertSucceeds(remove(ref(aliceDb, "liveLocations/familyA/bob")));
+    await assertSucceeds(remove(ref(aliceDb, "onlinePresence/familyA/bob")));
+    await assertSucceeds(remove(ref(aliceDb, "deviceStatus/familyA/bob")));
+    await assertFails(remove(ref(bobDb, "liveLocations/familyA/alice")));
+  });
 });
 
 async function seedFamilyMembersMirror({
