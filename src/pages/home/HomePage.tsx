@@ -577,6 +577,13 @@ export function HomePage() {
           </div>
         </div>
       </Card>
+      <Link
+        className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-[background-color,transform] duration-200 active:scale-[0.98] hover:bg-brand-hover"
+        to="/profile"
+      >
+        <UsersThree size={18} weight="bold" />
+        그룹 생성하기
+      </Link>
     </div>
   );
 
@@ -1169,9 +1176,9 @@ function DashboardList({
       {items.map((item) => (
         <li className="flex min-w-0 justify-between gap-3" key={`${item.label}-${item.meta}`}>
           <span className="min-w-0 truncate">{item.label}</span>
-          <strong className="min-w-0 max-w-[58%] shrink truncate text-right text-[var(--color-text-secondary)]">
+          <span className="min-w-0 max-w-[58%] shrink truncate text-right font-normal text-[var(--color-text-secondary)]">
             {item.meta}
-          </strong>
+          </span>
         </li>
       ))}
     </ul>
