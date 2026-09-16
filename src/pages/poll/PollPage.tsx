@@ -7,7 +7,7 @@ import {
   Trash,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
@@ -61,6 +61,7 @@ export function PollPage() {
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const pollRequestIdRef = useRef(0);
   const normalizedOptions = getNormalizedPollOptions(options);
   const hasDuplicateOptions = hasDuplicatePollOptions(options);
   const canCreatePoll =
@@ -78,27 +79,50 @@ export function PollPage() {
   );
 
   const loadPollData = useCallback(async (userId: string) => {
+    const requestId = pollRequestIdRef.current + 1;
+    pollRequestIdRef.current = requestId;
+    const isCurrentRequest = () => pollRequestIdRef.current === requestId;
+
     setIsLoading(true);
 
     try {
       if (!family) {
-        setPolls([]);
-        setRooms([]);
-        setSelectedRoomId("");
+        if (isCurrentRequest()) {
+          setPolls([]);
+          setRooms([]);
+          setSelectedRoomId("");
+        }
         return;
       }
 
       const nextPolls = await getPolls(family.id);
+      if (!isCurrentRequest()) {
+        return;
+      }
+
       setPolls(nextPolls);
-      setVotes(await getPollVotes(family.id, nextPolls.map((poll) => poll.id)));
+      const nextVotes = await getPollVotes(family.id, nextPolls.map((poll) => poll.id));
+      if (!isCurrentRequest()) {
+        return;
+      }
+
+      setVotes(nextVotes);
 
       try {
         const familyRoomId = await getOrCreateFamilyRoom({
           createdBy: userId,
           familyId: family.id,
         });
+        if (!isCurrentRequest()) {
+          return;
+        }
+
         setSelectedRoomId((currentRoomId) => currentRoomId || familyRoomId);
       } catch (roomError) {
+        if (!isCurrentRequest()) {
+          return;
+        }
+
         setSelectedRoomId("");
         notify(
           `투표는 만들 수 있지만 채팅방 연결 확인에 실패했습니다. ${getErrorMessage(roomError)}`,
@@ -106,9 +130,13 @@ export function PollPage() {
         );
       }
     } catch (error) {
-      notify(getErrorMessage(error), "error");
+      if (isCurrentRequest()) {
+        notify(getErrorMessage(error), "error");
+      }
     } finally {
-      setIsLoading(false);
+      if (isCurrentRequest()) {
+        setIsLoading(false);
+      }
     }
   }, [family, notify]);
 
