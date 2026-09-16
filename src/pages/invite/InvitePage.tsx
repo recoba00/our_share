@@ -48,7 +48,12 @@ export function InvitePage() {
       .then(async (result) => {
         await refreshFamilies(result.id);
         clearPendingInviteCode();
-        showToast({ message: `${result.name} 그룹에 참여했습니다.`, variant: "success" });
+        showToast({
+          message: result.alreadyMember
+            ? `${result.name} 그룹에 이미 참여 중입니다.`
+            : `${result.name} 그룹에 참여했습니다.`,
+          variant: result.alreadyMember ? "info" : "success",
+        });
         navigate("/", { replace: true });
       })
       .catch((error: unknown) => {
