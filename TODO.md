@@ -289,6 +289,7 @@
 - [x] 다중 그룹 권한과 그룹별 OWNER 관리 테스트 추가
 
 - [ ] Admin SDK Membership Mirror Sync
+  > 진행 상태: 로컬 Functions 에뮬레이터의 생성·수정·삭제 미러 테스트 통과. 운영 전환은 Blaze 결정과 Functions 배포 후 진행한다.
   - [ ] Blaze 요금제 전환 여부 결정
   - [x] Cloud Functions 코드베이스 추가
   - [x] Firestore `familyMembers` onCreate 트리거로 RTDB mirror 생성

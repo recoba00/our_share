@@ -490,7 +490,7 @@ export function HomePage() {
             <div
               className={`flex min-w-0 items-center justify-between gap-3 rounded-2xl border p-3 ${
                 isFamilyOwner
-                  ? "border-brand/30 bg-brand-soft/40"
+                  ? "border-[var(--color-owner-border)] bg-brand-soft/40"
                   : "border-[var(--color-border)] bg-[var(--color-surface-muted)]"
               }`}
             >
