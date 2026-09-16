@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   getCurrentPosition,
   readBatteryStatus,
@@ -7,6 +7,16 @@ import {
 } from "../services/locationService";
 
 type LocationShareStatus = "idle" | "loading" | "success" | "error";
+
+export type LocationShareController = {
+  isShared: boolean;
+  isSharing: boolean;
+  message: string;
+  clearMessage: () => void;
+  shareCurrentLocation: () => Promise<void>;
+  stopCurrentLocationShare: () => Promise<void>;
+  status: LocationShareStatus;
+};
 
 export function useMyLocationShare({
   familyId,
@@ -20,6 +30,7 @@ export function useMyLocationShare({
   const [sharedFamilyId, setSharedFamilyId] = useState<string | null>(null);
   const lastSentPositionRef = useRef<SentPosition | null>(null);
   const isSendingRef = useRef(false);
+  const clearMessage = useCallback(() => setMessage(""), []);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -210,6 +221,7 @@ export function useMyLocationShare({
     isShared: sharedFamilyId === familyId,
     isSharing: status === "loading",
     message,
+    clearMessage,
     shareCurrentLocation,
     stopCurrentLocationShare,
     status,

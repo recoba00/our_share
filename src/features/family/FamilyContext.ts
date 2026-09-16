@@ -1,10 +1,12 @@
 import { createContext } from "react";
+import type { LocationShareController } from "../location/hooks/useMyLocationShare";
 import type { Family } from "./types/familyTypes";
 
 export type FamilyContextValue = {
   activeFamily: Family | null;
   families: Family[];
   isLoading: boolean;
+  locationShare: LocationShareController;
   refreshFamilies: (preferredFamilyId?: string) => Promise<Family[]>;
   selectFamily: (familyId: string) => void;
 };

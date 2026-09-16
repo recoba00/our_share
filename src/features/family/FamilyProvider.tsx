@@ -1,5 +1,6 @@
 import { type PropsWithChildren, useCallback, useEffect, useMemo, useState } from "react";
 import { useAuth } from "../auth/useAuth";
+import { useMyLocationShare } from "../location/hooks/useMyLocationShare";
 import { FamilyContext } from "./FamilyContext";
 import { getFamiliesForUser } from "./services/familyService";
 import type { Family } from "./types/familyTypes";
@@ -11,6 +12,11 @@ export function FamilyProvider({ children }: PropsWithChildren) {
   const [families, setFamilies] = useState<Family[]>([]);
   const [activeFamilyId, setActiveFamilyId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const activeFamily = families.find((family) => family.id === activeFamilyId) ?? null;
+  const locationShare = useMyLocationShare({
+    familyId: activeFamily?.id ?? null,
+    userId: user?.uid ?? null,
+  });
 
   const refreshFamilies = useCallback(
     async (preferredFamilyId?: string) => {
@@ -81,13 +87,14 @@ export function FamilyProvider({ children }: PropsWithChildren) {
 
   const value = useMemo(
     () => ({
-      activeFamily: families.find((family) => family.id === activeFamilyId) ?? null,
+      activeFamily,
       families,
       isLoading,
+      locationShare,
       refreshFamilies,
       selectFamily,
     }),
-    [activeFamilyId, families, isLoading, refreshFamilies, selectFamily]
+    [activeFamily, families, isLoading, locationShare, refreshFamilies, selectFamily]
   );
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;

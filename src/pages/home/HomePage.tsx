@@ -51,7 +51,6 @@ import {
   subscribeChatRooms,
 } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
-import { useMyLocationShare } from "../../features/location/hooks/useMyLocationShare";
 import { subscribeFamilyLocations } from "../../features/location/services/locationService";
 import type { LiveLocation } from "../../features/location/types/locationTypes";
 import { subscribeMemos } from "../../features/memo/services/memoService";
@@ -143,7 +142,12 @@ declare global {
 
 export function HomePage() {
   const { authError, signIn, status, user } = useAuth();
-  const { activeFamily, refreshFamilies } = useFamily();
+  const { activeFamily, locationShare, refreshFamilies } = useFamily();
+  const {
+    clearMessage: clearLocationMessage,
+    message: locationShareMessage,
+    status: locationShareStatus,
+  } = locationShare;
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
@@ -162,10 +166,6 @@ export function HomePage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [inviteCode, setInviteCode] = useState("");
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
-  const locationShare = useMyLocationShare({
-    familyId: activeFamily?.id ?? null,
-    userId: user?.uid ?? null,
-  });
   const handleDataError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
@@ -260,15 +260,16 @@ export function HomePage() {
   }, [activeFamily, calendarEvents, polls, user]);
 
   useEffect(() => {
-    if (!locationShare.message) {
+    if (!locationShareMessage) {
       return;
     }
 
     showToast({
-      message: locationShare.message,
-      variant: locationShare.status === "error" ? "error" : "success",
+      message: locationShareMessage,
+      variant: locationShareStatus === "error" ? "error" : "success",
     });
-  }, [locationShare.message, locationShare.status, showToast]);
+    clearLocationMessage();
+  }, [clearLocationMessage, locationShareMessage, locationShareStatus, showToast]);
 
   if (status === "loading") {
     return (

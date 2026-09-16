@@ -8,6 +8,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 위치 공유를 `watchPosition` 기반으로 확장해 이동이 감지될 때만 최소 20m 기준으로 10초마다 Realtime Database에 갱신하고, 화면 재진입 시 최신 위치 동기화를 시도한다.
 - 카카오 지도 SDK의 `services` 라이브러리와 역지오코더를 연결해 위치 핀 상세에서 좌표 대신 도로명 주소를 우선 표시한다.
 - 웹 PWA 특성상 OS가 브라우저를 강제 정지한 경우에는 백그라운드 GPS 실행을 보장할 수 있어 후속 검토 항목으로 기록했다.
+- 위치 공유 컨트롤러를 `FamilyProvider`로 이동해 홈에서 채팅·캘린더 등 다른 화면으로 이동해도 이동 감지 추적이 유지되도록 했다.
 - Admin SDK Membership Mirror 운영 전환을 위해 Functions build·emulator test·deploy를 수동 실행하는 GitHub Actions workflow와 Blaze 전환 runbook을 추가했다.
 - 홈 사이드영역 그룹 오너 카드의 다크모드 보더를 어두운 Emerald/Slate 대비값으로 분리했다.
 - TODO의 Admin SDK Membership Mirror Sync를 재점검하고 Functions 에뮬레이터 생성·수정·삭제 동기화 테스트 통과 상태를 기록했다.
