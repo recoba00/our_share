@@ -11,6 +11,7 @@ import {
   MapPin,
   Note,
   ShareNetwork,
+  SignOut,
   Trash,
   GearSix,
   UserPlus,
@@ -33,6 +34,7 @@ import {
   deleteFamilyMember,
   getFamilyMembers,
   joinFamilyByInviteCode,
+  leaveFamily,
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
@@ -167,6 +169,7 @@ export function HomePage() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [inviteCode, setInviteCode] = useState("");
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
+  const [isLeavingFamily, setIsLeavingFamily] = useState(false);
   const handleDataError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
@@ -409,6 +412,35 @@ export function HomePage() {
     }
   }
 
+  async function handleLeaveFamily() {
+    if (!activeFamily || !user || isFamilyOwner) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "그룹 나가기",
+      description: `${activeFamily.name} 그룹의 일정, 메모, 투표, 채팅을 더 이상 볼 수 없게 됩니다.`,
+      title: `'${activeFamily.name}' 그룹에서 나갈까요?`,
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsLeavingFamily(true);
+
+    try {
+      await leaveFamily({ familyId: activeFamily.id, userId: user.uid });
+      await refreshFamilies();
+      notify("그룹에서 나갔습니다.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setIsLeavingFamily(false);
+    }
+  }
+
   async function handleCopyInviteCode() {
     if (!activeFamily) {
       notify("복사할 초대 코드가 없습니다.", "info");
@@ -634,7 +666,7 @@ export function HomePage() {
           </Button>
         </div>
       </Card>
-      <section className="grid gap-2 px-1">
+      <Card className="grid gap-2">
         <div>
           <p className="text-sm font-semibold">다른 그룹 추가</p>
           <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
@@ -661,7 +693,7 @@ export function HomePage() {
             그룹 추가
           </Button>
         </div>
-      </section>
+      </Card>
     </div>
   );
 
@@ -733,6 +765,16 @@ export function HomePage() {
                     type="button"
                   >
                     <DotsThreeVertical size={20} weight="bold" />
+                  </button>
+                ) : !isFamilyOwner && member.userId === user?.uid ? (
+                  <button
+                    aria-label="그룹 나가기"
+                    className="grid size-9 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
+                    disabled={isLeavingFamily}
+                    onClick={() => void handleLeaveFamily()}
+                    type="button"
+                  >
+                    <SignOut size={20} weight="bold" />
                   </button>
                 ) : null}
               </div>
