@@ -26,6 +26,7 @@ import { IconButton } from "../../components/common/IconButton";
 import { LoadingState } from "../../components/common/LoadingState";
 import { Modal } from "../../components/common/Modal";
 import { SectionHeading } from "../../components/common/SectionHeading";
+import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -59,6 +60,7 @@ import {
 } from "../../features/poll/utils/pollDraft";
 
 type ChatRoomFilter = "ALL" | "DIRECT" | "PRIVATE_GROUP" | "FAMILY";
+type ChatCreateTab = "SECRET" | "GROUP";
 
 const chatRoomFilters: { label: string; value: ChatRoomFilter }[] = [
   { label: "전체", value: "ALL" },
@@ -88,6 +90,7 @@ export function ChatPage() {
   const [secretRoomMemberIds, setSecretRoomMemberIds] = useState<string[]>([]);
   const [privateGroupName, setPrivateGroupName] = useState("");
   const [secretRoomName, setSecretRoomName] = useState("");
+  const [chatCreateTab, setChatCreateTab] = useState<ChatCreateTab>("GROUP");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isPollCreateOpen, setIsPollCreateOpen] = useState(false);
   const [isRoomSearchOpen, setIsRoomSearchOpen] = useState(false);
@@ -631,35 +634,44 @@ export function ChatPage() {
 
   const chatCreateTools = (
     <div className="mx-auto grid w-full max-w-xl gap-4">
-      <Card>
-        <div className="flex items-start gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-            <UserPlus size={20} weight="bold" />
-          </span>
-          <div className="min-w-0">
-            <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
-            <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
-              {activeFamily.role === "OWNER"
-                ? "그룹원을 초대할 때 이 코드를 공유하세요."
-                : "초대코드는 그룹 오너가 관리해요."}
+      <div className="flex items-start gap-3">
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+          <UserPlus size={20} weight="bold" />
+        </span>
+        <div className="min-w-0">
+          <h3 className="text-lg font-semibold">그룹 초대 코드</h3>
+          <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
+            {activeFamily.role === "OWNER"
+              ? "그룹원을 초대할 때 이 코드를 공유하세요."
+              : "초대코드는 그룹 오너가 관리해요."}
+          </p>
+          {activeFamily.role === "OWNER" ? (
+            <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
+              {activeFamily.inviteCode}
             </p>
-            {activeFamily.role === "OWNER" ? (
-              <p className="mt-3 font-mono text-2xl font-semibold tracking-wide text-brand">
-                {activeFamily.inviteCode}
-              </p>
-            ) : null}
-          </div>
+          ) : null}
         </div>
-      </Card>
+      </div>
 
-      <Card>
-        <SectionHeading
-          description="초대된 구성원만 참여할 수 있어요."
-          icon={<LockKey size={20} weight="bold" />}
-          level="h3"
-          title="비밀방"
-        />
-        <form className="mt-4 grid gap-3" onSubmit={handleCreateSecretRoom}>
+      <div className="h-px bg-[var(--color-border)]" />
+
+      <SegmentedControl
+        onChange={setChatCreateTab}
+        options={[
+          { icon: <LockKey size={16} weight="bold" />, label: "비밀방", value: "SECRET" },
+          { icon: <Users size={16} weight="bold" />, label: "그룹방", value: "GROUP" },
+        ]}
+        value={chatCreateTab}
+      />
+
+      {chatCreateTab === "SECRET" ? (
+        <form className="grid gap-3" onSubmit={handleCreateSecretRoom}>
+          <SectionHeading
+            description="초대된 구성원만 참여할 수 있어요."
+            icon={<LockKey size={20} weight="bold" />}
+            level="h3"
+            title="비밀방 만들기"
+          />
           <Input
             label="방 이름"
             onChange={(event) => setSecretRoomName(event.target.value)}
@@ -684,16 +696,14 @@ export function ChatPage() {
             비밀방 만들기
           </Button>
         </form>
-      </Card>
-
-      <Card>
-        <SectionHeading
-          description="선택한 구성원과 함께 사용할 방을 만들어요."
-          icon={<Users size={20} weight="bold" />}
-          level="h3"
-          title="그룹방"
-        />
-        <form className="mt-4 grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
+      ) : (
+        <form className="grid gap-3" onSubmit={handleCreatePrivateGroupRoom}>
+          <SectionHeading
+            description="선택한 구성원과 함께 사용할 방을 만들어요."
+            icon={<Users size={20} weight="bold" />}
+            level="h3"
+            title="그룹방 만들기"
+          />
           <Input
             label="방 이름"
             onChange={(event) => setPrivateGroupName(event.target.value)}
@@ -725,15 +735,13 @@ export function ChatPage() {
             그룹방 만들기
           </Button>
         </form>
-      </Card>
+      )}
     </div>
   );
 
   return (
     <>
-      <ActionLayer
-        desktop
-        isOpen={isCreateOpen}
+      <ActionLayer isOpen={isCreateOpen}
         onClose={() => setIsCreateOpen(false)}
         title="채팅방 만들기"
       >
@@ -741,7 +749,6 @@ export function ChatPage() {
       </ActionLayer>
       {!roomId ? (
         <MobileCreateButton
-          desktop
           label="+ 채팅방"
           onClick={() => setIsCreateOpen(true)}
         />
@@ -1007,6 +1014,15 @@ export function ChatPage() {
               ))
             )}
           </div>
+        </div>
+
+        <div className="mt-6 hidden border-t border-[var(--color-border)] pt-5 lg:block">
+          <SectionHeading
+            icon={<UserPlus size={20} weight="bold" />}
+            level="h3"
+            title="채팅방 만들기"
+          />
+          <div className="mt-4">{chatCreateTools}</div>
         </div>
 
       </Card>
