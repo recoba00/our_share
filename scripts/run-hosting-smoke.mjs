@@ -1,4 +1,4 @@
-const baseUrl = process.env.SMOKE_BASE_URL ?? "http://recoba00.dothome.co.kr/our_share";
+const baseUrl = process.env.SMOKE_BASE_URL ?? "https://our-share-6baf5.web.app";
 const expectedCommit = process.env.EXPECTED_COMMIT ?? (await getGitCommit());
 const retryCount = Number(process.env.SMOKE_RETRIES ?? 0);
 const retryDelayMs = Number(process.env.SMOKE_RETRY_DELAY_MS ?? 5000);
