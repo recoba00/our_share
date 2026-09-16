@@ -196,25 +196,28 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
     throw new Error("그룹 삭제는 오너만 할 수 있습니다.");
   }
 
+  const inviteCode = familySnapshot.data().inviteCode as string | undefined;
+  const inviteRef = inviteCode ? doc(db, "familyInvites", inviteCode) : null;
+  const inviteSnapshot = inviteRef ? await getDoc(inviteRef) : null;
   const batch = writeBatch(db);
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
   batch.delete(doc(db, "families", familyId));
-  const inviteCode = familySnapshot.data().inviteCode as string | undefined;
 
-  if (inviteCode) {
-    batch.delete(doc(db, "familyInvites", inviteCode));
+  if (inviteRef && inviteSnapshot?.exists()) {
+    batch.delete(inviteRef);
   }
 
   await batch.commit();
 
   const memberUserIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().userId as string);
 
-  await Promise.all(
-    memberUserIds.map((memberUserId) => clearMemberRealtimeData(familyId, memberUserId))
-  );
-  await Promise.all(
-    memberUserIds.map((memberUserId) => remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`)))
-  );
+  // Firestore deletion is the source of truth; mirror cleanup must not turn a successful delete into an error.
+  await Promise.allSettled([
+    ...memberUserIds.map((memberUserId) => clearMemberRealtimeData(familyId, memberUserId)),
+    ...memberUserIds.map((memberUserId) =>
+      remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`))
+    ),
+  ]);
 }
 
 export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
