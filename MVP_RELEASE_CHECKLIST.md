@@ -1,6 +1,6 @@
 # MVP Release Checklist
 
-Date: 2026-09-10
+Date: 2026-09-16
 
 ## Automated Checks
 
@@ -11,13 +11,13 @@ Date: 2026-09-10
 - [x] `npm run test:rules`
 - [x] `npm run test:hosting`
 - [x] `npm run test:mvp`
-- [x] GitHub Actions runs hosting smoke check after Dothome FTP deploy
-- [x] GitHub Actions runs lint and Firestore Rules tests before Dothome FTP deploy
-- [x] GitHub Actions verifies Firebase Hosting candidate build before Dothome FTP deploy
+- [x] GitHub Actions runs Hosting smoke check after Firebase Hosting deploy
+- [x] GitHub Actions runs lint and Firebase Rules tests before Firebase Hosting deploy
+- [x] GitHub Actions verifies Firebase Hosting candidate build before Firebase Hosting deploy
 - [x] GitHub Actions deploy target switched from Dothome FTP to Firebase Hosting
 - [x] GitHub Actions validates Firebase service account Secret shape before deploy
 - [x] Firebase Firestore Rules published
-- [x] Firebase Realtime Database Rules published
+- [x] Firebase Realtime Database Rules published via `Firebase Database Rules Deploy` workflow
 - [x] Firestore and Realtime Database Rules covered by local emulator tests
 - [x] Dothome root URL returns built Vite HTML
 - [x] Dothome SPA route fallback returns 200
@@ -34,8 +34,8 @@ Date: 2026-09-10
 
 Run from:
 
-- `http://recoba00.dothome.co.kr/our_share/`
-- `http://recoba00.dothome.co.kr/our_share/diagnostics`
+- `https://our-share-6baf5.web.app/`
+- `https://our-share-6baf5.web.app/diagnostics`
 
 Test account:
 
@@ -53,6 +53,10 @@ Checklist:
 - [ ] Create a family
 - [ ] Confirm invite code appears
 - [ ] Join family with invite code from another account
+- [ ] From an active A group, add B group by invite code and confirm A remains active
+- [ ] Open the group switcher and confirm owner/member tabs and role labels
+- [ ] Leave a group as a member and confirm its runtime data is removed
+- [ ] Delete a group as owner and confirm member runtime data is removed
 - [ ] Family member list appears
 - [ ] OWNER can change member role
 - [ ] Current location share succeeds after browser permission
@@ -85,4 +89,5 @@ MVP can be considered 100% ready for Firebase Hosting migration when:
 - Automated checks pass.
 - Manual smoke test passes without blocking permission errors.
 - Any Firebase Auth authorized-domain issue is resolved.
-- Dothome manifest MIME type is confirmed after deployment.
+- Firebase Realtime Database Rules workflow succeeds after a Rules change.
+- Firebase Auth authorized-domain and authenticated manual smoke tests pass.

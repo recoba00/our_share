@@ -13,7 +13,7 @@ MVP 기능에서 사용하는 Firebase 데이터 접근을 로그인 사용자�
 
 ## 배포 상태
 
-2026-09-10에 Firebase CLI `15.30.0`으로 `our-share-6baf5` 프로젝트에 Firestore Rules와 Realtime Database Rules를 게시했다.
+2026-09-16에 Firebase CLI 기반 `Firebase Database Rules Deploy` workflow로 `our-share-6baf5` 프로젝트에 Firestore Rules와 Realtime Database Rules를 게시했다.
 
 ## Firestore 적용 방법
 
