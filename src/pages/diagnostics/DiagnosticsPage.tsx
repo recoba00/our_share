@@ -37,6 +37,10 @@ const smokeChecklistItems = [
   "로그아웃에 성공한다",
   "그룹을 생성하고 초대 코드가 표시된다",
   "다른 계정이 초대 코드로 그룹에 참여한다",
+  "활성 A그룹에서 B그룹을 추가해도 A그룹이 유지된다",
+  "그룹 전환에서 오너 그룹과 그룹원 그룹 탭이 구분된다",
+  "그룹원으로 그룹을 나가면 위치·접속상태·기기상태가 정리된다",
+  "오너로 그룹을 삭제하면 구성원 runtime 데이터가 정리된다",
   "그룹 구성원 목록이 표시된다",
   "OWNER가 구성원 역할을 변경할 수 있다",
   "OWNER가 다른 그룹 구성원을 삭제할 수 있다",
@@ -62,6 +66,7 @@ const smokeChecklistItems = [
   "PWA 설치 안내와 업데이트 안내가 노출된다",
   "채팅 읽음 상태가 갱신된다",
   "브라우저 알림 권한 흐름을 확인한다",
+  "Firebase Hosting 접속 도메인이 Firebase Auth 승인 도메인에 등록되어 있다",
 ];
 
 const smokeChecklistStorageKey = "our-share:mvp-smoke-checklist";
