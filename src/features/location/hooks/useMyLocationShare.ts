@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   getCurrentPosition,
   readBatteryStatus,
@@ -45,7 +45,7 @@ export function useMyLocationShare({
     return () => window.clearTimeout(timeoutId);
   }, [familyId, userId]);
 
-  async function shareCurrentLocation() {
+  const shareCurrentLocation = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
       setMessage("그룹 생성 또는 참여 후 위치를 공유할 수 있습니다.");
@@ -87,9 +87,9 @@ export function useMyLocationShare({
       setStatus("error");
       setMessage(getLocationErrorMessage(error));
     }
-  }
+  }, [familyId, userId]);
 
-  async function stopCurrentLocationShare() {
+  const stopCurrentLocationShare = useCallback(async () => {
     if (!familyId || !userId) {
       setStatus("error");
       setMessage("그룹 생성 또는 참여 후 위치 공유를 끊을 수 있습니다.");
@@ -110,7 +110,7 @@ export function useMyLocationShare({
       setStatus("error");
       setMessage(error instanceof Error ? error.message : "위치 공유 해제에 실패했습니다.");
     }
-  }
+  }, [familyId, userId]);
 
   useEffect(() => {
     if (!familyId || !userId || sharedFamilyId !== familyId) {
@@ -217,15 +217,26 @@ export function useMyLocationShare({
     };
   }, [familyId, sharedFamilyId, userId]);
 
-  return {
-    isShared: sharedFamilyId === familyId,
-    isSharing: status === "loading",
-    message,
-    clearMessage,
-    shareCurrentLocation,
-    stopCurrentLocationShare,
-    status,
-  };
+  return useMemo(
+    () => ({
+      isShared: sharedFamilyId === familyId,
+      isSharing: status === "loading",
+      message,
+      clearMessage,
+      shareCurrentLocation,
+      stopCurrentLocationShare,
+      status,
+    }),
+    [
+      clearMessage,
+      familyId,
+      message,
+      sharedFamilyId,
+      shareCurrentLocation,
+      status,
+      stopCurrentLocationShare,
+    ]
+  );
 }
 
 type SentPosition = {
