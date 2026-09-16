@@ -16,6 +16,7 @@ import {
 import { ref, remove, set } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
+import { MAX_FAMILY_NAME_LENGTH } from "../utils/familyName";
 
 type CreateFamilyInput = {
   name: string;
@@ -64,12 +65,22 @@ type JoinFamilyResult = {
 const inFlightInviteJoins = new Map<string, Promise<JoinFamilyResult>>();
 
 export async function createFamily({ name, owner }: CreateFamilyInput) {
+  const normalizedName = name.trim();
+
+  if (!normalizedName) {
+    throw new Error("크루 이름을 입력해주세요.");
+  }
+
+  if (Array.from(normalizedName).length > MAX_FAMILY_NAME_LENGTH) {
+    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자 이내로 입력해주세요.`);
+  }
+
   const familyRef = doc(collection(db, "families"));
   const inviteCode = createInviteCode();
 
   await setDoc(familyRef, {
     id: familyRef.id,
-    name,
+    name: normalizedName,
     ownerId: owner.uid,
     inviteCode,
     createdAt: serverTimestamp(),
@@ -78,7 +89,7 @@ export async function createFamily({ name, owner }: CreateFamilyInput) {
   await setDoc(doc(db, "familyInvites", inviteCode), {
     familyId: familyRef.id,
     inviteCode,
-    name,
+    name: normalizedName,
     ownerId: owner.uid,
     createdAt: serverTimestamp(),
   });
@@ -171,6 +182,10 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
 
   if (!normalizedName) {
     throw new Error("크루 이름을 입력해주세요.");
+  }
+
+  if (Array.from(normalizedName).length > MAX_FAMILY_NAME_LENGTH) {
+    throw new Error(`크루 이름은 ${MAX_FAMILY_NAME_LENGTH}자 이내로 입력해주세요.`);
   }
 
   await updateDoc(doc(db, "families", familyId), {

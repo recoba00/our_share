@@ -25,6 +25,7 @@ import { BottomSheet } from "../../components/common/BottomSheet";
 import { BottomSheetItem } from "../../components/common/BottomSheetItem";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
@@ -293,7 +294,7 @@ export function HomePage() {
         <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
           <p className="text-sm font-semibold text-brand">우리끼리 스마트 홈</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
-            크루 위치, 일정, 메모, 투표를 한곳에서 관리해요
+            멤버 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>
           <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
             Google 계정으로 시작하고 크루를 만들거나 초대 코드로 참여하세요.
@@ -615,9 +616,7 @@ export function HomePage() {
               <div className="min-w-0">
                 <div className="flex min-w-0 items-center justify-between gap-2">
                     <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[var(--color-text-secondary)]">
-                        {isFamilyOwner ? "크루장" : "멤버"}
-                      </p>
+                      <FamilyRoleIndicator role={isFamilyOwner ? "OWNER" : "MEMBER"} />
                       <strong className="mt-0.5 block min-w-0 truncate">{truncateFamilyName(activeFamily.name)}</strong>
                     </div>
                     {isFamilyOwner ? (
@@ -676,6 +675,7 @@ export function HomePage() {
           <Button
             className={isLocationShared ? "bg-red-600 text-white hover:bg-red-700" : ""}
             disabled={locationShare.isSharing}
+            loading={locationShare.isSharing}
             onClick={() =>
               void (isLocationShared
                 ? locationShare.stopCurrentLocationShare()
@@ -707,6 +707,7 @@ export function HomePage() {
           <Button
             className="shrink-0 whitespace-nowrap"
             disabled={isJoiningFamily}
+            loading={isJoiningFamily}
             onClick={() => void handleJoinFamily()}
             variant="secondary"
           >
@@ -728,7 +729,7 @@ export function HomePage() {
             <>
               <div className="flex items-center gap-2">
                 <MapPin className="text-brand" size={22} weight="bold" />
-                <h3 className="text-base font-semibold">크루 위치</h3>
+                <h3 className="text-base font-semibold">멤버 위치</h3>
               </div>
               <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
                 크루 멤버가 있으면 위치 핀이 표시됩니다.
@@ -770,9 +771,13 @@ export function HomePage() {
                   <strong className="block truncate">
                     {member.displayName ?? member.nickname}
                   </strong>
-                  <p className="mt-1 text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {roleLabels[member.role]}
-                  </p>
+                  <div className="mt-1 flex items-center text-xs font-semibold text-[var(--color-text-secondary)]">
+                    {member.role === "OWNER" ? (
+                      <FamilyRoleIndicator role="OWNER" />
+                    ) : (
+                      roleLabels[member.role]
+                    )}
+                  </div>
                 </div>
                 {isFamilyOwner && member.role !== "OWNER" ? (
                   <button
@@ -812,7 +817,7 @@ export function HomePage() {
     <BottomSheet
       isOpen={Boolean(selectedLocationMember)}
       onClose={() => setSelectedLocationMemberId("")}
-      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "크루 위치"}
+      title={selectedLocationMember?.displayName ?? selectedLocationMember?.nickname ?? "멤버 위치"}
     >
       {selectedLocationMember ? (
         <FamilyLocationPin
@@ -929,9 +934,10 @@ function MemberSheetProfile({ member }: { member: FamilyMemberProfile }) {
       <Avatar alt={member.displayName ?? member.nickname} src={member.photoURL} />
       <div className="min-w-0">
         <strong className="block truncate">{member.displayName ?? member.nickname}</strong>
-        <p className="mt-1 truncate text-xs font-semibold text-[var(--color-text-secondary)]">
-          {roleLabels[member.role]} · {member.email ?? "이메일 없음"}
-        </p>
+        <div className="mt-1 flex min-w-0 items-center gap-1 truncate text-xs font-semibold text-[var(--color-text-secondary)]">
+          {member.role === "OWNER" ? <FamilyRoleIndicator role="OWNER" /> : roleLabels[member.role]}
+          <span className="truncate">· {member.email ?? "이메일 없음"}</span>
+        </div>
       </div>
     </div>
   );
@@ -1212,7 +1218,7 @@ function FamilyLocationMap({
         <div>
           <MapPin className="mx-auto text-slate-400" size={28} weight="bold" />
           <p className="mt-3 text-sm font-semibold text-[var(--color-text-secondary)]">
-            현재 위치 공유를 누르면 지도 위에 크루 핀이 표시됩니다.
+            현재 위치 공유를 누르면 지도 위에 멤버 위치 핀이 표시됩니다.
           </p>
         </div>
       </div>
@@ -1224,7 +1230,7 @@ function FamilyLocationMap({
       <div className="flex items-center justify-between gap-3">
         <div className="flex min-w-0 items-center gap-2">
           <MapPin className="shrink-0 text-brand" size={22} weight="bold" />
-          <h3 className="min-w-0 truncate text-base font-semibold">크루 위치</h3>
+          <h3 className="min-w-0 truncate text-base font-semibold">멤버 위치</h3>
         </div>
         <IconButton
           aria-label="지도 초기화"

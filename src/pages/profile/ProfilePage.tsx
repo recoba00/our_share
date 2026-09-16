@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
+import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { Input } from "../../components/common/Input";
@@ -11,7 +12,11 @@ import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
-import { truncateFamilyName } from "../../features/family/utils/familyName";
+import {
+  limitFamilyNameInput,
+  MAX_FAMILY_NAME_LENGTH,
+  truncateFamilyName,
+} from "../../features/family/utils/familyName";
 import {
   createFamily,
   deleteFamily,
@@ -264,7 +269,7 @@ export function ProfilePage() {
             value={photoURL}
           />
           <div className="grid gap-2 sm:grid-cols-2">
-            <Button disabled={isSaving} type="submit">
+            <Button disabled={isSaving} loading={isSaving} type="submit">
               저장
             </Button>
             <Button onClick={() => void signOut()} type="button" variant="secondary">
@@ -295,12 +300,13 @@ export function ProfilePage() {
           >
             <Input
               label="크루 이름"
-              onChange={(event) => setNewFamilyName(event.target.value)}
+              maxLength={MAX_FAMILY_NAME_LENGTH}
+              onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
               placeholder="새 크루 이름을 입력해주세요"
               value={newFamilyName}
             />
             <div className="grid grid-cols-2 gap-2">
-              <Button disabled={isCreating} type="submit">
+              <Button disabled={isCreating} loading={isCreating} type="submit">
                 <Check size={18} weight="bold" />
                 생성하기
               </Button>
@@ -356,11 +362,12 @@ export function ProfilePage() {
                     <div className="grid gap-3">
                       <Input
                         label="크루 이름"
-                        onChange={(event) => setEditingFamilyName(event.target.value)}
+                        maxLength={MAX_FAMILY_NAME_LENGTH}
+                        onChange={(event) => setEditingFamilyName(limitFamilyNameInput(event.target.value))}
                         value={editingFamilyName}
                       />
                       <div className="grid grid-cols-2 gap-2">
-                        <Button disabled={isBusy} onClick={() => void handleRenameFamily(family.id)}>
+                        <Button disabled={isBusy} loading={isBusy} onClick={() => void handleRenameFamily(family.id)}>
                           <Check size={18} weight="bold" />
                           저장
                         </Button>
@@ -386,15 +393,7 @@ export function ProfilePage() {
                           <strong className="min-w-0 flex-1 truncate text-base">
                             {truncateFamilyName(family.name)}
                           </strong>
-                          <span
-                            className={`shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[11px] font-semibold ${
-                              isOwner
-                                ? "bg-brand text-white"
-                                : "bg-[var(--color-surface)] text-[var(--color-text-secondary)]"
-                            }`}
-                          >
-                            {isOwner ? "크루장" : "멤버"}
-                          </span>
+                          <FamilyRoleIndicator role={isOwner ? "OWNER" : "MEMBER"} />
                         </span>
                         <span className="mt-1 block truncate text-xs text-[var(--color-text-secondary)]">
                           {isOwner

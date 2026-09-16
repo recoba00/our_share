@@ -433,6 +433,7 @@ export function PollPage() {
           action={
             <Button
               disabled={isLoading || !user}
+              loading={isLoading}
               onClick={() => user && void loadPollData(user.uid)}
               variant="secondary"
             >
@@ -459,6 +460,7 @@ export function PollPage() {
               onSendPoll={handleSendPollToChat}
               onDelete={handleDeletePoll}
               onVote={handleVote}
+              isLoading={isLoading}
               poll={poll}
               roomSelected={Boolean(selectedRoomId)}
               selected={selectedOptions[poll.id] ?? []}
@@ -474,6 +476,7 @@ export function PollPage() {
 
 function PollCard({
   onDelete,
+  isLoading,
   onSelect,
   onSendPoll,
   onVote,
@@ -483,6 +486,7 @@ function PollCard({
   votes,
 }: {
   onDelete: (poll: Poll) => void;
+  isLoading: boolean;
   onSelect: (poll: Poll, option: string) => void;
   onSendPoll: (poll: Poll) => void;
   onVote: (poll: Poll) => void;
@@ -515,11 +519,16 @@ function PollCard({
           )}
         </div>
         <div className="flex gap-2">
-          <Button disabled={!roomSelected} onClick={() => onSendPoll(poll)} variant="secondary">
+          <Button
+            disabled={!roomSelected || isLoading}
+            loading={isLoading}
+            onClick={() => onSendPoll(poll)}
+            variant="secondary"
+          >
             <ChatCircleDots size={18} weight="bold" />
             채팅방 전송
           </Button>
-          <Button onClick={() => onDelete(poll)} variant="secondary">
+          <Button disabled={isLoading} loading={isLoading} onClick={() => onDelete(poll)} variant="secondary">
             <Trash size={18} weight="bold" />
             삭제
           </Button>
@@ -558,7 +567,7 @@ function PollCard({
         })}
       </div>
 
-      <Button className="mt-4 w-full" onClick={() => onVote(poll)}>
+      <Button className="mt-4 w-full" disabled={isLoading} loading={isLoading} onClick={() => onVote(poll)}>
         투표하기
       </Button>
     </Card>

@@ -16,10 +16,15 @@ import { Input } from "../common/Input";
 import { useAuth } from "../../features/auth/useAuth";
 import { createFamily } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
-import { truncateFamilyName } from "../../features/family/utils/familyName";
+import {
+  limitFamilyNameInput,
+  MAX_FAMILY_NAME_LENGTH,
+  truncateFamilyName,
+} from "../../features/family/utils/familyName";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
+import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { SegmentedControl } from "../common/SegmentedControl";
 import { useToast } from "../common/toastContext";
 import type { Family } from "../../features/family/types/familyTypes";
@@ -199,11 +204,12 @@ export function AppHeader() {
             <Input
               autoFocus
               label="크루 이름"
-              onChange={(event) => setNewFamilyName(event.target.value)}
+              maxLength={MAX_FAMILY_NAME_LENGTH}
+              onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
               placeholder="새 크루 이름을 입력해주세요"
               value={newFamilyName}
             />
-            <Button disabled={isCreatingFamily} type="submit">
+            <Button disabled={isCreatingFamily} loading={isCreatingFamily} type="submit">
               <UsersThree size={18} weight="bold" />
               생성하기
             </Button>
@@ -324,9 +330,7 @@ function GroupSwitcher({
               type="button"
             >
               <span className="min-w-0 flex-1 truncate">{truncateFamilyName(family.name)}</span>
-              <span className="ml-auto shrink-0 text-xs font-semibold text-[var(--color-text-secondary)]">
-                {visibleGroupTab === "OWNER" ? "크루장" : "멤버"}
-              </span>
+              <FamilyRoleIndicator role={visibleGroupTab === "OWNER" ? "OWNER" : "MEMBER"} />
               {family.id === activeFamilyId ? <Check className="shrink-0 text-brand" size={18} weight="bold" /> : null}
             </BottomSheetItem>
           ))}

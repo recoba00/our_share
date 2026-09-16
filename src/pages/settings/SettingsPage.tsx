@@ -126,12 +126,13 @@ export function SettingsPage() {
           <Button
             className="mt-4 w-full"
             disabled={isDeleting}
+            loading={isDeleting}
             onClick={() => void handleDeleteAccount()}
             type="button"
             variant="danger"
           >
             <Trash size={18} weight="bold" />
-            {isDeleting ? "탈퇴 처리 중" : "회원탈퇴"}
+            회원탈퇴
           </Button>
         </section>
       </Card>
