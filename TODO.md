@@ -38,6 +38,7 @@
 - [x] GitHub Actions `dist` 배포 workflow 구성
 - [x] GitHub Actions Firebase Hosting 후보 빌드 검증 구성
 - [x] GitHub Repository Secrets 등록
+- [x] Firebase Database Rules 수동 배포 workflow 구성
 - [x] Dothome 서버에 `dist` 폴더 내용만 업로드
 - [x] Dothome manifest MIME type 확인
 - [x] MVP 100% 완료 후 Firebase Hosting 이전
@@ -150,6 +151,7 @@
 - [x] Family Member List
 - [x] Member Permissions
 - [x] Owner Member Delete
+- [x] Member Leave Family
 
 ## Home
 
@@ -276,6 +278,8 @@
 - [x] Java Runtime for Firebase Emulator
 - [x] Firestore Rules Test
 - [x] Realtime Database Rules Test
+- [x] Realtime Database member self-leave delete rule
+- [x] Realtime Database owner runtime cleanup delete rule
 
 ## Post-MVP / Later
 
@@ -291,6 +295,10 @@
 - [x] 내 정보 탭을 `MY | 그룹`으로 분리
 - [x] 내 정보 탭 UI를 캘린더 등록 탭과 동일한 세그먼트 스타일로 통일
 - [x] 홈에서 초대 코드로 그룹 참여 제공
+- [x] 다른 그룹 추가 시 현재 그룹 유지
+- [x] 오너 그룹 / 그룹원 그룹 탭 분리
+- [x] 1뎁스 기능 페이지 공통 그룹 전환
+- [x] 그룹 탈퇴·삭제 시 runtime 데이터 정리
 - [x] 홈 헤더에 그룹명과 아래 방향 아이콘 형태의 그룹 전환 표시
 - [x] 홈 헤더 그룹 전환 바텀시트에서 그룹 생성 및 생성 후 즉시 전환
 - [x] 다중 그룹 권한과 그룹별 OWNER 관리 테스트 추가
