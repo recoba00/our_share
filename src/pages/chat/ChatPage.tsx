@@ -869,8 +869,8 @@ export function ChatPage() {
         </form>
       </Modal>
 
-    <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
-      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:h-full`}>
+    <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:items-start lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
+      <Card className={`${roomId ? "hidden lg:block" : ""} min-w-0 self-start overflow-y-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden`}>
         <SectionHeading
           action={
             <div className="flex items-center gap-1">
