@@ -442,10 +442,10 @@ export async function updateFamilyMemberRole({
   });
   await batch.commit();
 
-  await set(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`), {
+  await mirrorFamilyMemberRole({
+    familyId,
     role,
     userId: targetUserId,
-    updatedAt: Date.now(),
   });
 }
 
@@ -514,15 +514,15 @@ export async function transferFamilyOwnership({
   await batch.commit();
 
   await Promise.all([
-    set(ref(realtimeDb, `familyMembers/${familyId}/${actorUserId}`), {
+    mirrorFamilyMemberRole({
+      familyId,
       role: "VICE_OWNER",
       userId: actorUserId,
-      updatedAt: Date.now(),
     }),
-    set(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`), {
+    mirrorFamilyMemberRole({
+      familyId,
       role: "OWNER",
       userId: targetUserId,
-      updatedAt: Date.now(),
     }),
   ]);
 }
@@ -611,11 +611,16 @@ async function mirrorFamilyMemberRole({
   role: FamilyRole;
   userId: string;
 }) {
-  await set(ref(realtimeDb, `familyMembers/${familyId}/${userId}`), {
-    role,
-    userId,
-    updatedAt: Date.now(),
-  });
+  try {
+    await set(ref(realtimeDb, `familyMembers/${familyId}/${userId}`), {
+      role,
+      userId,
+      updatedAt: Date.now(),
+    });
+  } catch (error) {
+    console.warn("멤버 역할 미러 갱신을 건너뛰었어요.", error);
+    // Firestore가 역할의 원본이다. RTDB 미러는 다음 로그인 또는 Functions 동기화에서 보정된다.
+  }
 }
 
 async function ensureFamilyInviteIndex({

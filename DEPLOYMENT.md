@@ -91,6 +91,8 @@ private_key
 
 GitHub Actions는 배포 전에 이 Secret이 올바른 JSON 형태인지 먼저 검사한다. 값이 비밀번호이거나 일부만 복사된 경우 Firebase Hosting 배포 단계 전에 실패하며, Firebase Hosting URL은 이전 배포 상태 또는 404 상태로 남을 수 있다.
 
+Hosting과 Firestore·Realtime Database Rules까지 push 한 번으로 배포하려면 이 서비스 계정에 Google Cloud IAM 역할 `Firebase Rules Admin`(`roles/firebaserules.admin`)을 추가해야 한다. 이 권한이 없으면 Rules 단계에서 중단되어 Hosting도 배포되지 않는다.
+
 현재 화면에 남아 있는 `FTP_PASSWORD`는 Dothome FTP 배포용 Secret이므로 Firebase Hosting 전환 후에는 사용하지 않는다. 필요 없으면 삭제해도 된다.
 
 Firebase Web App 설정값은 클라이언트 공개 설정이므로 앱 코드에 기본 fallback을 둔다. GitHub Secrets를 등록하면 배포 시 해당 값이 우선 적용되고, 등록하지 않아도 현재 MVP Firebase 프로젝트로 빌드된다.
@@ -189,11 +191,9 @@ Firebase Hosting 이전은 완료된 상태다.
 
 ## Firebase Rules 배포
 
-Hosting 배포와 Firebase Rules 배포는 분리한다. Realtime Database Rules를 수정한 뒤에는 GitHub Actions의 `Firebase Database Rules Deploy` workflow를 `Run workflow`로 실행한다.
+현재 `master` push workflow는 Hosting과 함께 `firestore.rules`, `database.rules.json`을 자동 배포한다. Realtime Database Rules만 다시 게시해야 할 때는 GitHub Actions의 `Firebase Database Rules Deploy` workflow를 `Run workflow`로 실행할 수 있다.
 
-이 workflow는 Firebase Rules 에뮬레이터 테스트, 서비스 계정 JSON 검증, `database.rules.json` 배포 순서로 동작한다.
-
-서비스 계정에는 Realtime Database Rules를 배포할 수 있는 Firebase/Google Cloud 권한이 필요하다. 권한이 없으면 Hosting 배포에는 영향이 없고 Rules workflow만 실패한다.
+두 workflow 모두 Firebase Rules 에뮬레이터 테스트, 서비스 계정 JSON 검증, Rules 배포 순서로 동작한다. 서비스 계정에 `Firebase Rules Admin` 권한이 없으면 Rules 단계에서 실패하므로 IAM 역할을 먼저 추가해야 한다.
 
 ## Firebase Functions 운영 배포
 
