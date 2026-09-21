@@ -12,6 +12,7 @@ import {
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
 import { useFamily } from "../../features/family/useFamily";
@@ -128,11 +129,8 @@ export function AppHeader() {
   }, [isNotificationsOpen]);
 
   return (
-    <header
-      className={`fixed inset-x-0 top-0 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl ${
-        isNotificationsOpen ? "z-[60]" : "z-30"
-      }`}
-    >
+    <>
+    <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           {isSettings ? (
@@ -232,79 +230,6 @@ export function AppHeader() {
               )}
             </Link>
           ) : null}
-          {isNotificationsOpen ? (
-            <>
-              <button
-                aria-label="알림 닫기"
-                className="fixed inset-0 z-40 cursor-default bg-slate-950/20"
-                onClick={() => setIsNotificationsOpen(false)}
-                type="button"
-              />
-              <aside
-                aria-label="알림"
-                className="fixed right-0 top-0 z-50 flex h-dvh w-[280px] max-w-[calc(100vw-24px)] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl side-panel-enter"
-              >
-                <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
-                  <h2 className="text-lg font-semibold">알림</h2>
-                  <button
-                    aria-label="알림 닫기"
-                    className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-[var(--color-text-primary)]"
-                    onClick={() => setIsNotificationsOpen(false)}
-                    type="button"
-                  >
-                    <X size={22} weight="regular" />
-                  </button>
-                </div>
-                <div className="min-h-0 flex-1 overflow-y-auto p-3">
-                  <div className="grid gap-4">
-                    <NotificationSection
-                      icon={<CalendarCheck size={18} weight="bold" />}
-                      items={notificationCalendarEvents.slice(0, 3).map((event) => ({
-                        description: `${formatNotificationDate(event.startDate)}${event.isDayOff ? " · 휴무" : ""}`,
-                        label: event.title,
-                        to: "/calendar",
-                      }))}
-                      title="캘린더"
-                    />
-                    <NotificationSection
-                      icon={<SealQuestion size={18} weight="bold" />}
-                      items={notificationPolls.slice(0, 3).map((poll) => ({
-                        description: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
-                        label: poll.title,
-                        to: "/poll",
-                      }))}
-                      title="투표"
-                    />
-                    <NotificationSection
-                      icon={<ChatCircleDots size={18} weight="bold" />}
-                      items={notificationChatRooms
-                        .map((room) => ({
-                          message: notificationIncomingMessages[room.id],
-                          room,
-                        }))
-                        .filter(({ message }) => message !== null && message !== undefined)
-                        .slice(0, 3)
-                        .map(({ message, room }) => ({
-                          description: truncateNotificationText(message?.text ?? "새 메시지가 있어요."),
-                          label: room.name,
-                          to: "/chat",
-                        }))}
-                      title="채팅"
-                    />
-                    <NotificationSection
-                      icon={<NotePencil size={18} weight="bold" />}
-                      items={notificationMemos.slice(0, 3).map((memo) => ({
-                        description: memo.type === "SENSITIVE" ? "민감 메모" : "공유 메모",
-                        label: memo.title,
-                        to: "/memo",
-                      }))}
-                      title="메모"
-                    />
-                  </div>
-                </div>
-              </aside>
-            </>
-          ) : null}
         </div>
       </div>
       {user ? (
@@ -314,6 +239,17 @@ export function AppHeader() {
         />
       ) : null}
     </header>
+    {isNotificationsOpen ? (
+      <NotificationDrawer
+        calendarEvents={notificationCalendarEvents}
+        chatRooms={notificationChatRooms}
+        incomingMessages={notificationIncomingMessages}
+        memos={notificationMemos}
+        onClose={() => setIsNotificationsOpen(false)}
+        polls={notificationPolls}
+      />
+    ) : null}
+    </>
   );
 }
 
@@ -415,6 +351,97 @@ function GroupSwitcher({
         </div>
       </BottomSheet>
     </div>
+  );
+}
+
+function NotificationDrawer({
+  calendarEvents,
+  chatRooms,
+  incomingMessages,
+  memos,
+  onClose,
+  polls,
+}: {
+  calendarEvents: CalendarEvent[];
+  chatRooms: ChatRoom[];
+  incomingMessages: Record<string, ChatMessage | null>;
+  memos: Memo[];
+  onClose: () => void;
+  polls: Poll[];
+}) {
+  return createPortal(
+    <>
+      <button
+        aria-label="알림 닫기"
+        className="fixed inset-0 z-40 cursor-default bg-slate-950/20"
+        onClick={onClose}
+        type="button"
+      />
+      <aside
+        aria-label="알림"
+        className="fixed right-0 top-0 z-50 flex h-dvh w-[280px] max-w-[calc(100vw-24px)] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl side-panel-enter"
+      >
+        <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
+          <h2 className="text-lg font-semibold">알림</h2>
+          <button
+            aria-label="알림 닫기"
+            className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-[var(--color-text-primary)]"
+            onClick={onClose}
+            type="button"
+          >
+            <X size={22} weight="regular" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-3">
+          <div className="grid gap-4">
+            <NotificationSection
+              icon={<CalendarCheck size={18} weight="bold" />}
+              items={calendarEvents.slice(0, 3).map((event) => ({
+                description: `${formatNotificationDate(event.startDate)}${event.isDayOff ? " · 휴무" : ""}`,
+                label: event.title,
+                to: "/calendar",
+              }))}
+              title="캘린더"
+            />
+            <NotificationSection
+              icon={<SealQuestion size={18} weight="bold" />}
+              items={polls.slice(0, 3).map((poll) => ({
+                description: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
+                label: poll.title,
+                to: "/poll",
+              }))}
+              title="투표"
+            />
+            <NotificationSection
+              icon={<ChatCircleDots size={18} weight="bold" />}
+              items={chatRooms
+                .map((room) => ({
+                  message: incomingMessages[room.id],
+                  room,
+                }))
+                .filter(({ message }) => message !== null && message !== undefined)
+                .slice(0, 3)
+                .map(({ message, room }) => ({
+                  description: truncateNotificationText(message?.text ?? "새 메시지가 있어요."),
+                  label: room.name,
+                  to: "/chat",
+                }))}
+              title="채팅"
+            />
+            <NotificationSection
+              icon={<NotePencil size={18} weight="bold" />}
+              items={memos.slice(0, 3).map((memo) => ({
+                description: memo.type === "SENSITIVE" ? "민감 메모" : "공유 메모",
+                label: memo.title,
+                to: "/memo",
+              }))}
+              title="메모"
+            />
+          </div>
+        </div>
+      </aside>
+    </>,
+    document.body
   );
 }
 
