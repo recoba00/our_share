@@ -30,7 +30,21 @@ export function useMyLocationShare({
   const [sharedFamilyId, setSharedFamilyId] = useState<string | null>(null);
   const lastSentPositionRef = useRef<SentPosition | null>(null);
   const isSendingRef = useRef(false);
+  const sharingScopeRef = useRef<string | null>(null);
   const clearMessage = useCallback(() => setMessage(""), []);
+
+  useEffect(() => {
+    const nextScope =
+      familyId && userId && sharedFamilyId === familyId ? `${userId}:${familyId}` : null;
+
+    if (sharingScopeRef.current === nextScope) {
+      return;
+    }
+
+    sharingScopeRef.current = nextScope;
+    lastSentPositionRef.current = null;
+    isSendingRef.current = false;
+  }, [familyId, sharedFamilyId, userId]);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {

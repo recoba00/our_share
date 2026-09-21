@@ -1186,6 +1186,7 @@ function FamilyLocationMap({
   );
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<KakaoMap | null>(null);
+  const pinsRef = useRef(pins);
   const [mapStatus, setMapStatus] = useState<"FALLBACK" | "LOADING" | "READY">("FALLBACK");
   const [mapError, setMapError] = useState("");
   const [projectedPositions, setProjectedPositions] = useState<Record<string, MapPinPosition>>({});
@@ -1200,6 +1201,16 @@ function FamilyLocationMap({
         ])
       : []
   );
+  const pinSignature = pins
+    .map(
+      ({ location, member }) =>
+        `${member.userId}:${location.latitude.toFixed(6)},${location.longitude.toFixed(6)}`
+    )
+    .join("|");
+
+  useEffect(() => {
+    pinsRef.current = pins;
+  }, [pins]);
 
   function resetMapView() {
     const map = mapRef.current;
@@ -1255,10 +1266,27 @@ function FamilyLocationMap({
   useEffect(() => {
     let active = true;
 
+    if (pins.length === 0) {
+      mapRef.current = null;
+      return () => {
+        active = false;
+      };
+    }
+
+    const existingMap = mapRef.current;
+
+    if (existingMap) {
+      existingMap.relayout();
+      setProjectedPositions(projectKakaoPinPositions(existingMap, pinsRef.current));
+      return () => {
+        active = false;
+      };
+    }
+
     async function initializeMap() {
       const container = mapContainerRef.current;
 
-      if (!container || pins.length === 0) {
+      if (!container) {
         return;
       }
 
@@ -1273,39 +1301,40 @@ function FamilyLocationMap({
         }
 
         const kakao = getKakaoMaps();
-        const center = getAverageLocation(pins.map((pin) => pin.location));
-        const map =
-          mapRef.current ??
-          new kakao.Map(container, {
-            center: new kakao.LatLng(center.latitude, center.longitude),
-            level: 5,
-          });
+        const currentPins = pinsRef.current;
+        const center = getAverageLocation(currentPins.map((pin) => pin.location));
+        const map = new kakao.Map(container, {
+          center: new kakao.LatLng(center.latitude, center.longitude),
+          level: 5,
+        });
 
         mapRef.current = map;
         map.setDraggable(true);
         map.setZoomable(true);
 
         const kakaoBounds = new kakao.LatLngBounds();
-        pins.forEach(({ location }) => {
+        currentPins.forEach(({ location }) => {
           kakaoBounds.extend(new kakao.LatLng(location.latitude, location.longitude));
         });
 
-        if (pins.length > 1) {
+        if (currentPins.length > 1) {
           map.setBounds(kakaoBounds, 44, 44, 44, 44);
         } else {
           map.setCenter(new kakao.LatLng(center.latitude, center.longitude));
         }
 
         kakao.event.addListener(map, "idle", () => {
-          if (active) {
-            setProjectedPositions(projectKakaoPinPositions(map, pins));
+          const latestPins = pinsRef.current;
+
+          if (latestPins.length > 0) {
+            setProjectedPositions(projectKakaoPinPositions(map, latestPins));
           }
         });
 
         window.setTimeout(() => {
           if (active) {
             map.relayout();
-            setProjectedPositions(projectKakaoPinPositions(map, pins));
+            setProjectedPositions(projectKakaoPinPositions(map, pinsRef.current));
             setMapStatus("READY");
           }
         }, 100);
@@ -1322,7 +1351,7 @@ function FamilyLocationMap({
     return () => {
       active = false;
     };
-  }, [pins]);
+  }, [pinSignature, pins.length]);
 
   useEffect(() => {
     if (mapStatus !== "READY" || pins.length === 0) {
