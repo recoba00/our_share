@@ -1,0 +1,10 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="1200" height="630" fill="#F8FAFC"/>
+  <rect x="48" y="48" width="1104" height="534" rx="32" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="2"/>
+  <rect x="112" y="184" width="224" height="224" rx="48" fill="#0F172A"/>
+  <image href="brand-logo.svg" x="112" y="184" width="224" height="224" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="416" y="184" width="8" height="224" rx="4" fill="#10B981"/>
+  <text x="480" y="264" fill="#0F172A" font-family="Pretendard, Arial, sans-serif" font-size="68" font-weight="700">우리끼리</text>
+  <text x="484" y="336" fill="#475569" font-family="Pretendard, Arial, sans-serif" font-size="30" font-weight="400">멤버와 함께 관리하는 크루 공간</text>
+  <text x="484" y="392" fill="#64748B" font-family="Pretendard, Arial, sans-serif" font-size="24" font-weight="400">위치 · 일정 · 메모 · 투표 · 채팅</text>
+</svg>

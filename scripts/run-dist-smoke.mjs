@@ -55,6 +55,9 @@ if (!existsSync(indexPath)) {
 validateDistFile("manifest.webmanifest");
 validateDistFile("sw.js");
 validateDistFile("pwa-icon.svg");
+validateDistFile("pwa-icon-192.png");
+validateDistFile("pwa-icon-512.png");
+validateDistFile("og-image.png");
 validateAssetsDirectory();
 validateManifest();
 validateServiceWorker();

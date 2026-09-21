@@ -307,7 +307,7 @@ export function HomePage() {
     return (
       <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
         <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
-          <p className="text-sm font-semibold text-brand">우리끼리 스마트 홈</p>
+          <p className="text-sm font-semibold text-brand">우리끼리</p>
           <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
             멤버 위치, 일정, 메모, 투표를 한곳에서 관리해요
           </h2>

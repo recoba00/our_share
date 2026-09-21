@@ -1,7 +1,7 @@
 {
-  "name": "우리끼리 스마트 홈",
-  "short_name": "우리집",
-  "description": "크루 위치, 일정, 메모, 투표, 채팅을 함께 관리하는 크루 전용 PWA",
+  "name": "우리끼리",
+  "short_name": "우리끼리",
+  "description": "멤버 위치, 일정, 메모, 투표, 채팅을 한곳에서 관리하는 크루 전용 PWA",
   "start_url": ".",
   "scope": ".",
   "display": "standalone",
