@@ -17,6 +17,7 @@ import { useConfirmDialog } from "../common/confirmDialogContext";
 import { useToast } from "../common/toastContext";
 import {
   getFamilyMembers,
+  deleteFamilyMember,
   transferFamilyOwnership,
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
@@ -216,6 +217,42 @@ export function ChatMemberDrawer({
     }
   }
 
+  async function handleRemoveFromCrew() {
+    if (!selectedMember) {
+      return;
+    }
+
+    const confirmed = await confirm({
+      confirmLabel: "내보내기",
+      description: `${selectedMember.displayName ?? selectedMember.nickname}님을 크루에서 내보내요. 다시 참여하려면 초대 코드가 필요해요.`,
+      title: "크루에서 내보낼까요?",
+      tone: "danger",
+    });
+
+    if (!confirmed) {
+      return;
+    }
+
+    setIsBusy(true);
+    try {
+      await deleteFamilyMember({
+        actorUserId: currentUserId,
+        familyId,
+        targetUserId: selectedMember.userId,
+      });
+      await refreshMembers();
+      showToast({ message: "크루에서 멤버를 내보냈어요.", variant: "success" });
+      closeActions();
+    } catch (error) {
+      showToast({
+        message: error instanceof Error ? error.message : "크루에서 멤버를 내보내지 못했어요.",
+        variant: "error",
+      });
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
   async function refreshMembers() {
     setMembers(await getFamilyMembers(familyId));
   }
@@ -255,7 +292,7 @@ export function ChatMemberDrawer({
                     <div className="grid gap-2">
                       {visibleMembers.map((member) => (
                         <CrewMemberRow
-                          action={canManageMembers && room?.type === "PRIVATE_GROUP" && member.userId !== currentUserId && member.role !== "OWNER" ? (
+                          action={canManageMembers && member.userId !== currentUserId && member.role !== "OWNER" ? (
                             <IconButton
                               className="size-8 shrink-0"
                               label={`${member.displayName ?? member.nickname} 멤버 관리`}
@@ -324,8 +361,24 @@ export function ChatMemberDrawer({
               <span>크루장 승계</span>
               <FamilyRoleIndicator role="OWNER" />
             </BottomSheetItem>
-            <BottomSheetItem disabled={isBusy} onClick={() => void handleDeleteMember()} tone="danger" type="button">
-              <span>채팅방에서 내보내기</span>
+            {room?.type === "PRIVATE_GROUP" ? (
+              <BottomSheetItem
+                disabled={isBusy}
+                onClick={() => void handleDeleteMember()}
+                tone="danger"
+                type="button"
+              >
+                <span>채팅방에서 내보내기</span>
+                <DotsThreeVertical size={18} />
+              </BottomSheetItem>
+            ) : null}
+            <BottomSheetItem
+              disabled={isBusy}
+              onClick={() => void handleRemoveFromCrew()}
+              tone="danger"
+              type="button"
+            >
+              <span>크루에서 내보내기</span>
               <DotsThreeVertical size={18} />
             </BottomSheetItem>
           </div>

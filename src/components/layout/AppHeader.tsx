@@ -8,6 +8,7 @@ import {
   GearSix,
   NotePencil,
   SealQuestion,
+  Users,
   UsersThree,
   X,
 } from "@phosphor-icons/react";
@@ -40,7 +41,7 @@ type LocationState = {
 };
 
 export function AppHeader() {
-  const { signOut, status, user } = useAuth();
+  const { status, user } = useAuth();
   const { activeFamily, families, selectFamily } = useFamily();
   const { pathname, state } = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
@@ -212,11 +213,6 @@ export function AppHeader() {
           ))}
         </nav>
         <div className="relative flex items-center gap-4">
-          {status === "authenticated" && (
-            <Button className="hidden sm:inline-flex" onClick={signOut} variant="secondary">
-              로그아웃
-            </Button>
-          )}
           {status === "authenticated" && isChatRoom ? (
             <button
               aria-label="참여 멤버 보기"
@@ -224,7 +220,7 @@ export function AppHeader() {
               onClick={() => setIsChatMembersOpen(true)}
               type="button"
             >
-              <UsersThree size={headerIconSize} weight="regular" />
+              <Users size={headerIconSize} weight="regular" />
             </button>
           ) : null}
           {status === "authenticated" && !isSettings ? (
