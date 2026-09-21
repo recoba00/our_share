@@ -98,7 +98,19 @@ jobs:
 
       - name: Deploy Firebase Rules
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: npx -y firebase-tools@latest deploy --only firestore:rules,database --project our-share-6baf5 --non-interactive
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if npx -y firebase-tools@latest deploy --only firestore:rules,database --project our-share-6baf5 --non-interactive; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 5 ]; then
+              echo "Firebase Rules deploy failed on attempt $attempt. Retrying in 30 seconds for IAM propagation..."
+              sleep 30
+            fi
+          done
+
+          exit 1
 
       - name: Deploy to Firebase Hosting
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''

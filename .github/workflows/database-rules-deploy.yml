@@ -66,7 +66,19 @@ jobs:
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
       - name: Deploy Realtime Database Rules
-        run: npx -y firebase-tools@latest deploy --only database --project our-share-6baf5 --non-interactive
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if npx -y firebase-tools@latest deploy --only database --project our-share-6baf5 --non-interactive; then
+              exit 0
+            fi
+
+            if [ "$attempt" -lt 5 ]; then
+              echo "Realtime Database Rules deploy failed on attempt $attempt. Retrying in 30 seconds for IAM propagation..."
+              sleep 30
+            fi
+          done
+
+          exit 1
 
       - name: Remove temporary credentials
         if: always()
