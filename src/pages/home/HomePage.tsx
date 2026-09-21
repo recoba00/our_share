@@ -694,17 +694,13 @@ export function HomePage() {
                     ) : null}
                   </div>
                   <p className="min-w-0 flex-1 truncate text-sm">
-                    <span
-                      className={`inline-flex h-5 max-w-[4.5rem] shrink-0 items-center truncate rounded-full px-1.5 align-middle text-[10px] font-semibold leading-5 ${memberRoleBadgeClass}`}
-                    >
-                      {memberRoleLabel}
-                    </span>
-                    {" "}
                     <strong>{memberName}</strong>
-                    {member.role === "OWNER" ? (
-                      <span className="text-[var(--color-text-secondary)]"> (총 {orderedMembers.length}명)</span>
-                    ) : null}
                   </p>
+                  <span
+                    className={`inline-flex h-5 max-w-[5.5rem] shrink-0 items-center truncate rounded-full px-1.5 text-[10px] font-semibold leading-5 ${memberRoleBadgeClass}`}
+                  >
+                    {memberRoleLabel}
+                  </span>
                   {member.role === "OWNER" && isFamilyOwner ? (
                     <Link
                       aria-label="크루 설정"
