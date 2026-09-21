@@ -67,7 +67,7 @@ Firebase 사용.
 - Firestore: 일반 앱 데이터 저장
 - Realtime Database: 실시간 위치, 접속 상태, 기기 상태 저장
 - Firebase Storage: MVP에서는 사용하지 않고 후순위로 보류
-- Cloud Functions: 알림 발송, 민감정보 서버 처리, 가족 초대 처리, 예약 알림
+- Cloud Functions: MVP에서는 에뮬레이터 테스트만 유지하고 운영 배포를 보류한다. Cloud Functions 운영 배포는 Blaze 요금제가 필요하므로 무료 Spark 운영 범위에 포함하지 않는다.
 
 ## 외부 연동
 
@@ -80,6 +80,7 @@ Firebase 사용.
 - Cloud Firestore: 서울 리전
 - Realtime Database: 싱가포르 리전, `https://our-share-6baf5-default-rtdb.asia-southeast1.firebasedatabase.app`
 - Firebase Storage: Spark 요금제에서는 보류
+- Cloud Functions: Spark 무료 운영 정책에 따라 운영 배포 보류. `functions-deploy.yml`은 Blaze 확인 입력 없이는 실행되지 않는다.
 - Firebase Web App: 생성 완료
 - Kakao Map JavaScript API: `VITE_KAKAO_MAP_JAVASCRIPT_KEY` 사용
 - Kakao 플랫폼 허용 도메인: `http://localhost:5173`, `https://our-share-6baf5.web.app`

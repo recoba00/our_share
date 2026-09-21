@@ -1,10 +1,17 @@
-name: Firebase Functions Deploy
+name: Firebase Functions Deploy (Blaze only)
 
 on:
   workflow_dispatch:
+    inputs:
+      confirm_blaze_deploy:
+        description: "Blaze 요금제로 전환했고 Functions 배포를 승인합니다"
+        required: true
+        type: boolean
+        default: false
 
 jobs:
   deploy-functions:
+    if: ${{ inputs.confirm_blaze_deploy == true }}
     name: Build, test, and deploy Firebase Functions
     runs-on: ubuntu-latest
     env:

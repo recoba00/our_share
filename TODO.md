@@ -1,5 +1,12 @@
 # TODO
 
+## 무료 운영 정책
+
+- [x] Spark 요금제 기준 MVP 범위 확정
+- [x] Firebase Storage 운영 사용 보류
+- [x] Cloud Functions 운영 배포 보류 및 에뮬레이터 테스트 유지
+- [ ] Blaze 전환 검토 전 비용·예산·알림 정책 별도 승인
+
 ## 문서 / 기획
 
 - [x] 화면 기획서 작성: `SCREEN_SPEC.md`

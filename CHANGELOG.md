@@ -2,6 +2,11 @@
 
 Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
+## 2026-09-21
+
+- 무료 Spark 운영 정책을 문서화하고 Firebase Storage·Cloud Functions 운영 배포를 MVP 범위에서 제외했다.
+- Functions 수동 배포 workflow에 `confirm_blaze_deploy` 확인 입력을 추가해 Blaze 전환 없이는 운영 배포가 실행되지 않도록 보호했다.
+
 ## 2026-09-17
 
 - 역할 변경·크루장 승계가 Firestore 저장 후 RTDB 미러 권한 오류로 실패처럼 보이지 않도록 미러 갱신을 best-effort로 처리했다.
