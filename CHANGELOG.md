@@ -6,6 +6,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 - 키보드 입력이 필요한 채팅 투표 생성·메시지 수정·크루 생성 UI를 공통 전체 화면 입력 레이어로 통일했다.
 - 전체 화면 입력 레이어가 모바일 `visualViewport` 크기를 따라가도록 보완해 키보드가 열려도 포커스 필드와 닫기 헤더가 가려지지 않게 했다.
+- Firestore·Realtime Database Rules 배포 권한 부족으로 Hosting 자동 배포가 막히지 않도록 Hosting workflow와 Rules 배포를 분리했다. Rules는 별도 수동 배포 대상으로 유지한다.
 
 - 무료 Spark 운영 정책을 문서화하고 Firebase Storage·Cloud Functions 운영 배포를 MVP 범위에서 제외했다.
 - Functions 수동 배포 workflow에 `confirm_blaze_deploy` 확인 입력을 추가해 Blaze 전환 없이는 운영 배포가 실행되지 않도록 보호했다.

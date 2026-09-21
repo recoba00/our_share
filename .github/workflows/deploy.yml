@@ -88,22 +88,6 @@ jobs:
           console.log('Firebase service account secret shape is valid.');
           NODE
 
-      - name: Configure Firebase service account
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        env:
-          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
-        run: |
-          printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
-
-      - name: Deploy Firestore rules
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: npx -y firebase-tools@latest deploy --only firestore:rules --project our-share-6baf5 --non-interactive
-
-      - name: Deploy Realtime Database rules
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: npx -y firebase-tools@latest deploy --only database --project our-share-6baf5 --non-interactive
-
       - name: Deploy to Firebase Hosting
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -127,7 +111,3 @@ jobs:
         run: |
           echo "Firebase Hosting deploy skipped."
           echo "Add FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 to GitHub Actions repository secrets."
-
-      - name: Remove temporary credentials
-        if: always() && env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: rm -f "$RUNNER_TEMP/firebase-service-account.json"
