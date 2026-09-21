@@ -2,7 +2,6 @@ import {
   ArrowLeft,
   Check,
   DotsThreeVertical,
-  UserList,
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -13,6 +12,7 @@ import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
 import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { IconButton } from "../common/IconButton";
+import { CrewMemberRow } from "../family/CrewMemberRow";
 import { useConfirmDialog } from "../common/confirmDialogContext";
 import { useToast } from "../common/toastContext";
 import {
@@ -236,10 +236,7 @@ export function ChatMemberDrawer({
                 className="fixed right-0 top-0 z-50 flex h-dvh w-[280px] max-w-[calc(100vw-24px)] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl side-panel-enter"
               >
                 <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <UserList className="shrink-0 text-brand" size={20} weight="regular" />
-                    <h2 className="truncate text-lg font-semibold">참여 멤버</h2>
-                  </div>
+                  <h2 className="truncate text-lg font-semibold">참여 멤버</h2>
                   <IconButton
                     className="size-8 rounded-none bg-transparent hover:bg-transparent"
                     label="참여 멤버 닫기"
@@ -255,23 +252,10 @@ export function ChatMemberDrawer({
                   ) : visibleMembers.length === 0 ? (
                     <p className="px-2 py-4 text-sm text-[var(--color-text-secondary)]">참여 멤버가 없어요.</p>
                   ) : (
-                    <div className="grid gap-1">
+                    <div className="grid gap-2">
                       {visibleMembers.map((member) => (
-                        <div className="flex min-w-0 items-center gap-2 rounded-xl px-2 py-2" key={member.userId}>
-                          <Avatar
-                            alt={member.displayName ?? member.nickname}
-                            className="size-9 shrink-0"
-                            src={member.photoURL}
-                          />
-                          <div className="min-w-0 flex-1">
-                            <strong className="block truncate text-sm font-semibold">
-                              {member.displayName ?? member.nickname}
-                            </strong>
-                            <div className="mt-0.5 flex items-center gap-1">
-                              <FamilyRoleIndicator role={member.role} />
-                            </div>
-                          </div>
-                          {canManageMembers && room?.type === "PRIVATE_GROUP" && member.userId !== currentUserId && member.role !== "OWNER" ? (
+                        <CrewMemberRow
+                          action={canManageMembers && room?.type === "PRIVATE_GROUP" && member.userId !== currentUserId && member.role !== "OWNER" ? (
                             <IconButton
                               className="size-8 shrink-0"
                               label={`${member.displayName ?? member.nickname} 멤버 관리`}
@@ -285,7 +269,9 @@ export function ChatMemberDrawer({
                               <DotsThreeVertical size={19} />
                             </IconButton>
                           ) : null}
-                        </div>
+                          key={member.userId}
+                          member={member}
+                        />
                       ))}
                     </div>
                   )}

@@ -25,6 +25,7 @@ import { Card } from "../../components/common/Card";
 import { SignInConsentButton } from "../../components/compliance/SignInConsentButton";
 import { PolicyDocumentView } from "../../components/compliance/PolicyDocumentView";
 import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
+import { CrewMemberRow } from "../../components/family/CrewMemberRow";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
@@ -664,44 +665,15 @@ export function HomePage() {
           멤버들의 역할과 상태를 한눈에 확인해요.
         </p>
         {orderedMembers.length > 0 ? (
-          <div className="mt-4 min-w-0 divide-y divide-[var(--color-border)]">
+          <div className="mt-4 grid min-w-0 gap-2">
             {visibleMembers.map((member) => {
               const memberName = member.displayName ?? member.nickname;
-              const memberRoleLabel =
-                member.role === "OWNER"
-                  ? "크루장"
-                  : member.role === "VICE_OWNER"
-                    ? "부크루장"
-                    : "멤버";
-              const memberRoleBadgeClass =
-                member.role === "OWNER"
-                  ? "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
-                  : member.role === "VICE_OWNER"
-                    ? "bg-orange-100 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 
               return (
-                <div
-                  className="flex min-w-0 items-center gap-2 py-1.5"
+                <CrewMemberRow
                   key={member.userId}
-                >
-                  <div className="relative size-9 shrink-0">
-                    <Avatar alt={memberName} className="size-9" src={member.photoURL} />
-                    {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
-                      <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[var(--color-surface)]">
-                        <FamilyRoleIndicator className="!size-4" role={member.role} />
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="min-w-0 flex-1 truncate text-sm">
-                    <strong>{memberName}</strong>
-                  </p>
-                  <span
-                    className={`inline-flex h-5 max-w-[5.5rem] shrink-0 items-center truncate rounded-full px-1.5 text-[10px] font-semibold leading-5 ${memberRoleBadgeClass}`}
-                  >
-                    {memberRoleLabel}
-                  </span>
-                  {member.role === "OWNER" && isFamilyOwner ? (
+                  member={member}
+                  action={member.role === "OWNER" && isFamilyOwner ? (
                     <Link
                       aria-label="크루 설정"
                       className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
@@ -733,7 +705,7 @@ export function HomePage() {
                       <SignOut size={18} weight="bold" />
                     </button>
                   ) : null}
-                </div>
+                />
               );
             })}
             {hasMoreMembers ? (
