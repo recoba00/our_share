@@ -8,7 +8,6 @@ import {
   GearSix,
   NotePencil,
   SealQuestion,
-  UserList,
   UsersThree,
   X,
 } from "@phosphor-icons/react";
@@ -64,6 +63,7 @@ export function AppHeader() {
   const chatRoomId = isChatRoom ? pathname.split("/")[2] ?? "" : "";
   const activeFamilyId = activeFamily?.id;
   const userId = user?.uid;
+  const headerIconSize = 20;
 
   useEffect(() => {
     if (!isChatRoom || !activeFamilyId || !userId || !chatRoomId) {
@@ -224,7 +224,7 @@ export function AppHeader() {
               onClick={() => setIsChatMembersOpen(true)}
               type="button"
             >
-              <UserList size={21} weight="regular" />
+              <UsersThree size={headerIconSize} weight="regular" />
             </button>
           ) : null}
           {status === "authenticated" && !isSettings ? (
@@ -234,7 +234,7 @@ export function AppHeader() {
               onClick={() => setIsNotificationsOpen((isOpen) => !isOpen)}
               type="button"
             >
-              <Bell size={21} />
+              <Bell size={headerIconSize} />
               <span className="absolute right-1 top-1 size-1.5 rounded-full bg-brand" />
             </button>
           ) : null}
