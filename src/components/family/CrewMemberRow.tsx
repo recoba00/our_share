@@ -29,7 +29,7 @@ export function CrewMemberRow({
   const memberName = member.displayName ?? member.nickname;
 
   return (
-    <div className="flex min-w-0 items-center gap-2 rounded-xl bg-[var(--color-surface-muted)] px-3 py-2">
+    <div className="flex min-w-0 items-center gap-2 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface-muted)] px-3 py-2 shadow-sm">
       <div className="relative size-9 shrink-0">
         <Avatar alt={memberName} className="size-9" src={member.photoURL} />
         {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
