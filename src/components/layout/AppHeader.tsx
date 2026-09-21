@@ -9,25 +9,28 @@ import {
   NotePencil,
   SealQuestion,
   UsersThree,
+  X,
 } from "@phosphor-icons/react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { Input } from "../common/Input";
 import { useAuth } from "../../features/auth/useAuth";
-import { createFamily } from "../../features/family/services/familyService";
 import { useFamily } from "../../features/family/useFamily";
-import {
-  limitFamilyNameInput,
-  MAX_FAMILY_NAME_LENGTH,
-  truncateFamilyName,
-} from "../../features/family/utils/familyName";
+import { truncateFamilyName } from "../../features/family/utils/familyName";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
+import { CreateFamilySheet } from "../common/CreateFamilySheet";
 import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { SegmentedControl } from "../common/SegmentedControl";
-import { useToast } from "../common/toastContext";
 import type { Family } from "../../features/family/types/familyTypes";
+import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
+import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
+import { subscribeChatRooms, subscribeMessages } from "../../features/chat/services/chatService";
+import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
+import { subscribeMemos } from "../../features/memo/services/memoService";
+import type { Memo } from "../../features/memo/types/memoTypes";
+import { subscribePolls } from "../../features/poll/services/pollService";
+import type { Poll } from "../../features/poll/types/pollTypes";
 import { mainNavigationItems } from "../navigation/navigationItems";
 
 type LocationState = {
@@ -36,19 +39,80 @@ type LocationState = {
 
 export function AppHeader() {
   const { signOut, status, user } = useAuth();
-  const { activeFamily, families, refreshFamilies, selectFamily } = useFamily();
-  const { showToast } = useToast();
+  const { activeFamily, families, selectFamily } = useFamily();
   const { pathname, state } = useLocation();
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isCreateFamilyOpen, setIsCreateFamilyOpen] = useState(false);
-  const [newFamilyName, setNewFamilyName] = useState("");
-  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
+  const [notificationCalendarEvents, setNotificationCalendarEvents] = useState<CalendarEvent[]>([]);
+  const [notificationPolls, setNotificationPolls] = useState<Poll[]>([]);
+  const [notificationChatRooms, setNotificationChatRooms] = useState<ChatRoom[]>([]);
+  const [notificationIncomingMessages, setNotificationIncomingMessages] = useState<
+    Record<string, ChatMessage | null>
+  >({});
+  const [notificationMemos, setNotificationMemos] = useState<Memo[]>([]);
   const locationState = state as LocationState | null;
   const title = getPageTitle(pathname);
   const isHome = title === "우리끼리";
   const isProfile = pathname.startsWith("/profile");
   const isSettings = pathname.startsWith("/settings");
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
+  const activeFamilyId = activeFamily?.id;
+  const userId = user?.uid;
+
+  useEffect(() => {
+    if (!isNotificationsOpen || !activeFamilyId || !userId) {
+      return;
+    }
+
+    const unsubscribes = [
+      subscribeCalendarEvents({
+        familyId: activeFamilyId,
+        onChange: setNotificationCalendarEvents,
+        userId,
+      }),
+      subscribePolls({
+        familyId: activeFamilyId,
+        onChange: setNotificationPolls,
+      }),
+      subscribeChatRooms({
+        familyId: activeFamilyId,
+        onChange: setNotificationChatRooms,
+        userId,
+      }),
+      subscribeMemos({
+        familyId: activeFamilyId,
+        onChange: setNotificationMemos,
+        userId,
+      }),
+    ];
+
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+  }, [activeFamilyId, isNotificationsOpen, userId]);
+
+  useEffect(() => {
+    if (!isNotificationsOpen || !activeFamilyId || !userId || notificationChatRooms.length === 0) {
+      return;
+    }
+
+    const unsubscribes = notificationChatRooms.slice(0, 6).map((room) =>
+      subscribeMessages({
+        familyId: activeFamilyId,
+        onChange: (messages) => {
+          const incomingMessage = [...messages]
+            .reverse()
+            .find((message) => message.createdBy !== userId);
+
+          setNotificationIncomingMessages((current) => ({
+            ...current,
+            [room.id]: incomingMessage ?? null,
+          }));
+        },
+        roomId: room.id,
+      })
+    );
+
+    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+  }, [activeFamilyId, isNotificationsOpen, notificationChatRooms, userId]);
 
   return (
     <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
@@ -152,104 +216,88 @@ export function AppHeader() {
             </Link>
           ) : null}
           {isNotificationsOpen ? (
-            <div className="absolute right-0 top-14 z-30 w-[min(320px,calc(100vw-32px))] rounded-2xl border border-[var(--color-border)] bg-[var(--color-surface)] p-2 shadow-xl">
-              <NotificationLink
-                description="오늘 일정과 월간 일정을 확인하세요."
-                icon={<CalendarCheck size={20} weight="bold" />}
-                label="캘린더 확인"
+            <>
+              <button
+                aria-label="알림 닫기"
+                className="fixed inset-0 z-40 cursor-default bg-slate-950/20"
                 onClick={() => setIsNotificationsOpen(false)}
-                to="/calendar"
+                type="button"
               />
-              <NotificationLink
-                description="진행 중인 크루 투표를 확인하세요."
-                icon={<SealQuestion size={20} weight="bold" />}
-                label="투표 확인"
-                onClick={() => setIsNotificationsOpen(false)}
-                to="/poll"
-              />
-              <NotificationLink
-                description="크루 채팅방 새 소식을 확인하세요."
-                icon={<ChatCircleDots size={20} weight="bold" />}
-                label="채팅 확인"
-                onClick={() => setIsNotificationsOpen(false)}
-                to="/chat"
-              />
-              <NotificationLink
-                description="최근 공유 메모를 확인하세요."
-                icon={<NotePencil size={20} weight="bold" />}
-                label="메모 확인"
-                onClick={() => setIsNotificationsOpen(false)}
-                to="/memo"
-              />
-            </div>
+              <aside
+                aria-label="알림"
+                className="fixed right-0 top-0 z-50 flex h-dvh w-[280px] max-w-[calc(100vw-24px)] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl side-panel-enter"
+              >
+                <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
+                  <h2 className="text-lg font-semibold">알림</h2>
+                  <button
+                    aria-label="알림 닫기"
+                    className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-[var(--color-text-primary)]"
+                    onClick={() => setIsNotificationsOpen(false)}
+                    type="button"
+                  >
+                    <X size={22} weight="regular" />
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                  <div className="grid gap-4">
+                    <NotificationSection
+                      icon={<CalendarCheck size={18} weight="bold" />}
+                      items={notificationCalendarEvents.slice(0, 3).map((event) => ({
+                        description: `${formatNotificationDate(event.startDate)}${event.isDayOff ? " · 휴무" : ""}`,
+                        label: event.title,
+                        to: "/calendar",
+                      }))}
+                      title="캘린더"
+                    />
+                    <NotificationSection
+                      icon={<SealQuestion size={18} weight="bold" />}
+                      items={notificationPolls.slice(0, 3).map((poll) => ({
+                        description: poll.type === "DATE" ? "날짜 투표" : "일반 투표",
+                        label: poll.title,
+                        to: "/poll",
+                      }))}
+                      title="투표"
+                    />
+                    <NotificationSection
+                      icon={<ChatCircleDots size={18} weight="bold" />}
+                      items={notificationChatRooms
+                        .map((room) => ({
+                          message: notificationIncomingMessages[room.id],
+                          room,
+                        }))
+                        .filter(({ message }) => message !== null && message !== undefined)
+                        .slice(0, 3)
+                        .map(({ message, room }) => ({
+                          description: truncateNotificationText(message?.text ?? "새 메시지가 있어요."),
+                          label: room.name,
+                          to: "/chat",
+                        }))}
+                      title="채팅"
+                    />
+                    <NotificationSection
+                      icon={<NotePencil size={18} weight="bold" />}
+                      items={notificationMemos.slice(0, 3).map((memo) => ({
+                        description: memo.type === "SENSITIVE" ? "민감 메모" : "공유 메모",
+                        label: memo.title,
+                        to: "/memo",
+                      }))}
+                      title="메모"
+                    />
+                  </div>
+                </div>
+              </aside>
+            </>
           ) : null}
         </div>
       </div>
       {user ? (
-        <BottomSheet
+        <CreateFamilySheet
           isOpen={isCreateFamilyOpen}
-          onClose={() => {
-            setIsCreateFamilyOpen(false);
-            setNewFamilyName("");
-          }}
-          title="크루 생성"
-        >
-          <form className="grid gap-4" onSubmit={(event) => void handleCreateFamily(event)}>
-            <div>
-              <p className="text-sm font-semibold text-brand">새 크루 만들기</p>
-              <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
-                크루를 만든 뒤 바로 해당 크루로 전환합니다.
-              </p>
-            </div>
-            <Input
-              autoFocus
-              label="크루 이름"
-              maxLength={MAX_FAMILY_NAME_LENGTH}
-              onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
-              placeholder="새 크루 이름을 적어주세요"
-              value={newFamilyName}
-            />
-            <Button disabled={isCreatingFamily} loading={isCreatingFamily} type="submit">
-              <UsersThree size={18} weight="bold" />
-              생성하기
-            </Button>
-          </form>
-        </BottomSheet>
+          onClose={() => setIsCreateFamilyOpen(false)}
+        />
       ) : null}
     </header>
   );
-
-  async function handleCreateFamily(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!user) {
-      return;
-    }
-
-    const normalizedName = newFamilyName.trim();
-
-    if (!normalizedName) {
-      showToast({ message: "크루 이름을 적어주세요.", variant: "info" });
-      return;
-    }
-
-    setIsCreatingFamily(true);
-
-    try {
-      const result = await createFamily({ name: normalizedName, owner: user });
-      await refreshFamilies(result.id);
-      setNewFamilyName("");
-      setIsCreateFamilyOpen(false);
-      showToast({ message: "크루를 만들었어요.", variant: "success" });
-    } catch (error) {
-      showToast({
-        message: error instanceof Error ? error.message : "크루를 만들지 못했어요.",
-        variant: "error",
-      });
-    } finally {
-      setIsCreatingFamily(false);
-    }
-  }
 }
 
 function GroupSwitcher({
@@ -353,34 +401,65 @@ function GroupSwitcher({
   );
 }
 
-function NotificationLink({
-  description,
+function NotificationSection({
   icon,
-  label,
-  onClick,
-  to,
+  items,
+  title,
 }: {
-  description: string;
   icon: ReactNode;
-  label: string;
-  onClick: () => void;
-  to: string;
+  items: NotificationItemData[];
+  title: string;
 }) {
   return (
-    <Link
-      className="flex items-start gap-3 rounded-xl p-3 text-left transition hover:bg-[var(--color-surface-muted)]"
-      onClick={onClick}
-      to={to}
-    >
-      <span className="mt-0.5 text-brand">{icon}</span>
-      <span className="min-w-0">
-        <strong className="block text-sm">{label}</strong>
-        <span className="mt-1 block text-xs leading-5 text-[var(--color-text-secondary)]">
-          {description}
-        </span>
-      </span>
-    </Link>
+    <section>
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-brand">{icon}</span>
+        <h3 className="text-sm font-semibold">{title}</h3>
+      </div>
+      {items.length > 0 ? (
+        <div className="mt-2 grid gap-1">
+          {items.map((item) => (
+            <Link
+              className="min-w-0 rounded-xl px-2 py-2 transition hover:bg-[var(--color-surface-muted)]"
+              key={`${item.to}-${item.label}`}
+              to={item.to}
+            >
+              <strong className="block truncate text-sm">{item.label}</strong>
+              <span className="mt-0.5 block truncate text-xs text-[var(--color-text-secondary)]">
+                {item.description}
+              </span>
+            </Link>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-2 px-2 text-xs text-[var(--color-text-secondary)]">새 소식이 없어요.</p>
+      )}
+    </section>
   );
+}
+
+type NotificationItemData = {
+  description: string;
+  label: string;
+  to: string;
+};
+
+function formatNotificationDate(dateValue: string) {
+  const [year, month, day] = dateValue.split("-");
+
+  if (!year || !month || !day) {
+    return "일정이 있어요";
+  }
+
+  return `${month}.${day}`;
+}
+
+function truncateNotificationText(value: string) {
+  const normalizedValue = value.trim();
+
+  return normalizedValue.length > 24
+    ? `${normalizedValue.slice(0, 24)}...`
+    : normalizedValue;
 }
 
 function getPageTitle(pathname: string) {

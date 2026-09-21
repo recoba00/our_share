@@ -10,6 +10,7 @@ import { DesktopWorkspace } from "../../components/layout/DesktopWorkspace";
 import { Input } from "../../components/common/Input";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
+import { CreateFamilySheet } from "../../components/common/CreateFamilySheet";
 import { updateUserProfile } from "../../features/auth/services/authService";
 import { useAuth } from "../../features/auth/useAuth";
 import {
@@ -18,7 +19,6 @@ import {
   truncateFamilyName,
 } from "../../features/family/utils/familyName";
 import {
-  createFamily,
   deleteFamily,
   leaveFamily,
   updateFamily,
@@ -43,9 +43,7 @@ export function ProfilePage() {
     groupTabRequested ? "GROUP" : "MY"
   );
   const [groupRoleTab, setGroupRoleTab] = useState<"OWNER" | "MEMBER">("OWNER");
-  const [isCreatingFamily, setIsCreatingFamily] = useState(false);
-  const [newFamilyName, setNewFamilyName] = useState("");
-  const [isCreating, setIsCreating] = useState(false);
+  const [isCreateFamilyOpen, setIsCreateFamilyOpen] = useState(false);
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -86,33 +84,6 @@ export function ProfilePage() {
       notify(getErrorMessage(error), "error");
     } finally {
       setBusyFamilyId("");
-    }
-  }
-
-  async function handleCreateFamily(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (!user) {
-      return;
-    }
-
-    if (!newFamilyName.trim()) {
-      notify("크루 이름을 적어주세요.", "info");
-      return;
-    }
-
-    setIsCreating(true);
-
-    try {
-      const result = await createFamily({ name: newFamilyName, owner: user });
-      await refreshFamilies(result.id);
-      setNewFamilyName("");
-      setIsCreatingFamily(false);
-      notify("크루를 만들었어요.", "success");
-    } catch (error) {
-      notify(getErrorMessage(error), "error");
-    } finally {
-      setIsCreating(false);
     }
   }
 
@@ -201,6 +172,7 @@ export function ProfilePage() {
   }, [groupTabRequested]);
 
   return (
+    <>
     <DesktopWorkspace
       sidebar={
         <Card className="grid gap-4">
@@ -292,37 +264,6 @@ export function ProfilePage() {
             </p>
           </div>
         </div>
-
-        {isCreatingFamily ? (
-          <form
-            className="mt-4 grid gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-4"
-            onSubmit={handleCreateFamily}
-          >
-            <Input
-              label="크루 이름"
-              maxLength={MAX_FAMILY_NAME_LENGTH}
-              onChange={(event) => setNewFamilyName(limitFamilyNameInput(event.target.value))}
-              placeholder="새 크루 이름을 적어주세요"
-              value={newFamilyName}
-            />
-            <div className="grid grid-cols-2 gap-2">
-              <Button disabled={isCreating} loading={isCreating} type="submit">
-                <Check size={18} weight="bold" />
-                생성하기
-              </Button>
-              <Button
-                onClick={() => {
-                  setIsCreatingFamily(false);
-                  setNewFamilyName("");
-                }}
-                type="button"
-                variant="secondary"
-              >
-                취소
-              </Button>
-            </div>
-          </form>
-        ) : null}
 
         <div className="mt-4">
           <SegmentedControl
@@ -459,17 +400,22 @@ export function ProfilePage() {
         </div>
         <Button
           className="mt-4 w-full"
-          onClick={() => setIsCreatingFamily((current) => !current)}
+          onClick={() => setIsCreateFamilyOpen(true)}
           type="button"
           variant="secondary"
         >
           <Plus size={18} weight="bold" />
-          크루 생성
+          크루 생성하기
         </Button>
       </Card>
         )}
       </div>
     </DesktopWorkspace>
+    <CreateFamilySheet
+      isOpen={isCreateFamilyOpen}
+      onClose={() => setIsCreateFamilyOpen(false)}
+    />
+    </>
   );
 }
 

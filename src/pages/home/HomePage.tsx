@@ -13,7 +13,6 @@ import {
   SignOut,
   Trash,
   GearSix,
-  UserPlus,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -659,7 +658,7 @@ export function HomePage() {
     <div className="grid gap-4">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
         <p className="truncate text-base font-semibold text-brand">
-          오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} 크루
+          오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} ({orderedMembers.length}명)
         </p>
         <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
           멤버들의 역할과 상태를 한눈에 확인해요.
@@ -674,6 +673,12 @@ export function HomePage() {
                   : member.role === "VICE_OWNER"
                     ? "부크루장"
                     : "멤버";
+              const memberRoleBadgeClass =
+                member.role === "OWNER"
+                  ? "bg-amber-100 text-amber-700 dark:bg-amber-400/15 dark:text-amber-300"
+                  : member.role === "VICE_OWNER"
+                    ? "bg-orange-100 text-orange-700 dark:bg-orange-400/15 dark:text-orange-300"
+                    : "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300";
 
               return (
                 <div
@@ -689,7 +694,12 @@ export function HomePage() {
                     ) : null}
                   </div>
                   <p className="min-w-0 flex-1 truncate text-sm">
-                    <span className="text-[var(--color-text-secondary)]">{memberRoleLabel}:</span>{" "}
+                    <span
+                      className={`inline-flex h-5 max-w-[4.5rem] shrink-0 items-center truncate rounded-full px-1.5 align-middle text-[10px] font-semibold leading-5 ${memberRoleBadgeClass}`}
+                    >
+                      {memberRoleLabel}
+                    </span>
+                    <span className="text-[var(--color-text-secondary)]">:</span>{" "}
                     <strong>{memberName}</strong>
                     {member.role === "OWNER" ? (
                       <span className="text-[var(--color-text-secondary)]"> (총 {orderedMembers.length}명)</span>
@@ -820,7 +830,7 @@ export function HomePage() {
         <div>
           <p className="text-base font-semibold">새 크루 참여</p>
           <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
-            초대코드를 입력하면 현재 크루는 유지되고 새 크루에 참여해요.
+            현재 크루를 유지한 채 새 크루에 참여해요.
           </p>
         </div>
         <div className="flex min-w-0 items-end gap-2">
@@ -840,7 +850,6 @@ export function HomePage() {
             onClick={() => void handleJoinFamily()}
             variant="secondary"
           >
-            <UserPlus size={18} weight="bold" />
             참여하기
           </Button>
         </div>
