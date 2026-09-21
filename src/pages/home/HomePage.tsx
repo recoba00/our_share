@@ -1,5 +1,4 @@
 import {
-  BatteryHigh,
   ArrowLeft,
   ArrowCounterClockwise,
   CalendarDots,
@@ -15,7 +14,6 @@ import {
   Trash,
   GearSix,
   UserPlus,
-  UsersThree,
 } from "@phosphor-icons/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
@@ -84,6 +82,13 @@ const roleLabels: Record<FamilyRole, string> = {
   OWNER: "크루장",
   PARENT: "부모",
   VICE_OWNER: "부크루장",
+};
+const memberRoleOrder: Record<FamilyRole, number> = {
+  OWNER: 0,
+  VICE_OWNER: 1,
+  PARENT: 2,
+  MEMBER: 3,
+  CHILD: 4,
 };
 const kakaoMapJavaScriptKey =
   import.meta.env.VITE_KAKAO_MAP_JAVASCRIPT_KEY ||
@@ -179,6 +184,7 @@ export function HomePage() {
   const [inviteCode, setInviteCode] = useState("");
   const [isJoiningFamily, setIsJoiningFamily] = useState(false);
   const [isLeavingFamily, setIsLeavingFamily] = useState(false);
+  const [expandedMemberFamilyId, setExpandedMemberFamilyId] = useState("");
   const [isLocationConsentOpen, setIsLocationConsentOpen] = useState(false);
   const [isLocationPolicyOpen, setIsLocationPolicyOpen] = useState(false);
   const [isLocationConsentChecked, setIsLocationConsentChecked] = useState(false);
@@ -627,6 +633,14 @@ export function HomePage() {
       : activeFamily?.role ?? "MEMBER";
   const canInviteToFamily = isFamilyOwner || isFamilyViceOwner;
   const viceOwnerCount = members.filter((member) => member.role === "VICE_OWNER").length;
+  const orderedMembers = [...members].sort(
+    (left, right) => memberRoleOrder[left.role] - memberRoleOrder[right.role]
+  );
+  const isMemberListExpanded = expandedMemberFamilyId === activeFamily?.id && Boolean(activeFamily?.id);
+  const visibleMembers = isMemberListExpanded
+    ? orderedMembers
+    : orderedMembers.slice(0, 6);
+  const hasMoreMembers = orderedMembers.length > 6;
   const selectedLocationMember =
     members.find((member) => member.userId === selectedLocationMemberId) ?? null;
   const selectedLocation = selectedLocationMember
@@ -643,47 +657,96 @@ export function HomePage() {
 
   const homeSidebar = (
     <div className="grid gap-4">
-      <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm">
-        <p className="text-sm font-semibold text-brand">
+      <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
+        <p className="truncate text-base font-semibold text-brand">
           오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} 크루
         </p>
-        <h2 className="mt-2 text-2xl font-semibold leading-tight">
-          모두의 위치와 일정을 한눈에 확인해요
-        </h2>
-        <div className="mt-4 grid min-w-0 grid-cols-2 gap-2">
-          {members.slice(0, 4).map((member) => (
-            <div key={member.userId} className="min-w-0 rounded-2xl bg-[var(--color-surface-muted)] p-3">
-              <div className="flex min-w-0 items-center justify-between gap-2">
-                <strong className="min-w-0 truncate text-sm">{member.displayName ?? member.nickname}</strong>
-                <BatteryHigh
-                  className={`shrink-0 ${liveLocations[member.userId]?.charging ? "text-brand" : "text-[var(--color-text-secondary)]"}`}
-                  size={16}
-                />
-              </div>
-              <p className="mt-2 flex min-w-0 items-center gap-1 text-xs">
-                <MapPin className="shrink-0" size={14} weight="fill" />
-                <span className="min-w-0 truncate">
-                  {liveLocations[member.userId]
-                    ? formatLocationPreview(
-                        liveLocations[member.userId],
-                        locationAddresses[member.userId]
-                      )
-                    : "위치 공유 대기"}
-                </span>
-              </p>
-              <p className="mt-1 truncate text-xs text-[var(--color-text-secondary)]">
-                {liveLocations[member.userId]
-                  ? formatUpdatedAt(liveLocations[member.userId].updatedAt)
-                  : "앱에서 현재 위치 공유 필요"}
-              </p>
-            </div>
-          ))}
-          {members.length === 0 && (
-            <div className="col-span-2 rounded-2xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
-              크루를 만들거나 초대 코드로 참여하면 크루 상황이 표시됩니다.
-            </div>
-          )}
-        </div>
+        <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
+          멤버들의 역할과 상태를 한눈에 확인해요.
+        </p>
+        {orderedMembers.length > 0 ? (
+          <div className="mt-4 min-w-0 divide-y divide-[var(--color-border)]">
+            {visibleMembers.map((member) => {
+              const memberName = member.displayName ?? member.nickname;
+              const memberRoleLabel =
+                member.role === "OWNER"
+                  ? "크루장"
+                  : member.role === "VICE_OWNER"
+                    ? "부크루장"
+                    : "멤버";
+
+              return (
+                <div
+                  className="flex min-w-0 items-center gap-2 py-1.5"
+                  key={member.userId}
+                >
+                  <div className="relative size-9 shrink-0">
+                    <Avatar alt={memberName} className="size-9" src={member.photoURL} />
+                    {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
+                      <span className="absolute -right-1 -top-1 grid size-4 place-items-center rounded-full bg-[var(--color-surface)]">
+                        <FamilyRoleIndicator className="!size-4" role={member.role} />
+                      </span>
+                    ) : null}
+                  </div>
+                  <p className="min-w-0 flex-1 truncate text-sm">
+                    <span className="text-[var(--color-text-secondary)]">{memberRoleLabel}:</span>{" "}
+                    <strong>{memberName}</strong>
+                    {member.role === "OWNER" ? (
+                      <span className="text-[var(--color-text-secondary)]"> (총 {orderedMembers.length}명)</span>
+                    ) : null}
+                  </p>
+                  {member.role === "OWNER" && isFamilyOwner ? (
+                    <Link
+                      aria-label="크루 설정"
+                      className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                      to="/profile?tab=group"
+                    >
+                      <GearSix size={18} weight="regular" />
+                    </Link>
+                  ) : isFamilyOwner && member.role !== "OWNER" ? (
+                    <button
+                      aria-label={`${memberName} 관리`}
+                      className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                      onClick={() => {
+                        setSelectedManageMemberId(member.userId);
+                        setMemberManageView("ACTIONS");
+                        setPendingMemberRole(null);
+                      }}
+                      type="button"
+                    >
+                      <DotsThreeVertical size={20} weight="bold" />
+                    </button>
+                  ) : !isFamilyOwner && member.userId === user?.uid ? (
+                    <button
+                      aria-label="크루 나가기"
+                      className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
+                      disabled={isLeavingFamily}
+                      onClick={() => void handleLeaveFamily()}
+                      type="button"
+                    >
+                      <SignOut size={18} weight="bold" />
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+            {hasMoreMembers ? (
+              <button
+                className="w-full pt-3 text-left text-sm font-semibold text-brand"
+                onClick={() =>
+                  setExpandedMemberFamilyId(isMemberListExpanded ? "" : activeFamily?.id ?? "")
+                }
+                type="button"
+              >
+                {isMemberListExpanded ? "멤버 접기" : `멤버 ${orderedMembers.length - 6}명 더 보기`}
+              </button>
+            ) : null}
+          </div>
+        ) : (
+          <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm leading-5 text-[var(--color-text-secondary)]">
+            크루를 만들거나 초대 코드로 참여하면 크루 상황이 표시됩니다.
+          </p>
+        )}
       </section>
 
       <Card>
@@ -707,15 +770,6 @@ export function HomePage() {
                           <span className="truncate">초대코드 {activeFamily.inviteCode}</span>
                           <CopySimple className="shrink-0" size={14} weight="regular" />
                         </button>
-                        {isFamilyOwner ? (
-                          <Link
-                            aria-label="크루 관리하기"
-                            className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                            to="/profile?tab=group"
-                          >
-                            <GearSix size={18} weight="regular" />
-                          </Link>
-                        ) : null}
                       </div>
                     ) : null}
                 </div>
@@ -764,8 +818,8 @@ export function HomePage() {
       </Card>
       <Card className="grid gap-2">
         <div>
-          <p className="text-sm font-semibold">새 크루 참여</p>
-          <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+          <p className="text-base font-semibold">새 크루 참여</p>
+          <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
             초대코드를 입력하면 현재 크루는 유지되고 새 크루에 참여해요.
           </p>
         </div>
@@ -825,68 +879,6 @@ export function HomePage() {
           memos={memos}
           polls={polls}
         />
-
-      <Card>
-        <div className="flex items-center gap-2">
-          <UsersThree className="text-brand" size={22} weight="bold" />
-          <h3 className="text-base font-semibold">크루 멤버</h3>
-        </div>
-        {members.length > 0 ? (
-          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-            {members.map((member) => (
-              <div
-                className="flex min-w-0 items-center gap-3 rounded-2xl bg-[var(--color-surface-muted)] p-3"
-                key={member.userId}
-              >
-                <Avatar
-                  alt={member.displayName ?? member.nickname}
-                  src={member.photoURL}
-                />
-                <div className="min-w-0 flex-1">
-                  <strong className="block truncate">
-                    {member.displayName ?? member.nickname}
-                  </strong>
-                  <div className="mt-1 flex items-center text-xs font-semibold text-[var(--color-text-secondary)]">
-                    {member.role === "OWNER" || member.role === "VICE_OWNER" ? (
-                      <FamilyRoleIndicator role={member.role} />
-                    ) : (
-                      roleLabels[member.role]
-                    )}
-                  </div>
-                </div>
-                {isFamilyOwner && member.role !== "OWNER" ? (
-                  <button
-                    aria-label={`${member.displayName ?? member.nickname} 관리`}
-                    className="grid size-9 shrink-0 place-items-center text-slate-500 transition hover:text-brand"
-                    onClick={() => {
-                      setSelectedManageMemberId(member.userId);
-                      setMemberManageView("ACTIONS");
-                      setPendingMemberRole(null);
-                    }}
-                    type="button"
-                  >
-                    <DotsThreeVertical size={20} weight="bold" />
-                  </button>
-                ) : !isFamilyOwner && member.userId === user?.uid ? (
-                  <button
-                    aria-label="크루 나가기"
-                    className="grid size-9 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-red-600 disabled:opacity-50"
-                    disabled={isLeavingFamily}
-                    onClick={() => void handleLeaveFamily()}
-                    type="button"
-                  >
-                    <SignOut size={20} weight="bold" />
-                  </button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        ) : (
-          <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-            크루를 만들거나 초대 코드로 참여하면 멤버가 표시됩니다.
-          </p>
-        )}
-      </Card>
       </div>
     </DesktopWorkspace>
     <BottomSheet
