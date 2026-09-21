@@ -11,6 +11,7 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 - 제공받은 크루 이미지로 OG 공유 이미지를 교체하고 1200×630px 비율로 최적화했다.
 - 앱 이름을 `우리끼리`로 통일하고 홈 헤더의 브랜드 아이콘을 PWA 설치 아이콘으로 재사용했다.
 - Firebase Hosting 루트와 `/our_share/` 하위 경로 모두에서 manifest·favicon·Apple touch icon을 찾도록 상대 경로로 변경했다.
+- Hosting push 배포가 Firebase Rules IAM 오류로 중단되지 않도록 메인 workflow에서 Rules 단계를 제거하고, Firestore/Realtime Database Rules는 각 수동 workflow에서 독립적으로 배포하도록 정리했다.
 - `og:image`와 Twitter 카드 메타 태그, 1200×630 공유 이미지를 추가해 링크 공유 미리보기를 정리했다.
 - 키보드 입력이 필요한 채팅 투표 생성·메시지 수정·크루 생성 UI를 공통 전체 화면 입력 레이어로 통일했다.
 - 전체 화면 입력 레이어가 모바일 `visualViewport` 크기를 따라가도록 보완해 키보드가 열려도 포커스 필드와 닫기 헤더가 가려지지 않게 했다.

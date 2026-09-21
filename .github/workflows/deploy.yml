@@ -62,56 +62,6 @@ jobs:
       - name: Verify Firebase Hosting candidate
         run: npm run test:dist:firebase
 
-      - name: Validate Firebase service account secret
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        env:
-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
-        run: |
-          node <<'NODE'
-          const raw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-
-          let serviceAccount;
-          try {
-            serviceAccount = JSON.parse(raw);
-          } catch {
-            throw new Error('FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 must be the full Firebase service account JSON object.');
-          }
-
-          if (serviceAccount.project_id !== 'our-share-6baf5') {
-            throw new Error('FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 project_id must be our-share-6baf5.');
-          }
-
-          if (!serviceAccount.client_email || !serviceAccount.private_key) {
-            throw new Error('FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 must include client_email and private_key.');
-          }
-
-          console.log('Firebase service account secret shape is valid.');
-          NODE
-
-      - name: Configure Firebase Admin credentials
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        env:
-          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
-        run: |
-          printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
-          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
-
-      - name: Deploy Firebase Rules
-        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: |
-          for attempt in 1 2 3 4 5; do
-            if npx -y firebase-tools@latest deploy --only firestore:rules,database --project our-share-6baf5 --non-interactive; then
-              exit 0
-            fi
-
-            if [ "$attempt" -lt 5 ]; then
-              echo "Firebase Rules deploy failed on attempt $attempt. Retrying in 30 seconds for IAM propagation..."
-              sleep 30
-            fi
-          done
-
-          exit 1
-
       - name: Deploy to Firebase Hosting
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         uses: FirebaseExtended/action-hosting-deploy@v0
@@ -129,10 +79,6 @@ jobs:
           SMOKE_BASE_URL: https://our-share-6baf5.web.app
           SMOKE_RETRIES: 6
           SMOKE_RETRY_DELAY_MS: 10000
-
-      - name: Remove temporary Firebase credentials
-        if: always() && env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
-        run: rm -f "$RUNNER_TEMP/firebase-service-account.json"
 
       - name: Skip Firebase Hosting deployment
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 == ''
