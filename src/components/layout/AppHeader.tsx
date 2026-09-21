@@ -6,9 +6,9 @@ import {
   Check,
   ChatCircleDots,
   GearSix,
-  List,
   NotePencil,
   SealQuestion,
+  UserList,
   UsersThree,
   X,
 } from "@phosphor-icons/react";
@@ -164,14 +164,6 @@ export function AppHeader() {
               <Link aria-label="채팅 목록으로 돌아가기" className="grid size-8 place-items-center lg:hidden" to="/chat">
                 <ArrowLeft size={22} />
               </Link>
-              <button
-                aria-label="참여 멤버 보기"
-                className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
-                onClick={() => setIsChatMembersOpen(true)}
-                type="button"
-              >
-                <List size={22} weight="regular" />
-              </button>
               <h1 className="min-w-0 truncate text-lg font-semibold leading-none lg:hidden">
                 {locationState?.chatRoomName ?? "채팅방"}
               </h1>
@@ -225,6 +217,16 @@ export function AppHeader() {
               로그아웃
             </Button>
           )}
+          {status === "authenticated" && isChatRoom ? (
+            <button
+              aria-label="참여 멤버 보기"
+              className="grid size-8 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+              onClick={() => setIsChatMembersOpen(true)}
+              type="button"
+            >
+              <UserList size={21} weight="regular" />
+            </button>
+          ) : null}
           {status === "authenticated" && !isSettings ? (
             <button
               aria-label="알림"

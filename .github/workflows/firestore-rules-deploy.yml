@@ -1,0 +1,73 @@
+name: Firebase Firestore Rules Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firebase-firestore-rules
+  cancel-in-progress: false
+
+jobs:
+  deploy-firestore-rules:
+    name: Test and deploy Firestore Rules
+    runs-on: ubuntu-latest
+    env:
+      FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Setup Java for Firebase emulator
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Test Firebase Rules
+        run: npm run test:rules
+
+      - name: Validate service account and configure ADC
+        env:
+          SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
+        run: |
+          node <<'NODE'
+          const raw = process.env.SERVICE_ACCOUNT_JSON;
+          let serviceAccount;
+
+          try {
+            serviceAccount = JSON.parse(raw);
+          } catch {
+            throw new Error('FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 must be the full service account JSON object.');
+          }
+
+          if (serviceAccount.project_id !== 'our-share-6baf5') {
+            throw new Error('The service account must belong to project our-share-6baf5.');
+          }
+
+          if (!serviceAccount.client_email || !serviceAccount.private_key) {
+            throw new Error('The service account must include client_email and private_key.');
+          }
+          NODE
+
+          printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
+          echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
+
+      - name: Deploy Firestore Rules
+        run: npx -y firebase-tools@latest deploy --only firestore:rules --project our-share-6baf5 --non-interactive
+
+      - name: Remove temporary credentials
+        if: always()
+        run: rm -f "$RUNNER_TEMP/firebase-service-account.json"

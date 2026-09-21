@@ -394,6 +394,35 @@ describe("chat message rules", () => {
     );
   });
 
+  it("allows only the family owner to remove a member from a nested private chat room", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob", "chris"],
+      ownerId: "alice",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: ["alice", "bob", "chris"],
+      roomId: "privateRoom",
+      type: "PRIVATE_GROUP",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const roomRef = doc(aliceDb, "families", "familyA", "chatRooms", "privateRoom");
+
+    await assertSucceeds(updateDoc(roomRef, {
+      memberIds: ["alice", "bob"],
+      updatedAt: new Date(),
+    }));
+    await assertFails(updateDoc(doc(bobDb, "families", "familyA", "chatRooms", "privateRoom"), {
+      memberIds: ["alice"],
+      updatedAt: new Date(),
+    }));
+  });
+
   it("allows creators to edit and delete nested text messages only", async () => {
     await seedFamilyWithMembers({
       familyId: "familyA",

@@ -1019,7 +1019,7 @@ export function HomePage() {
             tone="danger"
             type="button"
           >
-            <span>삭제</span>
+            <span>크루에서 내보내기</span>
             <Trash size={18} />
           </BottomSheetItem>
         </div>

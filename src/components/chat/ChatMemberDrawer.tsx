@@ -16,11 +16,11 @@ import { IconButton } from "../common/IconButton";
 import { useConfirmDialog } from "../common/confirmDialogContext";
 import { useToast } from "../common/toastContext";
 import {
-  deleteFamilyMember,
   getFamilyMembers,
   transferFamilyOwnership,
   updateFamilyMemberRole,
 } from "../../features/family/services/familyService";
+import { removeChatRoomMember } from "../../features/chat/services/chatService";
 import type { FamilyMemberProfile, FamilyRole } from "../../features/family/types/familyTypes";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 
@@ -181,14 +181,14 @@ export function ChatMemberDrawer({
   }
 
   async function handleDeleteMember() {
-    if (!selectedMember) {
+    if (!selectedMember || !room) {
       return;
     }
 
     const confirmed = await confirm({
       confirmLabel: "내보내기",
-      description: `${selectedMember.displayName ?? selectedMember.nickname}님을 이 크루에서 내보내요. 다시 참여하려면 초대 코드가 필요해요.`,
-      title: "멤버를 내보낼까요?",
+      description: `${selectedMember.displayName ?? selectedMember.nickname}님을 이 채팅방에서 내보내요. 크루 멤버 자격은 그대로 유지돼요.`,
+      title: "채팅방에서 내보낼까요?",
       tone: "danger",
     });
 
@@ -198,13 +198,13 @@ export function ChatMemberDrawer({
 
     setIsBusy(true);
     try {
-      await deleteFamilyMember({
-        actorUserId: currentUserId,
+      await removeChatRoomMember({
         familyId,
+        roomId: room.id,
         targetUserId: selectedMember.userId,
       });
       await refreshMembers();
-      showToast({ message: "멤버를 크루에서 내보냈어요.", variant: "success" });
+      showToast({ message: "채팅방에서 멤버를 내보냈어요.", variant: "success" });
       closeActions();
     } catch (error) {
       showToast({
@@ -271,7 +271,7 @@ export function ChatMemberDrawer({
                               <FamilyRoleIndicator role={member.role} />
                             </div>
                           </div>
-                          {canManageMembers && member.userId !== currentUserId && member.role !== "OWNER" ? (
+                          {canManageMembers && room?.type === "PRIVATE_GROUP" && member.userId !== currentUserId && member.role !== "OWNER" ? (
                             <IconButton
                               className="size-8 shrink-0"
                               label={`${member.displayName ?? member.nickname} 멤버 관리`}
@@ -339,7 +339,7 @@ export function ChatMemberDrawer({
               <FamilyRoleIndicator role="OWNER" />
             </BottomSheetItem>
             <BottomSheetItem disabled={isBusy} onClick={() => void handleDeleteMember()} tone="danger" type="button">
-              <span>크루에서 내보내기</span>
+              <span>채팅방에서 내보내기</span>
               <DotsThreeVertical size={18} />
             </BottomSheetItem>
           </div>

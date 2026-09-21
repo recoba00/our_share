@@ -205,6 +205,37 @@ export async function deleteChatRoom({
   await deleteDoc(doc(db, "families", familyId, "chatRooms", roomId));
 }
 
+export async function removeChatRoomMember({
+  familyId,
+  roomId,
+  targetUserId,
+}: {
+  familyId: string;
+  roomId: string;
+  targetUserId: string;
+}) {
+  const roomRef = doc(db, "families", familyId, "chatRooms", roomId);
+  const roomSnapshot = await getDoc(roomRef);
+
+  if (!roomSnapshot.exists()) {
+    throw new Error("채팅방을 찾을 수 없어요.");
+  }
+
+  const room = roomSnapshot.data() as ChatRoom;
+  if (room.type !== "PRIVATE_GROUP") {
+    throw new Error("이 채팅방에서는 멤버를 내보낼 수 없어요.");
+  }
+
+  if (!room.memberIds.includes(targetUserId)) {
+    throw new Error("이미 채팅방에 없는 멤버예요.");
+  }
+
+  await updateDoc(roomRef, {
+    memberIds: room.memberIds.filter((memberId) => memberId !== targetUserId),
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export function subscribeChatRooms({
   familyId,
   onChange,
