@@ -6,6 +6,7 @@ import {
   Check,
   ChatCircleDots,
   GearSix,
+  List,
   NotePencil,
   SealQuestion,
   UsersThree,
@@ -33,6 +34,7 @@ import type { Memo } from "../../features/memo/types/memoTypes";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 import { mainNavigationItems } from "../navigation/navigationItems";
+import { ChatMemberDrawer } from "../chat/ChatMemberDrawer";
 
 type LocationState = {
   chatRoomName?: string;
@@ -51,14 +53,31 @@ export function AppHeader() {
     Record<string, ChatMessage | null>
   >({});
   const [notificationMemos, setNotificationMemos] = useState<Memo[]>([]);
+  const [chatRoom, setChatRoom] = useState<ChatRoom | null>(null);
+  const [isChatMembersOpen, setIsChatMembersOpen] = useState(false);
   const locationState = state as LocationState | null;
   const title = getPageTitle(pathname);
   const isHome = title === "우리끼리";
   const isProfile = pathname.startsWith("/profile");
   const isSettings = pathname.startsWith("/settings");
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
+  const chatRoomId = isChatRoom ? pathname.split("/")[2] ?? "" : "";
   const activeFamilyId = activeFamily?.id;
   const userId = user?.uid;
+
+  useEffect(() => {
+    if (!isChatRoom || !activeFamilyId || !userId || !chatRoomId) {
+      return;
+    }
+
+    return subscribeChatRooms({
+      familyId: activeFamilyId,
+      onChange: (rooms) => {
+        setChatRoom(rooms.find((room) => room.id === chatRoomId) ?? null);
+      },
+      userId,
+    });
+  }, [activeFamilyId, chatRoomId, isChatRoom, userId]);
 
   useEffect(() => {
     if (!isNotificationsOpen || !activeFamilyId || !userId) {
@@ -145,6 +164,14 @@ export function AppHeader() {
               <Link aria-label="채팅 목록으로 돌아가기" className="grid size-8 place-items-center lg:hidden" to="/chat">
                 <ArrowLeft size={22} />
               </Link>
+              <button
+                aria-label="참여 멤버 보기"
+                className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                onClick={() => setIsChatMembersOpen(true)}
+                type="button"
+              >
+                <List size={22} weight="regular" />
+              </button>
               <h1 className="min-w-0 truncate text-lg font-semibold leading-none lg:hidden">
                 {locationState?.chatRoomName ?? "채팅방"}
               </h1>
@@ -247,6 +274,16 @@ export function AppHeader() {
         memos={notificationMemos}
         onClose={() => setIsNotificationsOpen(false)}
         polls={notificationPolls}
+      />
+    ) : null}
+    {isChatMembersOpen && activeFamily && user ? (
+      <ChatMemberDrawer
+        currentUserId={user.uid}
+        currentUserRole={activeFamily.role}
+        familyId={activeFamily.id}
+        isOpen={isChatMembersOpen}
+        onClose={() => setIsChatMembersOpen(false)}
+        room={chatRoom}
       />
     ) : null}
     </>
