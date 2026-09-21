@@ -22,6 +22,10 @@ export function BottomSheet({
   title,
 }: BottomSheetProps) {
   const [isVisible, setIsVisible] = useState(isOpen);
+  const [visualViewport, setVisualViewport] = useState<{
+    height: number;
+    offsetTop: number;
+  } | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -50,6 +54,30 @@ export function BottomSheet({
     return () => window.clearTimeout(timeoutId);
   }, [isOpen, isVisible]);
 
+  useEffect(() => {
+    if (!isOpen || !window.visualViewport) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+
+    function syncVisualViewport() {
+      setVisualViewport({
+        height: viewport.height,
+        offsetTop: viewport.offsetTop,
+      });
+    }
+
+    syncVisualViewport();
+    viewport.addEventListener("resize", syncVisualViewport);
+    viewport.addEventListener("scroll", syncVisualViewport);
+
+    return () => {
+      viewport.removeEventListener("resize", syncVisualViewport);
+      viewport.removeEventListener("scroll", syncVisualViewport);
+    };
+  }, [isOpen]);
+
   const isClosing = !isOpen && isVisible;
 
   if (!isOpen && !isVisible) {
@@ -59,10 +87,19 @@ export function BottomSheet({
   return createPortal(
     <div
       aria-modal="true"
-      className={`fixed inset-0 z-50 flex items-end bg-slate-950/45 ${
+      className={`fixed inset-x-0 bottom-0 top-0 z-50 flex items-end bg-slate-950/45 ${
         isClosing ? "sheet-backdrop-exit" : "sheet-backdrop-enter"
       }`}
       role="dialog"
+      style={
+        visualViewport
+          ? {
+              bottom: "auto",
+              height: `${visualViewport.height}px`,
+              top: `${visualViewport.offsetTop}px`,
+            }
+          : undefined
+      }
     >
       <button
         aria-label={closeLabel}

@@ -699,7 +699,7 @@ export function HomePage() {
                     >
                       {memberRoleLabel}
                     </span>
-                    <span className="text-[var(--color-text-secondary)]">:</span>{" "}
+                    {" "}
                     <strong>{memberName}</strong>
                     {member.role === "OWNER" ? (
                       <span className="text-[var(--color-text-secondary)]"> (총 {orderedMembers.length}명)</span>

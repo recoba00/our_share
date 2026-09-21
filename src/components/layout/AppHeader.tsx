@@ -114,8 +114,25 @@ export function AppHeader() {
     return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
   }, [activeFamilyId, isNotificationsOpen, notificationChatRooms, userId]);
 
+  useEffect(() => {
+    if (!isNotificationsOpen) {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isNotificationsOpen]);
+
   return (
-    <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
+    <header
+      className={`fixed inset-x-0 top-0 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl ${
+        isNotificationsOpen ? "z-[60]" : "z-30"
+      }`}
+    >
       <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           {isSettings ? (
