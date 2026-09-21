@@ -12,16 +12,16 @@ jobs:
       FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 24
           cache: npm
 
       - name: Setup Java for Firebase emulator
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
