@@ -1,6 +1,6 @@
 import type { FormEvent } from "react";
 import { UsersThree } from "@phosphor-icons/react";
-import { BottomSheet } from "./BottomSheet";
+import { ActionLayer } from "./ActionLayer";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { useToast } from "./toastContext";
@@ -64,7 +64,7 @@ export function CreateFamilySheet({
   }
 
   return (
-    <BottomSheet isOpen={isOpen} onClose={handleClose} title="크루 생성">
+    <ActionLayer desktop isOpen={isOpen} onClose={handleClose} title="크루 생성">
       <form className="grid gap-4" onSubmit={(event) => void handleSubmit(event)}>
         <div>
           <p className="text-sm font-semibold text-brand">새 크루 만들기</p>
@@ -85,6 +85,6 @@ export function CreateFamilySheet({
           생성하기
         </Button>
       </form>
-    </BottomSheet>
+    </ActionLayer>
   );
 }

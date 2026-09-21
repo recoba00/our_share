@@ -18,14 +18,12 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
-import { BottomSheet } from "../../components/common/BottomSheet";
 import { Card } from "../../components/common/Card";
 import { Avatar } from "../../components/common/Avatar";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { Input } from "../../components/common/Input";
 import { IconButton } from "../../components/common/IconButton";
 import { LoadingState } from "../../components/common/LoadingState";
-import { Modal } from "../../components/common/Modal";
 import { SectionHeading } from "../../components/common/SectionHeading";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
@@ -713,7 +711,8 @@ export function ChatPage() {
           onClick={() => setIsCreateOpen(true)}
         />
       ) : null}
-      <BottomSheet
+      <ActionLayer
+        desktop
         isOpen={isPollCreateOpen}
         onClose={() => setIsPollCreateOpen(false)}
         title="투표 만들기"
@@ -800,8 +799,9 @@ export function ChatPage() {
             </p>
           ) : null}
         </form>
-      </BottomSheet>
-      <Modal
+      </ActionLayer>
+      <ActionLayer
+        desktop
         isOpen={Boolean(editingMessageId)}
         onClose={() => {
           setEditingMessageId("");
@@ -833,7 +833,7 @@ export function ChatPage() {
             <Button type="submit">수정 완료</Button>
           </div>
         </form>
-      </Modal>
+      </ActionLayer>
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:items-start lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <div

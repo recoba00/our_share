@@ -11,6 +11,11 @@ type ActionLayerProps = PropsWithChildren<{
 }>;
 
 export function ActionLayer({ children, desktop = false, isOpen, onClose, title }: ActionLayerProps) {
+  const [visualViewport, setVisualViewport] = useState<{
+    height: number;
+    offsetTop: number;
+  } | null>(null);
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -26,6 +31,31 @@ export function ActionLayer({ children, desktop = false, isOpen, onClose, title 
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
+  useEffect(() => {
+    if (!isOpen || !window.visualViewport) {
+      return;
+    }
+
+    const viewport = window.visualViewport;
+
+    function syncVisualViewport() {
+      setVisualViewport({
+        height: viewport.height,
+        offsetTop: viewport.offsetTop,
+      });
+    }
+
+    syncVisualViewport();
+    viewport.addEventListener("resize", syncVisualViewport);
+    viewport.addEventListener("scroll", syncVisualViewport);
+
+    return () => {
+      viewport.removeEventListener("resize", syncVisualViewport);
+      viewport.removeEventListener("scroll", syncVisualViewport);
+      setVisualViewport(null);
+    };
+  }, [isOpen]);
+
   if (!isOpen) {
     return null;
   }
@@ -35,8 +65,17 @@ export function ActionLayer({ children, desktop = false, isOpen, onClose, title 
       aria-modal="true"
       className={`fixed inset-0 z-50 bg-[var(--color-background)] ${desktop ? "" : "lg:hidden"}`}
       role="dialog"
+      style={
+        visualViewport
+          ? {
+              bottom: "auto",
+              height: `${visualViewport.height}px`,
+              top: `${visualViewport.offsetTop}px`,
+            }
+          : undefined
+      }
     >
-      <div className="h-dvh sheet-panel-enter">
+      <div className="h-full min-h-0 sheet-panel-enter">
         <DialogSurface
           contentClassName="pb-28"
           onClose={onClose}

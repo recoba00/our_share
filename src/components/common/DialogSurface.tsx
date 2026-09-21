@@ -40,7 +40,7 @@ export function DialogSurface({
   }, []);
 
   const panelClassName = {
-    fullscreen: "flex h-dvh w-full flex-col bg-[var(--color-background)]",
+    fullscreen: "flex h-full min-h-0 w-full flex-col bg-[var(--color-background)]",
     modal:
       "grid max-h-[calc(100dvh-32px)] w-full overflow-hidden rounded-t-card bg-[var(--color-surface)] shadow-xl sm:rounded-card",
     sheet:
