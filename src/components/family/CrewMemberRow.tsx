@@ -38,14 +38,16 @@ export function CrewMemberRow({
           </span>
         ) : null}
       </div>
-      <p className="min-w-0 flex-1 truncate text-sm">
-        <strong>{memberName}</strong>
-      </p>
-      <span
-        className={`inline-flex h-5 max-w-[5.5rem] shrink-0 items-center truncate rounded-full px-1.5 text-[10px] font-semibold leading-5 ${roleBadgeClasses[member.role]}`}
-      >
-        {roleLabels[member.role]}
-      </span>
+      <div className="flex min-w-0 flex-1 items-center gap-2">
+        <p className="min-w-0 flex-1 truncate text-sm">
+          <strong>{memberName}</strong>
+        </p>
+        <span
+          className={`inline-flex h-5 max-w-[5.5rem] shrink-0 items-center truncate rounded-full px-1.5 text-[10px] font-semibold leading-5 ${roleBadgeClasses[member.role]}`}
+        >
+          {roleLabels[member.role]}
+        </span>
+      </div>
       {action}
     </div>
   );

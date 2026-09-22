@@ -3,6 +3,7 @@ import {
   ChartBar,
   ChatCircleDots,
   LockKey,
+  ListBullets,
   MagnifyingGlass,
   PaperPlaneTilt,
   PencilSimple,
@@ -25,6 +26,7 @@ import { Input } from "../../components/common/Input";
 import { IconButton } from "../../components/common/IconButton";
 import { LoadingState } from "../../components/common/LoadingState";
 import { SectionHeading } from "../../components/common/SectionHeading";
+import { useChatMemberDrawer } from "../../components/chat/useChatMemberDrawer";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
 import { useAuth } from "../../features/auth/useAuth";
@@ -75,6 +77,7 @@ export function ChatPage() {
   const { showToast } = useToast();
   const navigate = useNavigate();
   const { roomId } = useParams();
+  const { open: openChatMembers, setRoom: setMemberDrawerRoom } = useChatMemberDrawer();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesScrollRef = useRef<HTMLDivElement>(null);
@@ -115,6 +118,12 @@ export function ChatPage() {
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
   );
+
+  useEffect(() => {
+    setMemberDrawerRoom(selectedRoom ?? null);
+  }, [selectedRoom, setMemberDrawerRoom]);
+
+  useEffect(() => () => setMemberDrawerRoom(null), [setMemberDrawerRoom]);
   const visibleRooms = useMemo(() => {
     const normalizedQuery = roomQuery.trim().toLocaleLowerCase();
 
@@ -994,9 +1003,22 @@ export function ChatPage() {
 
       <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-full lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
-          <h3 className="min-w-0 truncate text-lg font-semibold">
-            {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
-          </h3>
+          <div className="flex min-w-0 items-center gap-2">
+            {selectedRoom ? (
+              <button
+                aria-label="참여 멤버 보기"
+                className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
+                onClick={openChatMembers}
+                title="참여 멤버 보기"
+                type="button"
+              >
+                <ListBullets size={20} weight="regular" />
+              </button>
+            ) : null}
+            <h3 className="min-w-0 truncate text-lg font-semibold">
+              {selectedRoom ? getRoomDisplayName(selectedRoom, members, user?.uid) : "채팅방"}
+            </h3>
+          </div>
         </div>
         <div
           className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:mt-4 lg:min-h-0 lg:rounded-2xl lg:bg-slate-50 lg:p-4"
