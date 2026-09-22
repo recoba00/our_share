@@ -26,6 +26,8 @@ export function PollOptionEditor({
           <div className="flex items-center gap-2" key={index}>
             <input
               className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              inputMode="text"
+              lang="ko"
               onChange={(event) => onUpdate(index, event.target.value)}
               placeholder={`항목 ${index + 1}`}
               value={option}

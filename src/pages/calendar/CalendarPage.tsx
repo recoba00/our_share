@@ -673,6 +673,8 @@ function CalendarTools({
               설명
               <textarea
                 className="min-h-24 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+                inputMode="text"
+                lang="ko"
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="일정 메모를 적어주세요."
                 value={description}

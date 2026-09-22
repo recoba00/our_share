@@ -176,6 +176,8 @@ export function MemoPage() {
           내용
           <textarea
             className="min-h-32 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-sm font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+            inputMode="text"
+            lang="ko"
             onChange={(event) => setContent(event.target.value)}
             placeholder="크루와 공유할 내용을 적어주세요."
             value={content}
@@ -190,9 +192,13 @@ export function MemoPage() {
         </label>
         {memoType === "SENSITIVE" ? (
           <Input
+            autoComplete="off"
+            inputMode="numeric"
             label="개인 비밀번호"
+            lang="en"
             onChange={(event) => setCreatePassword(event.target.value)}
             placeholder="열람할 때 사용할 비밀번호"
+            spellCheck={false}
             type="password"
             value={createPassword}
           />
@@ -299,9 +305,13 @@ export function MemoPage() {
             ) : (
               <form className="mt-4 grid gap-3" onSubmit={handleRevealMemo}>
                 <Input
+                  autoComplete="off"
+                  inputMode="numeric"
                   label="열람 비밀번호"
+                  lang="en"
                   onChange={(event) => setRevealPassword(event.target.value)}
                   placeholder="개인 비밀번호"
+                  spellCheck={false}
                   type="password"
                   value={revealPassword}
                 />

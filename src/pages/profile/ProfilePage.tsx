@@ -257,9 +257,14 @@ export function ProfilePage() {
             value={displayName}
           />
           <Input
+            autoCapitalize="none"
+            autoCorrect="off"
+            inputMode="url"
             label="프로필 이미지 URL"
+            lang="en"
             onChange={(event) => setPhotoURL(event.target.value)}
             placeholder="https://..."
+            spellCheck={false}
             value={photoURL}
           />
           <div className="grid gap-2 sm:grid-cols-2">

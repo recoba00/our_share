@@ -824,6 +824,8 @@ export function ChatPage() {
             <textarea
               autoFocus
               className="min-h-28 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-base font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+              inputMode="text"
+              lang="ko"
               onChange={(event) => setEditingMessageText(event.target.value)}
               value={editingMessageText}
             />
@@ -871,6 +873,8 @@ export function ChatPage() {
             <input
               autoFocus
               className="min-w-0 flex-1 bg-transparent text-sm text-[var(--color-text-primary)] outline-none placeholder:text-slate-400"
+              inputMode="search"
+              lang="ko"
               onChange={(event) => setRoomQuery(event.target.value)}
               placeholder="채팅방 검색"
               value={roomQuery}
@@ -1063,9 +1067,14 @@ export function ChatPage() {
         </div>
         <form className="flex shrink-0 min-w-0 gap-2 border-t border-white/70 bg-white/85 px-4 py-3 pb-[max(env(safe-area-inset-bottom),12px)] shadow-[0_-12px_32px_rgba(15,23,42,0.08)] backdrop-blur-xl sm:px-6 lg:mt-4 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none lg:backdrop-blur-none" onSubmit={handleSendMessage}>
           <input
+            autoComplete="off"
             className="h-11 min-w-0 flex-1 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-[var(--color-text-primary)] outline-none focus:border-brand"
+            enterKeyHint="send"
+            inputMode="text"
+            lang="ko"
             onChange={(event) => setMessageText(event.target.value)}
             placeholder="메시지 입력"
+            type="text"
             value={messageText}
           />
           <button

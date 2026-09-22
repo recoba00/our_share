@@ -842,10 +842,19 @@ export function HomePage() {
         <div className="flex min-w-0 items-end gap-2">
           <div className="min-w-0 flex-1">
             <Input
+              autoCapitalize="characters"
+              autoComplete="off"
+              autoCorrect="off"
               className="w-full"
+              inputMode="text"
               label=""
-              onChange={(event) => setInviteCode(event.target.value.toUpperCase())}
+              lang="en"
+              maxLength={6}
+              onChange={(event) =>
+                setInviteCode(event.target.value.toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6))
+              }
               placeholder="초대코드를 입력해주세요"
+              spellCheck={false}
               value={inviteCode}
             />
           </div>
