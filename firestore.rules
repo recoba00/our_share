@@ -23,8 +23,14 @@ service cloud.firestore {
     }
 
     function isFamilyOwner(familyId) {
-      return isFamilyMember(familyId) &&
-        get(membershipPath(familyId)).data.role == "OWNER";
+      return signedIn() &&
+        (
+          get(/databases/$(database)/documents/families/$(familyId)).data.ownerId == request.auth.uid ||
+          (
+            isFamilyMember(familyId) &&
+            get(membershipPath(familyId)).data.role == "OWNER"
+          )
+        );
     }
 
     function isFamilyViceOwner(familyId) {
@@ -289,7 +295,7 @@ service cloud.firestore {
     }
 
     match /families/{familyId} {
-      allow read: if isFamilyMember(familyId);
+      allow read: if isFamilyMember(familyId) || isFamilyOwner(familyId);
       allow create: if signedIn() &&
         request.resource.data.keys().hasOnly([
           "id",
@@ -393,7 +399,8 @@ service cloud.firestore {
     match /familyMembers/{memberId} {
       allow read: if signedIn() &&
         (resource.data.userId == request.auth.uid ||
-          isFamilyMember(resource.data.familyId));
+          isFamilyMember(resource.data.familyId) ||
+          isFamilyOwner(resource.data.familyId));
       allow create: if signedIn() &&
         memberId == request.resource.data.familyId + "_" + request.auth.uid &&
         request.resource.data.keys().hasOnly([

@@ -12,7 +12,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { ref, remove, set } from "firebase/database";
+import { ref, remove, set, update } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 import { MAX_FAMILY_NAME_LENGTH } from "../utils/familyName";
@@ -201,26 +201,27 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
 }
 
 export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
-  const familySnapshot = await getDoc(doc(db, "families", familyId));
+  const familySnapshot = await runFamilyDeleteStep("크루 정보 확인", () =>
+    getDoc(doc(db, "families", familyId))
+  );
 
   if (!familySnapshot.exists()) {
     throw new Error("삭제할 크루를 찾을 수 없어요.");
   }
 
-  const memberSnapshot = await getDocs(
-    query(collection(db, "familyMembers"), where("familyId", "==", familyId))
-  );
-  const ownerMember = memberSnapshot.docs.find(
-    (memberDoc) => memberDoc.data().userId === ownerId && memberDoc.data().role === "OWNER"
+  const memberSnapshot = await runFamilyDeleteStep("멤버 정보 확인", () =>
+    getDocs(query(collection(db, "familyMembers"), where("familyId", "==", familyId)))
   );
 
-  if (!ownerMember) {
+  if (familySnapshot.data().ownerId !== ownerId) {
     throw new Error("크루 삭제는 크루장만 할 수 있어요.");
   }
 
   const inviteCode = familySnapshot.data().inviteCode as string | undefined;
   const inviteRef = inviteCode ? doc(db, "familyInvites", inviteCode) : null;
-  const inviteSnapshot = inviteRef ? await getDoc(inviteRef) : null;
+  const inviteSnapshot = inviteRef
+    ? await runFamilyDeleteStep("초대 코드 확인", () => getDoc(inviteRef))
+    : null;
   const batch = writeBatch(db);
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
   batch.delete(doc(db, "families", familyId));
@@ -229,17 +230,50 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
     batch.delete(inviteRef);
   }
 
-  await batch.commit();
+  await runFamilyDeleteStep("크루 삭제", () => batch.commit());
 
   const memberUserIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().userId as string);
 
-  // Firestore deletion is the source of truth; mirror cleanup must not turn a successful delete into an error.
-  await Promise.allSettled([
-    ...memberUserIds.map((memberUserId) => clearMemberRealtimeData(familyId, memberUserId)),
-    ...memberUserIds.map((memberUserId) =>
-      remove(ref(realtimeDb, `familyMembers/${familyId}/${memberUserId}`))
-    ),
-  ]);
+  const realtimeUpdates = Object.fromEntries(
+    memberUserIds.flatMap((memberUserId) => [
+      [`familyMembers/${familyId}/${memberUserId}`, null],
+      [`liveLocations/${familyId}/${memberUserId}`, null],
+      [`onlinePresence/${familyId}/${memberUserId}`, null],
+      [`deviceStatus/${familyId}/${memberUserId}`, null],
+    ])
+  );
+
+  if (Object.keys(realtimeUpdates).length === 0) {
+    return { realtimeCleanupComplete: true };
+  }
+
+  try {
+    await update(ref(realtimeDb), realtimeUpdates);
+    return { realtimeCleanupComplete: true };
+  } catch (error) {
+    console.warn("크루 RTDB 잔여 데이터 정리를 마치지 못했어요.", error);
+    return { realtimeCleanupComplete: false };
+  }
+}
+
+async function runFamilyDeleteStep<T>(step: string, action: () => Promise<T>) {
+  try {
+    return await action();
+  } catch (error) {
+    if (isPermissionDenied(error)) {
+      throw new Error(`${step} 권한이 없어요. 로그아웃 후 다시 로그인해 주세요.`);
+    }
+    throw error;
+  }
+}
+
+function isPermissionDenied(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as { code?: unknown }).code === "permission-denied"
+  );
 }
 
 export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {

@@ -6,7 +6,7 @@ import {
 } from "@firebase/rules-unit-testing";
 import { get, ref, remove, set, update } from "firebase/database";
 import { readFileSync } from "node:fs";
-import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const projectId = "our-share-rtdb-rules-test";
 let testEnv: RulesTestEnvironment;
@@ -225,6 +225,52 @@ describe("Realtime Database live location rules", () => {
     await assertSucceeds(remove(ref(aliceDb, "onlinePresence/familyA/bob")));
     await assertSucceeds(remove(ref(aliceDb, "deviceStatus/familyA/bob")));
     await assertFails(remove(ref(bobDb, "liveLocations/familyA/alice")));
+  });
+
+  it("allows an owner to atomically clear crew mirrors and runtime data", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+      for (const userId of ["alice", "bob"]) {
+        await set(ref(db, `liveLocations/familyA/${userId}`), createLiveLocation());
+        await set(ref(db, `onlinePresence/familyA/${userId}`), { status: "online" });
+        await set(ref(db, `deviceStatus/familyA/${userId}`), { battery: 80 });
+      }
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+    const updates = Object.fromEntries(
+      ["alice", "bob"].flatMap((userId) => [
+        [`familyMembers/familyA/${userId}`, null],
+        [`liveLocations/familyA/${userId}`, null],
+        [`onlinePresence/familyA/${userId}`, null],
+        [`deviceStatus/familyA/${userId}`, null],
+      ])
+    );
+
+    await assertSucceeds(update(ref(aliceDb), updates));
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+      for (const path of [
+        "familyMembers/familyA/alice",
+        "familyMembers/familyA/bob",
+        "liveLocations/familyA/alice",
+        "liveLocations/familyA/bob",
+        "onlinePresence/familyA/alice",
+        "onlinePresence/familyA/bob",
+        "deviceStatus/familyA/alice",
+        "deviceStatus/familyA/bob",
+      ]) {
+        expect((await get(ref(db, path))).exists()).toBe(false);
+      }
+    });
   });
 });
 

@@ -103,7 +103,7 @@ export function ProfilePage() {
 
     const confirmed = await confirm({
       confirmLabel: "크루 삭제",
-      description: `${familyName} 크루와 멤버 연결을 삭제해요. 일정·메모·투표·채팅은 복구할 수 없어요.`,
+      description: `${familyName} 크루와 멤버 연결을 삭제해요. 기존 일정·메모·투표·채팅 기록은 남지만 더 이상 볼 수 없어요.`,
       title: `'${familyName}' 크루를 삭제할까요?`,
       tone: "danger",
     });
@@ -115,9 +115,14 @@ export function ProfilePage() {
     setBusyFamilyId(familyId);
 
     try {
-      await deleteFamily({ familyId, ownerId: user.uid });
+      const result = await deleteFamily({ familyId, ownerId: user.uid });
       await refreshFamilies();
-      notify("크루를 삭제했어요.", "success");
+      notify(
+        result.realtimeCleanupComplete
+          ? "크루를 삭제했어요."
+          : "크루는 삭제했지만 위치 데이터 정리는 끝내지 못했어요.",
+        result.realtimeCleanupComplete ? "success" : "error"
+      );
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {

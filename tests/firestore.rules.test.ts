@@ -259,11 +259,38 @@ describe("family membership rules", () => {
     });
 
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const members = await getDocs(
+      query(collection(aliceDb, "familyMembers"), where("familyId", "==", "familyA"))
+    );
     const batch = writeBatch(aliceDb);
 
-    memberIds.forEach((userId) => {
-      batch.delete(doc(aliceDb, "familyMembers", `familyA_${userId}`));
+    members.docs.forEach((member) => batch.delete(member.ref));
+    batch.delete(doc(aliceDb, "families", "familyA"));
+    batch.delete(doc(aliceDb, "familyInvites", "ABC123"));
+
+    await assertSucceeds(batch.commit());
+  });
+
+  it("uses family ownerId when the owner membership role is stale", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
     });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "familyMembers", "familyA_alice"), {
+        role: "MEMBER",
+      });
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const members = await getDocs(
+      query(collection(aliceDb, "familyMembers"), where("familyId", "==", "familyA"))
+    );
+    const batch = writeBatch(aliceDb);
+    members.docs.forEach((member) => batch.delete(member.ref));
     batch.delete(doc(aliceDb, "families", "familyA"));
     batch.delete(doc(aliceDb, "familyInvites", "ABC123"));
 
