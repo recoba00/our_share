@@ -133,6 +133,62 @@ a {
   }
 }
 
+@keyframes guest-background-reveal {
+  from {
+    filter: blur(12px) brightness(0.55);
+    transform: scale(1.06);
+  }
+  to {
+    filter: blur(0) brightness(1);
+    transform: scale(1);
+  }
+}
+
+@keyframes guest-content-reveal {
+  from {
+    filter: blur(5px);
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    filter: blur(0);
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes guest-auth-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.guest-background-enter {
+  animation: guest-background-reveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  will-change: filter, transform;
+}
+
+.guest-logo-enter {
+  animation: guest-content-reveal 560ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.guest-title-enter {
+  animation: guest-content-reveal 680ms 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.guest-copy-enter {
+  animation: guest-content-reveal 620ms 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.guest-auth-enter {
+  animation: guest-auth-reveal 720ms 1.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
 .sheet-backdrop-enter {
   animation: sheet-backdrop-in 220ms ease-out both;
 }
