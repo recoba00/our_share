@@ -39,7 +39,7 @@ export function CrewMemberRow({
         ) : null}
       </div>
       <div className="flex min-w-0 flex-1 items-center gap-2">
-        <p className="min-w-0 flex-1 truncate text-sm">
+        <p className="min-w-0 truncate text-sm">
           <strong>{memberName}</strong>
         </p>
         <span
