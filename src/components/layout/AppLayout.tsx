@@ -32,7 +32,11 @@ export function AppLayout({ children }: PropsWithChildren) {
       return <Navigate replace to="/" />;
     }
 
-    return <div className="min-h-[100svh] w-full">{children}</div>;
+    return (
+      <div className="fixed inset-0 h-[100dvh] w-full overflow-hidden overscroll-none">
+        {children}
+      </div>
+    );
   }
 
   return (

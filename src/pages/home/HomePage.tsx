@@ -1104,7 +1104,7 @@ export function HomePage() {
 function GuestHome({ authError, isLoading = false }: { authError?: string | null; isLoading?: boolean }) {
   return (
     <main
-      className="relative isolate flex min-h-[100svh] w-full items-end px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:items-center sm:px-8 lg:min-h-dvh lg:px-12"
+      className="relative isolate flex h-full min-h-0 w-full items-end overflow-hidden px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:items-center sm:px-8 lg:px-12"
       style={{
         backgroundImage: `url("${import.meta.env.BASE_URL}login-background.png")`,
         backgroundPosition: "center 30%",
@@ -1112,7 +1112,7 @@ function GuestHome({ authError, isLoading = false }: { authError?: string | null
       }}
     >
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/50" />
-      <div className="mx-auto grid w-full max-w-screen-2xl items-end gap-7 pb-4 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:gap-16 lg:px-12">
+      <div className="mx-auto grid min-h-0 w-full max-w-screen-2xl items-end gap-7 pb-4 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:gap-16 lg:px-12">
         <section className="max-w-2xl text-white">
           <div className="mb-6 flex items-center gap-3">
             <img
