@@ -4,6 +4,11 @@ Codex가 작업한 내용을 날짜별로 누적 기록한다.
 
 ## 2026-09-22
 
+- 크루장 승계 시 초대 인덱스 소유자 정보도 같은 Firestore 배치에서 갱신하고, 이전 크루장 권한으로 크루 삭제가 막히던 Rules 검증을 보강했다.
+- 크루 멤버 삭제 시 Realtime Database 위치·멤버 미러를 정리하고, 크루 목록 로딩 중 멤버십 미러 보정이 끝나기 전에 위치 공유를 시도하던 권한 오류를 수정했다.
+- 위치 공유 권한 거절 메시지를 알아보기 쉬운 안내로 바꾸고 로그아웃 완료 토스트를 추가했다.
+- Hosting 배포 workflow에 Firestore·Realtime Database Rules 배포를 연결하고 수동 재실행 기능을 추가했다. `35674454249`에서 Rules와 Firebase Hosting 배포 및 배포 검증이 모두 성공했다.
+- 검증: `npm run lint`, `npm run test:rules`(33개), `npm run test:unit`(5개), `npm run build:firebase`, `npm run test:dist:firebase` 통과.
 - 채팅 상세 참여 멤버가 크루장에게 모어 버튼을 보여주고, 기존 바텀시트에서 역할 변경·크루장 승계·채팅방 내보내기·크루에서 내보내기를 방 유형에 맞게 선택할 수 있도록 확장했다.
 - 데스크탑 헤더의 로그아웃 버튼을 제거하고 내 정보 화면에서만 로그아웃하도록 정리했다.
 - 채팅 참여 멤버 아이콘을 Phosphor `Users` 아이콘으로 교체했다.

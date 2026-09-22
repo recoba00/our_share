@@ -44,6 +44,7 @@
 - [x] 배포 URL 문서화
 - [x] GitHub Actions `dist` 배포 workflow 구성
 - [x] GitHub Actions Firebase Hosting 후보 빌드 검증 구성
+- [x] Firebase Hosting 배포 전 Firestore·Realtime Database Rules 자동 배포 및 실배포 검증
 - [x] GitHub Repository Secrets 등록
 - [x] Firebase Database Rules 수동 배포 workflow 구성
 - [x] Dothome 서버에 `dist` 폴더 내용만 업로드
