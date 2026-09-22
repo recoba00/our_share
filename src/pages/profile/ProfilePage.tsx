@@ -66,6 +66,15 @@ export function ProfilePage() {
     }
   }
 
+  async function handleSignOut() {
+    try {
+      await signOut();
+      notify("로그아웃했어요.", "success");
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    }
+  }
+
   async function handleRenameFamily(familyId: string) {
     if (!editingFamilyName.trim()) {
       notify("크루 이름을 적어주세요.", "info");
@@ -244,7 +253,7 @@ export function ProfilePage() {
             <Button disabled={isSaving} loading={isSaving} type="submit">
               저장
             </Button>
-            <Button onClick={() => void signOut()} type="button" variant="secondary">
+            <Button onClick={() => void handleSignOut()} type="button" variant="secondary">
               <SignOut size={18} weight="bold" />
               로그아웃
             </Button>

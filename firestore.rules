@@ -377,10 +377,17 @@ service cloud.firestore {
         request.resource.data.ownerId == request.auth.uid &&
         exists(/databases/$(database)/documents/families/$(request.resource.data.familyId)) &&
         get(/databases/$(database)/documents/families/$(request.resource.data.familyId)).data.ownerId == request.auth.uid;
-      allow update: if false;
-      allow delete: if signedIn() &&
-        resource.data.ownerId == request.auth.uid &&
-        isFamilyOwner(resource.data.familyId);
+      allow update: if signedIn() &&
+        isFamilyOwner(resource.data.familyId) &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.inviteCode == resource.data.inviteCode &&
+        request.resource.data.name == resource.data.name &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.ownerId == getAfter(
+          /databases/$(database)/documents/families/$(resource.data.familyId)
+        ).data.ownerId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["ownerId"]);
+      allow delete: if signedIn() && isFamilyOwner(resource.data.familyId);
     }
 
     match /familyMembers/{memberId} {

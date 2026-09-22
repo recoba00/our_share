@@ -293,6 +293,7 @@ export async function getFamiliesForUser(userId: string) {
   const familyIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().familyId as string);
   const familySnapshots = await getDocumentsByIds("families", familyIds);
   const familiesById = new Map(familySnapshots.map((familySnapshot) => [familySnapshot.id, familySnapshot]));
+  const memberMirrorSyncs: Promise<void>[] = [];
 
   const families = memberSnapshot.docs.map((memberDoc) => {
     const member = memberDoc.data();
@@ -304,13 +305,11 @@ export async function getFamiliesForUser(userId: string) {
       return null;
     }
 
-    mirrorFamilyMemberRole({
+    memberMirrorSyncs.push(mirrorFamilyMemberRole({
       familyId,
       role,
       userId,
-    }).catch(() => {
-      // RTDB mirror backfill is best-effort during MVP.
-    });
+    }));
 
     const family = familySnapshot.data();
     const inviteCode = family.inviteCode as string;
@@ -336,6 +335,8 @@ export async function getFamiliesForUser(userId: string) {
       createdAt: family.createdAt,
     };
   });
+
+  await Promise.all(memberMirrorSyncs);
 
   return families.filter((family): family is NonNullable<typeof family> => Boolean(family));
 }
@@ -492,6 +493,10 @@ export async function transferFamilyOwnership({
     throw new Error("부크루장은 최대 2명이라 승계 전에 한 명을 멤버로 바꿔주세요.");
   }
 
+  const inviteCode = familySnapshot.data().inviteCode as string | undefined;
+  const inviteRef = inviteCode ? doc(db, "familyInvites", inviteCode) : null;
+  const inviteSnapshot = inviteRef ? await getDoc(inviteRef) : null;
+
   const nextViceOwnerIds = currentViceOwnerIds.filter(
     (viceOwnerId) => viceOwnerId !== targetUserId && viceOwnerId !== actorUserId
   );
@@ -511,20 +516,39 @@ export async function transferFamilyOwnership({
     role: "OWNER",
     updatedAt: serverTimestamp(),
   });
-  await batch.commit();
+  if (
+    inviteRef &&
+    inviteSnapshot?.exists() &&
+    inviteSnapshot.data().familyId === familyId
+  ) {
+    batch.update(inviteRef, { ownerId: targetUserId });
+  }
 
-  await Promise.all([
-    mirrorFamilyMemberRole({
+  const targetRole = targetSnapshot.data().role as FamilyRole;
+  await writeFamilyMemberRoleMirror({
+    familyId,
+    role: "OWNER",
+    userId: targetUserId,
+  });
+  try {
+    await batch.commit();
+  } catch (error) {
+    await writeFamilyMemberRoleMirror({
       familyId,
-      role: "VICE_OWNER",
-      userId: actorUserId,
-    }),
-    mirrorFamilyMemberRole({
-      familyId,
-      role: "OWNER",
+      role: targetRole,
       userId: targetUserId,
-    }),
-  ]);
+    }).catch((restoreError) => {
+      console.error("크루장 승계 실패 후 권한 복구에 실패했어요.", restoreError);
+    });
+    throw error;
+  }
+
+  // Keep the previous owner authorized until the new owner's RTDB mirror is in place.
+  await mirrorFamilyMemberRole({
+    familyId,
+    role: "VICE_OWNER",
+    userId: actorUserId,
+  });
 }
 
 export async function deleteFamilyMember({
@@ -548,9 +572,15 @@ export async function deleteFamilyMember({
     throw new Error("크루장은 삭제할 수 없어요.");
   }
 
+  const targetRole = targetSnapshot.data().role as FamilyRole;
+  const targetMirrorRef = ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`);
+
+  await clearMemberRealtimeData(familyId, targetUserId);
+  await remove(targetMirrorRef);
+
   const batch = writeBatch(db);
   batch.delete(targetRef);
-  if (targetSnapshot.data().role === "VICE_OWNER") {
+  if (targetRole === "VICE_OWNER") {
     const familyRef = doc(db, "families", familyId);
     const familySnapshot = await getDoc(familyRef);
     if (familySnapshot.exists()) {
@@ -562,8 +592,18 @@ export async function deleteFamilyMember({
       });
     }
   }
-  await batch.commit();
-  await remove(ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`));
+  try {
+    await batch.commit();
+  } catch (error) {
+    await set(targetMirrorRef, {
+      role: targetRole,
+      userId: targetUserId,
+      updatedAt: Date.now(),
+    }).catch((restoreError) => {
+      console.error("멤버 권한 복구에 실패했어요.", restoreError);
+    });
+    throw error;
+  }
 }
 
 async function upsertFamilyMember({
@@ -612,15 +652,27 @@ async function mirrorFamilyMemberRole({
   userId: string;
 }) {
   try {
-    await set(ref(realtimeDb, `familyMembers/${familyId}/${userId}`), {
-      role,
-      userId,
-      updatedAt: Date.now(),
-    });
+    await writeFamilyMemberRoleMirror({ familyId, role, userId });
   } catch (error) {
     console.warn("멤버 역할 미러 갱신을 건너뛰었어요.", error);
     // Firestore가 역할의 원본이다. RTDB 미러는 다음 로그인 또는 Functions 동기화에서 보정된다.
   }
+}
+
+async function writeFamilyMemberRoleMirror({
+  familyId,
+  role,
+  userId,
+}: {
+  familyId: string;
+  role: FamilyRole;
+  userId: string;
+}) {
+  await set(ref(realtimeDb, `familyMembers/${familyId}/${userId}`), {
+    role,
+    userId,
+    updatedAt: Date.now(),
+  });
 }
 
 async function ensureFamilyInviteIndex({

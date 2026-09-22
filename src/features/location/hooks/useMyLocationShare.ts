@@ -314,6 +314,10 @@ function getLocationErrorMessage(error: unknown) {
   }
 
   if (error instanceof Error) {
+    if (/PERMISSION_DENIED|permission-denied/i.test(error.message)) {
+      return "크루 권한을 확인하지 못했어요. 화면을 새로고침한 뒤 다시 시도해주세요.";
+    }
+
     return error.message;
   }
 

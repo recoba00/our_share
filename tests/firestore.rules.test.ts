@@ -188,7 +188,7 @@ describe("family membership rules", () => {
     await assertFails(promoteThirdViceOwner.commit());
   });
 
-  it("allows an owner to transfer ownership atomically and makes the old owner a vice owner", async () => {
+  it("transfers ownership, updates the invite owner, and lets the new owner delete the family", async () => {
     await seedFamilyWithMembers({
       familyId: "familyA",
       inviteCode: "ABC123",
@@ -211,8 +211,20 @@ describe("family membership rules", () => {
       role: "OWNER",
       updatedAt: new Date(),
     });
+    transfer.update(doc(aliceDb, "familyInvites", "ABC123"), {
+      ownerId: "bob",
+    });
 
     await assertSucceeds(transfer.commit());
+
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const deleteFamily = writeBatch(bobDb);
+    deleteFamily.delete(doc(bobDb, "familyMembers", "familyA_alice"));
+    deleteFamily.delete(doc(bobDb, "familyMembers", "familyA_bob"));
+    deleteFamily.delete(doc(bobDb, "families", "familyA"));
+    deleteFamily.delete(doc(bobDb, "familyInvites", "ABC123"));
+
+    await assertSucceeds(deleteFamily.commit());
   });
 
   it("does not allow a vice owner to delete the family", async () => {
