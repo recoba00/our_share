@@ -9,6 +9,7 @@ import {
   serverTimestamp,
   setDoc,
   where,
+  writeBatch,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
@@ -69,7 +70,31 @@ export async function deletePoll({
   familyId: string;
   pollId: string;
 }) {
-  await deleteDoc(doc(db, "families", familyId, "polls", pollId));
+  const votesQuery = query(
+    collection(db, "families", familyId, "pollVotes"),
+    where("pollId", "==", pollId)
+  );
+  const votesSnapshot = await getDocs(votesQuery);
+  const voteDocuments = votesSnapshot.docs;
+  const batchSize = 450;
+
+  if (voteDocuments.length === 0) {
+    await deleteDoc(doc(db, "families", familyId, "polls", pollId));
+    return;
+  }
+
+  for (let offset = 0; offset < voteDocuments.length; offset += batchSize) {
+    const batch = writeBatch(db);
+    const voteChunk = voteDocuments.slice(offset, offset + batchSize);
+
+    voteChunk.forEach((voteDocument) => batch.delete(voteDocument.ref));
+
+    if (offset + voteChunk.length === voteDocuments.length) {
+      batch.delete(doc(db, "families", familyId, "polls", pollId));
+    }
+
+    await batch.commit();
+  }
 }
 
 export async function getPolls(familyId: string): Promise<Poll[]> {

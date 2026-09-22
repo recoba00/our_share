@@ -167,6 +167,10 @@ export function HomePage() {
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
+  const [memberLoad, setMemberLoad] = useState<{
+    familyId: string;
+    status: "loading" | "ready" | "error";
+  }>({ familyId: "", status: "loading" });
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>([]);
   const [chatRooms, setChatRooms] = useState<ChatRoom[]>([]);
   const [sendingQuickMessageTo, setSendingQuickMessageTo] = useState("");
@@ -221,19 +225,30 @@ export function HomePage() {
 
   useEffect(() => {
     if (!activeFamily || !user) {
+      queueMicrotask(() => {
+        setMembers([]);
+        setMemberLoad({ familyId: "", status: "ready" });
+      });
       return;
     }
 
     let active = true;
+    queueMicrotask(() => {
+      if (active) {
+        setMemberLoad({ familyId: activeFamily.id, status: "loading" });
+      }
+    });
 
     getFamilyMembers(activeFamily.id)
       .then((nextMembers) => {
         if (active) {
           setMembers(nextMembers);
+          setMemberLoad({ familyId: activeFamily.id, status: "ready" });
         }
       })
       .catch((error: Error) => {
         if (active && activeFamilyIdRef.current === activeFamily.id) {
+          setMemberLoad({ familyId: activeFamily.id, status: "error" });
           handleFamilyDataError(activeFamily.id, error.message);
         }
       });
@@ -679,6 +694,11 @@ export function HomePage() {
     ? orderedMembers
     : orderedMembers.slice(0, 6);
   const hasMoreMembers = orderedMembers.length > 6;
+  const memberLoadStatus = activeFamily
+    ? memberLoad.familyId === activeFamily.id
+      ? memberLoad.status
+      : "loading"
+    : "ready";
   const selectedLocationMember =
     members.find((member) => member.userId === selectedLocationMemberId) ?? null;
   const selectedLocation = selectedLocationMember
@@ -697,12 +717,26 @@ export function HomePage() {
     <div className="grid gap-4">
       <section className="min-w-0 rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-4 shadow-sm">
         <p className="truncate text-base font-semibold text-brand">
-          오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} ({orderedMembers.length}명)
+          오늘의 크루 상황 &gt; {truncateFamilyName(activeFamily?.name ?? "현재")} (
+          {memberLoadStatus === "loading"
+            ? "불러오는 중"
+            : memberLoadStatus === "error"
+              ? "확인 필요"
+              : `${orderedMembers.length}명`}
+          )
         </p>
         <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
           멤버들의 역할과 상태를 한눈에 확인해요.
         </p>
-        {orderedMembers.length > 0 ? (
+        {memberLoadStatus === "loading" ? (
+          <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm leading-5 text-[var(--color-text-secondary)]">
+            크루 멤버를 불러오고 있어요.
+          </p>
+        ) : memberLoadStatus === "error" ? (
+          <p className="mt-4 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm leading-5 text-[var(--color-text-secondary)]">
+            크루 멤버를 불러오지 못했어요.
+          </p>
+        ) : orderedMembers.length > 0 ? (
           <div className="mt-4 grid min-w-0 gap-2">
             {visibleMembers.map((member) => {
               const memberName = member.displayName ?? member.nickname;

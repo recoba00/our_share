@@ -578,6 +578,40 @@ describe("poll vote rules", () => {
       })
     );
   });
+
+  it("allows only the poll creator to remove votes when deleting their poll", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedNestedPoll({
+      createdBy: "alice",
+      familyId: "familyA",
+      pollId: "pollA",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const voteRef = doc(bobDb, "families", "familyA", "pollVotes", "pollA_bob");
+
+    await assertSucceeds(
+      setDoc(voteRef, {
+        pollId: "pollA",
+        userId: "bob",
+        selectedOptions: ["가능"],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    );
+    await assertFails(deleteDoc(voteRef));
+
+    const deleteBatch = writeBatch(aliceDb);
+    deleteBatch.delete(doc(aliceDb, "families", "familyA", "pollVotes", "pollA_bob"));
+    deleteBatch.delete(doc(aliceDb, "families", "familyA", "polls", "pollA"));
+    await assertSucceeds(deleteBatch.commit());
+  });
 });
 
 describe("MVP create flows", () => {

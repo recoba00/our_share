@@ -5,6 +5,7 @@ import {
   ClipboardText,
   Database,
   FloppyDisk,
+  Info,
   MapPin,
   ShieldCheck,
   WarningCircle,
@@ -21,7 +22,7 @@ import {
 import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
 import { firebaseApp, realtimeDb } from "../../lib/firebase/app";
 
-type DiagnosticStatus = "ok" | "warning";
+type DiagnosticStatus = "ok" | "warning" | "neutral";
 
 type DiagnosticItem = {
   detail: string;
@@ -194,8 +195,8 @@ export function DiagnosticsPage() {
             <div>
               <h3 className="text-base font-semibold">저장 권한 검사</h3>
               <p className="mt-1 text-sm leading-6 text-[var(--color-text-secondary)]">
-                현재 로그인 계정으로 캘린더, 메모, 투표, 위치 공유, 채팅방
-                저장과 크루 채팅방 준비 흐름을 실제로 확인해요.
+                현재 로그인 계정으로 캘린더, 메모, 투표, 채팅방 저장과 준비 흐름을
+                확인해요. 실제 위치 데이터는 자동으로 변경하지 않아요.
               </p>
             </div>
           </div>
@@ -212,7 +213,9 @@ export function DiagnosticsPage() {
                 key={result.label}
               >
                 <div className="flex items-start gap-3">
-                  <StatusIcon status={result.ok ? "ok" : "warning"} />
+                  <StatusIcon
+                    status={result.skipped ? "neutral" : result.ok ? "ok" : "warning"}
+                  />
                   <div className="min-w-0">
                     <strong className="block text-sm">{result.label}</strong>
                     <p className="mt-1 break-words text-xs font-semibold leading-5 text-[var(--color-text-secondary)]">
@@ -314,6 +317,10 @@ function DiagnosticGroup({
 function StatusIcon({ status }: { status: DiagnosticStatus }) {
   if (status === "ok") {
     return <CheckCircle className="shrink-0 text-brand" size={22} weight="fill" />;
+  }
+
+  if (status === "neutral") {
+    return <Info className="shrink-0 text-[var(--color-text-secondary)]" size={22} weight="fill" />;
   }
 
   return (

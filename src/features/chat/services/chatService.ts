@@ -3,8 +3,10 @@ import {
   deleteDoc,
   doc,
   getDoc,
+  getDocs,
   onSnapshot,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -15,6 +17,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
+import { getLatestMessagePreview, getTimestampMilliseconds } from "../utils/chatMessagePreview";
 import type { ChatMessage, ChatRoom } from "../types/chatTypes";
 
 type CreateSecretRoomInput = {
@@ -268,7 +271,11 @@ export function subscribeChatRooms({
         (room, index, allRooms) =>
           allRooms.findIndex((nextRoom) => nextRoom.id === room.id) === index
       )
-      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+      .sort(
+        (a, b) =>
+          getTimestampMilliseconds(b.updatedAt) -
+          getTimestampMilliseconds(a.updatedAt)
+      );
 
     onChange(rooms);
   }
@@ -341,7 +348,11 @@ export function subscribeMessages({
     (snapshot) => {
       const messages = snapshot.docs
         .map((messageDoc) => messageDoc.data() as ChatMessage)
-        .sort((a, b) => getTime(a.createdAt) - getTime(b.createdAt));
+        .sort(
+          (a, b) =>
+            getTimestampMilliseconds(a.createdAt) -
+            getTimestampMilliseconds(b.createdAt)
+        );
 
       onChange(messages);
     },
@@ -443,7 +454,55 @@ export async function deleteMessage({
   familyId: string;
   messageId: string;
 }) {
-  await deleteDoc(doc(db, "families", familyId, "messages", messageId));
+  const messageRef = doc(db, "families", familyId, "messages", messageId);
+  const initialMessageSnapshot = await getDoc(messageRef);
+
+  if (!initialMessageSnapshot.exists()) {
+    return;
+  }
+
+  const initialMessage = initialMessageSnapshot.data() as ChatMessage;
+  const messagesSnapshot = await getDocs(
+    query(
+      collection(db, "families", familyId, "messages"),
+      where("roomId", "==", initialMessage.roomId)
+    )
+  );
+  const preview = getLatestMessagePreview(
+    messagesSnapshot.docs
+      .filter((messageDoc) => messageDoc.id !== messageId)
+      .map((messageDoc) => messageDoc.data() as ChatMessage)
+  );
+
+  await runTransaction(db, async (transaction) => {
+    const messageSnapshot = await transaction.get(messageRef);
+
+    if (!messageSnapshot.exists()) {
+      return;
+    }
+
+    const message = messageSnapshot.data() as ChatMessage;
+    const roomRef = doc(db, "families", familyId, "chatRooms", message.roomId);
+    const roomSnapshot = await transaction.get(roomRef);
+
+    transaction.delete(messageRef);
+
+    if (roomSnapshot.exists()) {
+      const room = roomSnapshot.data() as ChatRoom;
+      const stillCurrentPreview =
+        room.lastMessageText === message.text &&
+        getTimestampMilliseconds(room.lastMessageAt) ===
+          getTimestampMilliseconds(message.createdAt);
+
+      if (stillCurrentPreview) {
+        transaction.update(roomRef, {
+          lastMessageText: preview.text,
+          lastMessageAt: preview.createdAt,
+          updatedAt: serverTimestamp(),
+        });
+      }
+    }
+  });
 }
 
 export async function markRoomMessagesAsRead({
@@ -472,12 +531,4 @@ export async function markRoomMessagesAsRead({
   });
 
   await batch.commit();
-}
-
-function getTime(value: unknown) {
-  if (value && typeof value === "object" && "seconds" in value) {
-    return Number((value as { seconds: number }).seconds) * 1000;
-  }
-
-  return 0;
 }

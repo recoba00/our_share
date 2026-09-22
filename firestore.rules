@@ -581,7 +581,10 @@ service cloud.firestore {
         request.resource.data.selectedOptions.size() <= 20 &&
         exists(/databases/$(database)/documents/families/$(familyId)/polls/$(request.resource.data.pollId)) &&
         isFamilyMember(familyId);
-      allow delete: if false;
+      allow delete: if isFamilyMember(familyId) &&
+        resource.data.pollId is string &&
+        exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
+        get(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)).data.createdBy == request.auth.uid;
     }
 
     match /families/{familyId}/chatRooms/{roomId} {

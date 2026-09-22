@@ -1,5 +1,4 @@
 import { deleteDoc, doc, getDoc } from "firebase/firestore";
-import { ref, remove, set } from "firebase/database";
 import { createCalendarEvent } from "../../calendar/services/calendarService";
 import {
   createSecretRoom,
@@ -12,13 +11,14 @@ import {
 } from "../../family/services/familyService";
 import { createMemo } from "../../memo/services/memoService";
 import { createPoll } from "../../poll/services/pollService";
-import { db, realtimeDb } from "../../../lib/firebase/app";
+import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 
 export type WriteProbeResult = {
   detail: string;
   label: string;
   ok: boolean;
+  skipped?: boolean;
 };
 
 export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult[]> {
@@ -56,8 +56,11 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       title: "[진단] 저장 권한 확인",
     });
 
-    await deleteDoc(doc(db, "families", family.id, "calendarEvents", eventId));
-    return "저장 및 자동 삭제 성공";
+    try {
+      return "저장 권한 확인 성공";
+    } finally {
+      await deleteDoc(doc(db, "families", family.id, "calendarEvents", eventId));
+    }
   });
 
   await runProbeStep(results, "메모 저장", async () => {
@@ -70,8 +73,11 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       type: "PUBLIC",
     });
 
-    await deleteDoc(doc(db, "families", family.id, "memos", memoId));
-    return "저장 및 자동 삭제 성공";
+    try {
+      return "저장 권한 확인 성공";
+    } finally {
+      await deleteDoc(doc(db, "families", family.id, "memos", memoId));
+    }
   });
 
   await runProbeStep(results, "투표 저장", async () => {
@@ -85,24 +91,18 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       type: "GENERAL",
     });
 
-    await deleteDoc(doc(db, "families", family.id, "polls", pollId));
-    return "저장 및 자동 삭제 성공";
+    try {
+      return "저장 권한 확인 성공";
+    } finally {
+      await deleteDoc(doc(db, "families", family.id, "polls", pollId));
+    }
   });
 
-  await runProbeStep(results, "위치 공유 저장", async () => {
-    const locationRef = ref(realtimeDb, `liveLocations/${family.id}/${userId}`);
-
-    await set(locationRef, {
-      accuracy: null,
-      battery: null,
-      charging: null,
-      latitude: 37.5665,
-      longitude: 126.978,
-      updatedAt: Date.now(),
-    });
-    await remove(locationRef);
-
-    return "Realtime Database 저장 및 자동 삭제 성공";
+  results.push({
+    detail: "실제 위치 공유 데이터를 보호하기 위해 자동 쓰기 검사를 건너뛰었어요. 위치 공유 버튼으로 직접 확인해주세요.",
+    label: "위치 공유 저장",
+    ok: false,
+    skipped: true,
   });
 
   await runProbeStep(results, "크루 전체방 준비", async () => {
@@ -157,8 +157,11 @@ export async function runMvpWriteProbe(userId: string): Promise<WriteProbeResult
       name: "[진단] 저장 권한 확인",
     });
 
-    await deleteDoc(doc(db, "families", family.id, "chatRooms", roomId));
-    return "저장 및 자동 삭제 성공";
+    try {
+      return "저장 권한 확인 성공";
+    } finally {
+      await deleteDoc(doc(db, "families", family.id, "chatRooms", roomId));
+    }
   });
 
   return results;

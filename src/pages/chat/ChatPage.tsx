@@ -86,6 +86,10 @@ export function ChatPage() {
   const previousMessageRoomIdRef = useRef("");
   const shouldScrollToLatestRef = useRef(false);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
+  const [memberLoad, setMemberLoad] = useState<{
+    familyId: string;
+    status: "loading" | "ready" | "error";
+  }>({ familyId: "", status: "loading" });
   const [polls, setPolls] = useState<Poll[]>([]);
   const [selectedRoomId, setSelectedRoomId] = useState("");
   const [messageText, setMessageText] = useState("");
@@ -161,6 +165,11 @@ export function ChatPage() {
       return searchableText.includes(normalizedQuery);
     });
   }, [members, roomFilter, roomQuery, rooms, user?.uid]);
+  const memberLoadStatus = activeFamily
+    ? memberLoad.familyId === activeFamily.id
+      ? memberLoad.status
+      : "loading"
+    : "ready";
   const normalizedPollOptions = getNormalizedPollOptions(pollOptions);
   const hasDuplicatePollDraftOptions = hasDuplicatePollOptions(pollOptions);
   const canCreateRoomPoll =
@@ -184,6 +193,10 @@ export function ChatPage() {
 
   useEffect(() => {
     if (!activeFamily || !user) {
+      queueMicrotask(() => {
+        setMembers([]);
+        setMemberLoad({ familyId: "", status: "ready" });
+      });
       return;
     }
 
@@ -195,6 +208,7 @@ export function ChatPage() {
         return;
       }
 
+      setMemberLoad({ familyId: activeFamily.id, status: "loading" });
       setRooms([]);
       setMessages([]);
       setMembers([]);
@@ -214,7 +228,9 @@ export function ChatPage() {
 
       if (membersResult.status === "fulfilled") {
         setMembers(membersResult.value);
+        setMemberLoad({ familyId: activeFamily.id, status: "ready" });
       } else {
+        setMemberLoad({ familyId: activeFamily.id, status: "error" });
         reportError(getErrorMessage(membersResult.reason));
       }
 
@@ -918,7 +934,15 @@ export function ChatPage() {
         <div className="mt-6">
           <SectionHeading icon={<User size={20} weight="bold" />} level="h3" title="1:1 대화" />
           <div className="mt-3 grid gap-1">
-            {members.filter((member) => member.userId !== user?.uid).length === 0 ? (
+            {memberLoadStatus === "loading" ? (
+              <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+                멤버 목록을 불러오고 있어요.
+              </p>
+            ) : memberLoadStatus === "error" ? (
+              <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
+                멤버 목록을 불러오지 못했어요.
+              </p>
+            ) : members.filter((member) => member.userId !== user?.uid).length === 0 ? (
               <p className="rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm text-[var(--color-text-secondary)]">
                 다른 크루 멤버가 참여하면 1:1 대화를 시작할 수 있어요.
               </p>
