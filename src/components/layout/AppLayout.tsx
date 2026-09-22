@@ -1,12 +1,39 @@
 import type { PropsWithChildren } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { Navigate, useLocation } from "react-router-dom";
 import { AppHeader } from "./AppHeader";
 import { BottomNavigation } from "../navigation/BottomNavigation";
 import { ChatMemberDrawerProvider } from "../chat/ChatMemberDrawerProvider";
+import { useAuth } from "../../features/auth/useAuth";
+import { savePendingInviteCode } from "../../features/family/services/pendingInviteService";
 
 export function AppLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
+  const { status } = useAuth();
   const isSecondDepth = /^\/chat\/[^/]+/.test(pathname);
+
+  useEffect(() => {
+    if (status !== "guest") {
+      return;
+    }
+
+    const inviteCode = pathname.match(/^\/invite\/([A-Za-z0-9]{6})$/)?.[1];
+    if (inviteCode) {
+      savePendingInviteCode(inviteCode.toUpperCase());
+    }
+  }, [pathname, status]);
+
+  if (status === "loading" && pathname !== "/") {
+    return null;
+  }
+
+  if (status === "guest") {
+    if (pathname !== "/") {
+      return <Navigate replace to="/" />;
+    }
+
+    return <div className="min-h-[100svh] w-full">{children}</div>;
+  }
 
   return (
     <ChatMemberDrawerProvider>

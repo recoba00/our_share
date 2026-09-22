@@ -2,6 +2,7 @@ import { ArrowClockwise, DownloadSimple, X } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
 import { Button } from "../common/Button";
 import { IconButton } from "../common/IconButton";
+import { useAuth } from "../../features/auth/useAuth";
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -9,6 +10,7 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 export function PwaPrompt() {
+  const { status } = useAuth();
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [isInstallDismissed, setIsInstallDismissed] = useState(
     () => localStorage.getItem("our-share:pwa-install-dismissed") === "true"
@@ -16,6 +18,7 @@ export function PwaPrompt() {
   const [isUpdateReady, setIsUpdateReady] = useState(false);
   const platform = useMemo(getPlatform, []);
   const shouldShowInstall =
+    status === "authenticated" &&
     !isUpdateReady &&
     !isInstallDismissed &&
     !isStandalone() &&
@@ -82,6 +85,10 @@ export function PwaPrompt() {
       waitingWorker.postMessage({ type: "SKIP_WAITING" });
       window.setTimeout(reloadAfterActivation, 5000);
     });
+  }
+
+  if (status !== "authenticated") {
+    return null;
   }
 
   if (!shouldShowInstall && !isUpdateReady) {

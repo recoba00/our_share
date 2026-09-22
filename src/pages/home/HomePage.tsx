@@ -337,40 +337,12 @@ export function HomePage() {
 
   if (status === "loading") {
     return (
-      <Card>
-        <p className="text-sm font-semibold text-[var(--color-text-secondary)]">
-          로그인 상태를 확인하고 있어요.
-        </p>
-      </Card>
+      <GuestHome isLoading />
     );
   }
 
   if (status === "guest") {
-    return (
-      <div className="grid gap-4 lg:grid-cols-[1fr_420px]">
-        <section className="rounded-card border border-[var(--color-border)] bg-[var(--color-surface)] p-6 shadow-sm lg:p-8">
-          <p className="text-sm font-semibold text-brand">우리끼리</p>
-          <h2 className="mt-3 max-w-2xl text-3xl font-semibold leading-tight lg:text-5xl">
-            멤버 위치, 일정, 메모, 투표를 한곳에서 관리해요
-          </h2>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)] lg:text-base">
-            Google 계정으로 시작하고 크루를 만들거나 초대 코드로 참여하세요.
-          </p>
-        </section>
-        <Card className="self-start">
-          <h3 className="text-xl font-semibold">시작하기</h3>
-          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-            프로필 이미지는 Google 계정의 photoURL을 사용합니다.
-          </p>
-          <SignInConsentButton className="mt-5 w-full" />
-          {authError ? (
-            <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm font-semibold text-red-700">
-              {authError}
-            </p>
-          ) : null}
-        </Card>
-      </div>
-    );
+    return <GuestHome authError={authError} />;
   }
 
   async function handleSendQuickMessage(member: FamilyMemberProfile, message: string) {
@@ -1126,6 +1098,61 @@ export function HomePage() {
       ) : null}
     </BottomSheet>
     </>
+  );
+}
+
+function GuestHome({ authError, isLoading = false }: { authError?: string | null; isLoading?: boolean }) {
+  return (
+    <main
+      className="relative isolate flex min-h-[100svh] w-full items-end px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:items-center sm:px-8 lg:min-h-dvh lg:px-12"
+      style={{
+        backgroundImage: `url("${import.meta.env.BASE_URL}login-background.png")`,
+        backgroundPosition: "center 30%",
+        backgroundSize: "cover",
+      }}
+    >
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/50" />
+      <div className="mx-auto grid w-full max-w-screen-2xl items-end gap-7 pb-4 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:gap-16 lg:px-12">
+        <section className="max-w-2xl text-white">
+          <div className="mb-6 flex items-center gap-3">
+            <img
+              alt=""
+              className="size-11 rounded-xl bg-white p-2 object-contain"
+              src={`${import.meta.env.BASE_URL}brand-logo.svg`}
+            />
+            <p className="text-lg font-semibold">우리끼리</p>
+          </div>
+          <h1 className="max-w-xl text-[32px] font-semibold leading-tight sm:text-[40px]">
+            우리끼리, 오늘을 나눠요
+          </h1>
+          <p className="mt-4 max-w-lg text-sm font-normal leading-6 text-white/85 sm:text-base">
+            멤버 위치와 일정, 메모와 투표까지 한곳에서 편하게 관리해요.
+          </p>
+        </section>
+
+        <section className="rounded-card border border-white/20 bg-slate-950/40 p-5 text-white shadow-xl backdrop-blur-md sm:p-7">
+          <h2 className="text-xl font-semibold">우리끼리 시작하기</h2>
+          <p className="mt-2 text-sm leading-6 text-white/75">
+            {isLoading
+              ? "로그인 상태를 확인하고 있어요."
+              : "Google 계정으로 가입하거나 로그인할 수 있어요."}
+          </p>
+          <SignInConsentButton
+            className="mt-5 h-12 w-full"
+            disabled={isLoading}
+            label="Google로 시작하기"
+          />
+          <p className="mt-4 text-center text-xs leading-5 text-white/65">
+            처음이라면 가입, 이미 계정이 있다면 로그인으로 이어져요.
+          </p>
+          {authError ? (
+            <p className="mt-4 rounded-xl border border-red-200/20 bg-red-500/15 p-3 text-sm text-red-100">
+              {authError}
+            </p>
+          ) : null}
+        </section>
+      </div>
+    </main>
   );
 }
 
