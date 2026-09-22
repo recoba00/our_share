@@ -14,7 +14,7 @@ import {
   Trash,
   GearSix,
 } from "@phosphor-icons/react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { Avatar } from "../../components/common/Avatar";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
@@ -158,7 +158,7 @@ declare global {
 
 export function HomePage() {
   const { authError, status, user } = useAuth();
-  const { activeFamily, locationShare, refreshFamilies } = useFamily();
+  const { activeFamily, locationShare, refreshFamilies, removeFamily } = useFamily();
   const {
     clearMessage: clearLocationMessage,
     message: locationShareMessage,
@@ -189,13 +189,35 @@ export function HomePage() {
   const [isLocationPolicyOpen, setIsLocationPolicyOpen] = useState(false);
   const [isLocationConsentChecked, setIsLocationConsentChecked] = useState(false);
   const [locationConsentUserId, setLocationConsentUserId] = useState("");
+  const activeFamilyIdRef = useRef<string | null>(activeFamily?.id ?? null);
+  const leavingFamilyIdRef = useRef<string | null>(null);
   const handleDataError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
   );
+  const handleFamilyDataError = useCallback(
+    (familyId: string, message: string) => {
+      if (
+        activeFamilyIdRef.current !== familyId ||
+        leavingFamilyIdRef.current === familyId
+      ) {
+        return;
+      }
+
+      handleDataError(message);
+    },
+    [handleDataError]
+  );
   const handleLocationAddressChange = useCallback((memberId: string, address: string) => {
     setLocationAddresses((current) => ({ ...current, [memberId]: address }));
   }, []);
+
+  useLayoutEffect(() => {
+    activeFamilyIdRef.current = activeFamily?.id ?? null;
+    if (leavingFamilyIdRef.current && activeFamily?.id !== leavingFamilyIdRef.current) {
+      leavingFamilyIdRef.current = null;
+    }
+  }, [activeFamily?.id]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -211,27 +233,31 @@ export function HomePage() {
         }
       })
       .catch((error: Error) => {
-        if (active) {
-          handleDataError(error.message);
+        if (active && activeFamilyIdRef.current === activeFamily.id) {
+          handleFamilyDataError(activeFamily.id, error.message);
         }
       });
 
     return () => {
       active = false;
     };
-  }, [activeFamily, handleDataError, user]);
+  }, [activeFamily, handleFamilyDataError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
       return;
     }
 
-    const unsubscribe = subscribeFamilyLocations(activeFamily.id, setLiveLocations, handleDataError);
+    const unsubscribe = subscribeFamilyLocations(
+      activeFamily.id,
+      setLiveLocations,
+      (message) => handleFamilyDataError(activeFamily.id, message)
+    );
 
     return () => {
       unsubscribe();
     };
-  }, [activeFamily, handleDataError, user]);
+  }, [activeFamily, handleFamilyDataError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user) {
@@ -242,32 +268,32 @@ export function HomePage() {
       subscribeCalendarEvents({
         familyId: activeFamily.id,
         onChange: setCalendarEvents,
-        onError: handleDataError,
+        onError: (message) => handleFamilyDataError(activeFamily.id, message),
         userId: user.uid,
       }),
       subscribeChatRooms({
         familyId: activeFamily.id,
         onChange: setChatRooms,
-        onError: handleDataError,
+        onError: (message) => handleFamilyDataError(activeFamily.id, message),
         userId: user.uid,
       }),
       subscribeMemos({
         familyId: activeFamily.id,
         onChange: setMemos,
-        onError: handleDataError,
+        onError: (message) => handleFamilyDataError(activeFamily.id, message),
         userId: user.uid,
       }),
       subscribePolls({
         familyId: activeFamily.id,
         onChange: setPolls,
-        onError: handleDataError,
+        onError: (message) => handleFamilyDataError(activeFamily.id, message),
       }),
     ];
 
     return () => {
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
-  }, [activeFamily, handleDataError, user]);
+  }, [activeFamily, handleFamilyDataError, user]);
 
   useEffect(() => {
     if (!activeFamily || !user || getNotificationPermission() !== "granted") {
@@ -491,12 +517,14 @@ export function HomePage() {
     }
 
     setIsLeavingFamily(true);
+    leavingFamilyIdRef.current = activeFamily.id;
 
     try {
       await leaveFamily({ familyId: activeFamily.id, userId: user.uid });
-      await refreshFamilies();
+      removeFamily(activeFamily.id);
       notify("크루에서 나갔어요.", "success");
     } catch (error) {
+      leavingFamilyIdRef.current = null;
       notify(getErrorMessage(error), "error");
     } finally {
       setIsLeavingFamily(false);
@@ -761,7 +789,7 @@ export function HomePage() {
                       </div>
                     ) : null}
                 </div>
-                <p className="mt-1 text-xs leading-5 text-[var(--color-text-secondary)]">
+                <p className="mt-1 text-sm leading-5 text-[var(--color-text-secondary)]">
                   {canInviteToFamily
                     ? "초대코드를 공유해 크루 멤버를 초대할 수 있어요."
                     : "초대코드는 크루장이 관리해요."}

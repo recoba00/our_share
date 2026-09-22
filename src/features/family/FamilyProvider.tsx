@@ -138,10 +138,14 @@ export function FamilyProvider({ children }: PropsWithChildren) {
       setFamilies(nextFamilies);
       setActiveFamilyId(nextActiveFamilyId);
 
-      if (nextActiveFamilyId) {
-        window.localStorage.setItem(ACTIVE_FAMILY_STORAGE_KEY, nextActiveFamilyId);
-      } else {
-        window.localStorage.removeItem(ACTIVE_FAMILY_STORAGE_KEY);
+      try {
+        if (nextActiveFamilyId) {
+          window.localStorage.setItem(ACTIVE_FAMILY_STORAGE_KEY, nextActiveFamilyId);
+        } else {
+          window.localStorage.removeItem(ACTIVE_FAMILY_STORAGE_KEY);
+        }
+      } catch {
+        // Keep the in-memory crew switch even when browser storage is unavailable.
       }
     },
     [activeFamilyId, families]

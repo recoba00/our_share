@@ -158,7 +158,7 @@ export function ProfilePage() {
 
     try {
       await leaveFamily({ familyId, userId: user.uid });
-      await refreshFamilies();
+      removeFamily(familyId);
       notify("크루에서 나갔어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
