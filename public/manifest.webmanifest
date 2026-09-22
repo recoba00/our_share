@@ -7,7 +7,7 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f8fafc",
-  "theme_color": "#10b981",
+  "theme_color": "#111111",
   "lang": "ko-KR",
   "categories": ["productivity", "lifestyle"],
   "icons": [

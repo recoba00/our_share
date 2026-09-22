@@ -136,8 +136,8 @@ export function AppHeader() {
 
   return (
     <>
-    <header className="fixed inset-x-0 top-0 z-30 h-16 border-b border-white/60 bg-white/75 shadow-sm backdrop-blur-xl">
-      <div className="mx-auto flex h-full w-full max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
+    <header className="fixed inset-x-0 top-0 z-30 h-[calc(4rem+env(safe-area-inset-top))] border-b border-white/60 bg-white/75 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur-xl">
+      <div className="mx-auto flex h-16 w-full max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
           {isSettings ? (
             <>
@@ -402,7 +402,7 @@ function NotificationDrawer({
         aria-label="알림"
         className="fixed right-0 top-0 z-50 flex h-dvh w-[280px] max-w-[calc(100vw-24px)] flex-col border-l border-[var(--color-border)] bg-[var(--color-surface)] shadow-2xl side-panel-enter"
       >
-        <div className="flex h-16 shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4">
+        <div className="flex h-[calc(4rem+env(safe-area-inset-top))] shrink-0 items-center justify-between border-b border-[var(--color-border)] px-4 pt-[env(safe-area-inset-top)]">
           <h2 className="text-lg font-semibold">알림</h2>
           <button
             aria-label="알림 닫기"

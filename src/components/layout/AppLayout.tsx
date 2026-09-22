@@ -13,6 +13,19 @@ export function AppLayout({ children }: PropsWithChildren) {
   const isSecondDepth = /^\/chat\/[^/]+/.test(pathname);
 
   useEffect(() => {
+    const usesGuestChrome = status !== "authenticated";
+    const themeColor = usesGuestChrome ? "#111111" : "#10b981";
+    const statusBarStyle = usesGuestChrome ? "black-translucent" : "default";
+
+    document
+      .querySelector('meta[name="theme-color"]')
+      ?.setAttribute("content", themeColor);
+    document
+      .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+      ?.setAttribute("content", statusBarStyle);
+  }, [status]);
+
+  useEffect(() => {
     if (status !== "guest") {
       return;
     }
@@ -45,7 +58,7 @@ export function AppLayout({ children }: PropsWithChildren) {
         <div className="mx-auto flex min-h-dvh w-full max-w-screen-2xl flex-col">
           <AppHeader />
           <main
-            className={`mx-auto min-w-0 w-full flex-1 overflow-x-hidden px-4 pt-20 sm:px-6 lg:px-8 ${
+            className={`mx-auto min-w-0 w-full flex-1 overflow-x-hidden px-4 pt-[calc(5rem+env(safe-area-inset-top))] sm:px-6 lg:px-8 ${
               isSecondDepth
                 ? "h-[100dvh] min-h-0 overflow-y-hidden pb-4 lg:h-auto lg:overflow-y-visible lg:pb-8"
                 : "pb-36 lg:pb-8"

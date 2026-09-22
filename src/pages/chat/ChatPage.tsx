@@ -1047,7 +1047,7 @@ export function ChatPage() {
       </Card>
       </div>
 
-      <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-16 z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-full lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
+      <section className={`${roomId ? "fixed inset-x-0 bottom-0 top-[calc(4rem+env(safe-area-inset-top))] z-10 flex" : "hidden lg:flex"} mx-0 min-h-0 min-w-0 flex-col overflow-hidden bg-[var(--color-background)] lg:static lg:inset-auto lg:z-auto lg:mx-0 lg:h-full lg:rounded-card lg:border lg:border-[var(--color-border)] lg:bg-[var(--color-surface)] lg:p-4 lg:shadow-sm`}>
         <div className="hidden min-w-0 shrink-0 items-center justify-between gap-3 lg:flex">
           <div className="flex min-w-0 items-center gap-2">
             {selectedRoom ? (
