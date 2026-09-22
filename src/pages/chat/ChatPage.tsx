@@ -15,7 +15,7 @@ import {
 } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
@@ -75,6 +75,7 @@ export function ChatPage() {
   const { activeFamily, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
+  const location = useLocation();
   const navigate = useNavigate();
   const { roomId } = useParams();
   const { open: openChatMembers, setRoom: setMemberDrawerRoom } = useChatMemberDrawer();
@@ -118,6 +119,23 @@ export function ChatPage() {
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
   );
+
+  useEffect(() => {
+    if (!roomId || !selectedRoom || !user) {
+      return;
+    }
+
+    const chatRoomName = getRoomDisplayName(selectedRoom, members, user.uid);
+    const currentChatRoomName = (location.state as { chatRoomName?: string } | null)
+      ?.chatRoomName;
+
+    if (currentChatRoomName !== chatRoomName) {
+      navigate(location.pathname, {
+        replace: true,
+        state: { chatRoomName },
+      });
+    }
+  }, [location.pathname, location.state, members, navigate, roomId, selectedRoom, user]);
 
   useEffect(() => {
     setMemberDrawerRoom(selectedRoom ?? null);
