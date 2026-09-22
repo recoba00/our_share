@@ -12,6 +12,7 @@
   --color-accent: #14b8a6;
   --color-background: #f8fafc;
   --color-surface: #ffffff;
+  --color-surface-subtle: #f8fafc;
   --color-surface-muted: #f1f5f9;
   --color-text-primary: #0f172a;
   --color-text-secondary: #64748b;
@@ -30,6 +31,7 @@
   --color-accent: #2dd4bf;
   --color-background: #050505;
   --color-surface: #111111;
+  --color-surface-subtle: #151515;
   --color-surface-muted: #1b1b1b;
   --color-text-primary: #f1f5f9;
   --color-text-secondary: #94a3b8;
