@@ -7,6 +7,7 @@ export type FamilyContextValue = {
   families: Family[];
   isLoading: boolean;
   locationShare: LocationShareController;
+  removeFamily: (familyId: string) => void;
   refreshFamilies: (preferredFamilyId?: string) => Promise<Family[]>;
   selectFamily: (familyId: string) => void;
 };

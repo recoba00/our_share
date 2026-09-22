@@ -209,13 +209,18 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
     throw new Error("삭제할 크루를 찾을 수 없어요.");
   }
 
+  if (familySnapshot.data().ownerId !== ownerId) {
+    const ownerMembershipSnapshot = await runFamilyDeleteStep("크루장 정보 확인", () =>
+      getDoc(doc(db, "familyMembers", `${familyId}_${ownerId}`))
+    );
+    if (ownerMembershipSnapshot.data()?.role !== "OWNER") {
+      throw new Error("크루 삭제는 크루장만 할 수 있어요.");
+    }
+  }
+
   const memberSnapshot = await runFamilyDeleteStep("멤버 정보 확인", () =>
     getDocs(query(collection(db, "familyMembers"), where("familyId", "==", familyId)))
   );
-
-  if (familySnapshot.data().ownerId !== ownerId) {
-    throw new Error("크루 삭제는 크루장만 할 수 있어요.");
-  }
 
   const inviteCode = familySnapshot.data().inviteCode as string | undefined;
   const inviteRef = inviteCode ? doc(db, "familyInvites", inviteCode) : null;
@@ -590,14 +595,23 @@ export async function deleteFamilyMember({
   familyId,
   targetUserId,
 }: DeleteFamilyMemberInput) {
-  const actorSnapshot = await getDoc(doc(db, "familyMembers", `${familyId}_${actorUserId}`));
-  const targetRef = doc(db, "familyMembers", `${familyId}_${targetUserId}`);
-  const targetSnapshot = await getDoc(targetRef);
-
-  if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
-    throw new Error("멤버 삭제는 크루장만 할 수 있어요.");
+  const familyRef = doc(db, "families", familyId);
+  const familySnapshot = await runFamilyDeleteStep("크루 정보 확인", () => getDoc(familyRef));
+  if (!familySnapshot.exists()) {
+    throw new Error("크루를 찾을 수 없어요.");
   }
 
+  if (familySnapshot.data().ownerId !== actorUserId) {
+    const actorSnapshot = await runFamilyDeleteStep("크루장 정보 확인", () =>
+      getDoc(doc(db, "familyMembers", `${familyId}_${actorUserId}`))
+    );
+    if (!actorSnapshot.exists() || actorSnapshot.data().role !== "OWNER") {
+      throw new Error("멤버 삭제는 크루장만 할 수 있어요.");
+    }
+  }
+
+  const targetRef = doc(db, "familyMembers", `${familyId}_${targetUserId}`);
+  const targetSnapshot = await runFamilyDeleteStep("멤버 정보 확인", () => getDoc(targetRef));
   if (!targetSnapshot.exists()) {
     throw new Error("삭제할 멤버를 찾을 수 없어요.");
   }
@@ -607,37 +621,37 @@ export async function deleteFamilyMember({
   }
 
   const targetRole = targetSnapshot.data().role as FamilyRole;
-  const targetMirrorRef = ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`);
-
-  await clearMemberRealtimeData(familyId, targetUserId);
-  await remove(targetMirrorRef);
-
   const batch = writeBatch(db);
   batch.delete(targetRef);
   if (targetRole === "VICE_OWNER") {
-    const familyRef = doc(db, "families", familyId);
-    const familySnapshot = await getDoc(familyRef);
-    if (familySnapshot.exists()) {
-      batch.update(familyRef, {
-        viceOwnerIds: readViceOwnerIds(familySnapshot.data()).filter(
-          (viceOwnerId) => viceOwnerId !== targetUserId
-        ),
-        updatedAt: serverTimestamp(),
-      });
-    }
-  }
-  try {
-    await batch.commit();
-  } catch (error) {
-    await set(targetMirrorRef, {
-      role: targetRole,
-      userId: targetUserId,
-      updatedAt: Date.now(),
-    }).catch((restoreError) => {
-      console.error("멤버 권한 복구에 실패했어요.", restoreError);
+    batch.update(familyRef, {
+      viceOwnerIds: readViceOwnerIds(familySnapshot.data()).filter(
+        (viceOwnerId) => viceOwnerId !== targetUserId
+      ),
+      updatedAt: serverTimestamp(),
     });
-    throw error;
   }
+
+  await runFamilyDeleteStep("멤버 삭제", () => batch.commit());
+
+  const targetMirrorRef = ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`);
+  let realtimeCleanupComplete = true;
+
+  try {
+    await clearMemberRealtimeData(familyId, targetUserId);
+  } catch (error) {
+    realtimeCleanupComplete = false;
+    console.warn("멤버 위치·접속 데이터 정리를 마치지 못했어요.", error);
+  }
+
+  try {
+    await remove(targetMirrorRef);
+  } catch (error) {
+    realtimeCleanupComplete = false;
+    console.warn("멤버 권한 미러 정리를 마치지 못했어요.", error);
+  }
+
+  return { realtimeCleanupComplete };
 }
 
 async function upsertFamilyMember({

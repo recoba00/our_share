@@ -19,7 +19,7 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { afterAll, beforeAll, beforeEach, describe, it } from "vitest";
+import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const projectId = "our-share-rules-test";
 let testEnv: RulesTestEnvironment;
@@ -269,6 +269,36 @@ describe("family membership rules", () => {
     batch.delete(doc(aliceDb, "familyInvites", "ABC123"));
 
     await assertSucceeds(batch.commit());
+  });
+
+  it("allows an owner to remove a vice owner and update the role index atomically", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await updateDoc(doc(db, "familyMembers", "familyA_bob"), { role: "VICE_OWNER" });
+      await updateDoc(doc(db, "families", "familyA"), { viceOwnerIds: ["bob"] });
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const batch = writeBatch(aliceDb);
+    batch.delete(doc(aliceDb, "familyMembers", "familyA_bob"));
+    batch.update(doc(aliceDb, "families", "familyA"), {
+      viceOwnerIds: [],
+      updatedAt: serverTimestamp(),
+    });
+
+    await assertSucceeds(batch.commit());
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      expect((await getDoc(doc(db, "familyMembers", "familyA_bob"))).exists()).toBe(false);
+      expect((await getDoc(doc(db, "families", "familyA"))).data()?.viceOwnerIds).toEqual([]);
+    });
   });
 
   it("uses family ownerId when the owner membership role is stale", async () => {

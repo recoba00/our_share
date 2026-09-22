@@ -133,6 +133,7 @@ describe("Realtime Database family membership mirror rules", () => {
     const aliceDb = testEnv.authenticatedContext("alice").database();
 
     await assertSucceeds(remove(ref(bobDb, "familyMembers/familyA/bob")));
+    await assertSucceeds(remove(ref(aliceDb, "familyMembers/familyA/bob")));
     await assertSucceeds(remove(ref(aliceDb, "familyMembers/familyA/alice")));
   });
 });

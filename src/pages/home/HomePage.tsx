@@ -447,16 +447,26 @@ export function HomePage() {
 
     setDeletingMemberId(member.userId);
     try {
-      await deleteFamilyMember({
+      const result = await deleteFamilyMember({
         actorUserId: user.uid,
         familyId: activeFamily.id,
         targetUserId: member.userId,
       });
-      setMembers(await getFamilyMembers(activeFamily.id));
+      setMembers((currentMembers) =>
+        currentMembers.filter((currentMember) => currentMember.userId !== member.userId)
+      );
       setSelectedManageMemberId("");
       setMemberManageView("ACTIONS");
       setPendingMemberRole(null);
-      notify("크루에서 멤버를 삭제했어요.", "success");
+      notify(
+        result.realtimeCleanupComplete
+          ? "크루에서 멤버를 내보냈어요."
+          : "멤버를 내보냈어요. 위치 정보 정리는 나중에 다시 확인할게요.",
+        result.realtimeCleanupComplete ? "success" : "info"
+      );
+      void getFamilyMembers(activeFamily.id)
+        .then(setMembers)
+        .catch(() => undefined);
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {

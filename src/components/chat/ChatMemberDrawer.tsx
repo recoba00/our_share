@@ -235,14 +235,22 @@ export function ChatMemberDrawer({
 
     setIsBusy(true);
     try {
-      await deleteFamilyMember({
+      const result = await deleteFamilyMember({
         actorUserId: currentUserId,
         familyId,
         targetUserId: selectedMember.userId,
       });
-      await refreshMembers();
-      showToast({ message: "크루에서 멤버를 내보냈어요.", variant: "success" });
+      setMembers((currentMembers) =>
+        currentMembers.filter((member) => member.userId !== selectedMember.userId)
+      );
+      showToast({
+        message: result.realtimeCleanupComplete
+          ? "크루에서 멤버를 내보냈어요."
+          : "멤버를 내보냈어요. 위치 정보 정리는 나중에 다시 확인할게요.",
+        variant: result.realtimeCleanupComplete ? "success" : "info",
+      });
       closeActions();
+      void refreshMembers().catch(() => undefined);
     } catch (error) {
       showToast({
         message: error instanceof Error ? error.message : "크루에서 멤버를 내보내지 못했어요.",

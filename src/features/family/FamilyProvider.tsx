@@ -129,16 +129,35 @@ export function FamilyProvider({ children }: PropsWithChildren) {
     [families]
   );
 
+  const removeFamily = useCallback(
+    (familyId: string) => {
+      const nextFamilies = families.filter((family) => family.id !== familyId);
+      const nextActiveFamilyId =
+        activeFamilyId === familyId ? nextFamilies[0]?.id ?? null : activeFamilyId;
+
+      setFamilies(nextFamilies);
+      setActiveFamilyId(nextActiveFamilyId);
+
+      if (nextActiveFamilyId) {
+        window.localStorage.setItem(ACTIVE_FAMILY_STORAGE_KEY, nextActiveFamilyId);
+      } else {
+        window.localStorage.removeItem(ACTIVE_FAMILY_STORAGE_KEY);
+      }
+    },
+    [activeFamilyId, families]
+  );
+
   const value = useMemo(
     () => ({
       activeFamily,
       families,
       isLoading,
       locationShare,
+      removeFamily,
       refreshFamilies,
       selectFamily,
     }),
-    [activeFamily, families, isLoading, locationShare, refreshFamilies, selectFamily]
+    [activeFamily, families, isLoading, locationShare, removeFamily, refreshFamilies, selectFamily]
   );
 
   return <FamilyContext.Provider value={value}>{children}</FamilyContext.Provider>;

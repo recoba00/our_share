@@ -28,7 +28,14 @@ import { useFamily } from "../../features/family/useFamily";
 export function ProfilePage() {
   const [searchParams] = useSearchParams();
   const { refreshUser, signOut, user } = useAuth();
-  const { activeFamily, families, isLoading: isFamilyLoading, refreshFamilies, selectFamily } = useFamily();
+  const {
+    activeFamily,
+    families,
+    isLoading: isFamilyLoading,
+    refreshFamilies,
+    removeFamily,
+    selectFamily,
+  } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [displayName, setDisplayName] = useState(() => user?.displayName ?? "");
@@ -116,7 +123,8 @@ export function ProfilePage() {
 
     try {
       const result = await deleteFamily({ familyId, ownerId: user.uid });
-      await refreshFamilies();
+      removeFamily(familyId);
+      await refreshFamilies().catch(() => undefined);
       notify(
         result.realtimeCleanupComplete
           ? "크루를 삭제했어요."
