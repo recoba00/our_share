@@ -169,24 +169,24 @@ a {
 }
 
 .guest-background-enter {
-  animation: guest-background-reveal 1.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: guest-background-reveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
   will-change: filter, transform;
 }
 
 .guest-logo-enter {
-  animation: guest-content-reveal 560ms 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: guest-content-reveal 800ms 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .guest-title-enter {
-  animation: guest-content-reveal 680ms 420ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: guest-content-reveal 950ms 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .guest-copy-enter {
-  animation: guest-content-reveal 620ms 720ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: guest-content-reveal 900ms 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .guest-auth-enter {
-  animation: guest-auth-reveal 720ms 1.28s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: guest-auth-reveal 1s 1.65s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .sheet-backdrop-enter {

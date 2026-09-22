@@ -1114,16 +1114,15 @@ function GuestHome({ authError, isLoading = false }: { authError?: string | null
         }}
       />
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-black/50" />
+      <div className="guest-logo-enter absolute right-5 top-[max(1.5rem,env(safe-area-inset-top))] overflow-hidden rounded-xl bg-white shadow-lg sm:right-8 lg:right-12">
+        <img
+          alt="우리끼리"
+          className="size-12 object-cover sm:size-14"
+          src={`${import.meta.env.BASE_URL}brand-logo.svg`}
+        />
+      </div>
       <div className="mx-auto grid min-h-0 w-full max-w-screen-2xl items-end gap-7 pb-4 sm:pb-0 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,28rem)] lg:gap-16 lg:px-12">
         <section className="max-w-2xl text-white">
-          <div className="guest-logo-enter mb-6 flex items-center gap-3">
-            <img
-              alt=""
-              className="size-11 object-contain"
-              src={`${import.meta.env.BASE_URL}brand-mark-white.svg`}
-            />
-            <p className="text-lg font-semibold">우리끼리</p>
-          </div>
           <h1 className="guest-title-enter max-w-xl text-[32px] font-semibold leading-tight sm:text-[40px]">
             우리끼리, 오늘을 나눠요
           </h1>
