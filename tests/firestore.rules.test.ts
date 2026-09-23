@@ -54,9 +54,11 @@ describe("private and public profile rules", () => {
 
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
     const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
 
     await assertSucceeds(getDoc(doc(aliceDb, "users", "alice")));
     await assertFails(getDoc(doc(bobDb, "users", "alice")));
+    await assertFails(getDoc(doc(adminDb, "users", "alice")));
     await assertSucceeds(getDoc(doc(bobDb, "publicProfiles", "alice")));
   });
 
@@ -166,6 +168,26 @@ describe("service notice rules", () => {
 });
 
 describe("family membership rules", () => {
+  it("allows only the platform admin to list all crews and memberships", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+    const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
+
+    const crews = await assertSucceeds(getDocs(collection(adminDb, "families")));
+    const memberships = await assertSucceeds(getDocs(collection(adminDb, "familyMembers")));
+
+    expect(crews.size).toBe(1);
+    expect(memberships.size).toBe(2);
+    await assertFails(getDocs(collection(outsiderDb, "families")));
+    await assertFails(getDocs(collection(outsiderDb, "familyMembers")));
+  });
+
   it("allows owner bootstrap and invite-code member join", async () => {
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
     const bobDb = testEnv.authenticatedContext("bob").firestore();

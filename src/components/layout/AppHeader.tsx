@@ -185,24 +185,28 @@ export function AppHeader() {
             </div>
           )}
         </div>
-        <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
-          {mainNavigationItems.map(({ to, label }) => (
-            <NavLink
-              className={({ isActive }) =>
-                `inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold transition-colors ${
-                  isActive
-                    ? "text-brand"
-                    : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
-                }`
-              }
-              key={to}
-              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-              to={to}
-            >
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+        {!isAdmin ? (
+          <nav aria-label="주요 메뉴" className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex">
+            {mainNavigationItems.map(({ to, label }) => (
+              <NavLink
+                className={({ isActive }) =>
+                  `inline-flex h-10 items-center gap-2 px-3 text-sm font-semibold transition-colors ${
+                    isActive
+                      ? "text-brand"
+                      : "text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]"
+                  }`
+                }
+                key={to}
+                onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+                to={to}
+              >
+                {label}
+              </NavLink>
+            ))}
+          </nav>
+        ) : (
+          <div className="hidden min-w-0 flex-1 lg:block" />
+        )}
         <div className="relative flex items-center gap-4">
           {status === "authenticated" && isChatRoom ? (
             <button

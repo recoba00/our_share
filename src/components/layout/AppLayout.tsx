@@ -11,6 +11,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
   const { status } = useAuth();
   const isSecondDepth = /^\/chat\/[^/]+/.test(pathname);
+  const isAdmin = pathname.startsWith("/admin");
 
   useEffect(() => {
     const usesGuestChrome = status !== "authenticated";
@@ -66,7 +67,7 @@ export function AppLayout({ children }: PropsWithChildren) {
           >
             {children}
           </main>
-          {!isSecondDepth ? <BottomNavigation /> : null}
+          {!isSecondDepth && !isAdmin ? <BottomNavigation /> : null}
         </div>
       </div>
     </ChatMemberDrawerProvider>

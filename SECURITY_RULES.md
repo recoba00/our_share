@@ -86,9 +86,9 @@ Firestore emulator는 Java Runtime이 필요하다. 이 프로젝트의 `npm run
 - `users`: 이메일·동의 기록을 포함하므로 본인만 읽기·생성·수정·삭제 가능
 - `publicProfiles`: 로그인 사용자는 이름·프로필 이미지만 읽을 수 있고 본인 문서만 쓰기 가능
 - `serviceNotices`: 로그인 사용자는 게시된 공지만 조회 가능하고, 플랫폼 운영 계정만 전체 조회와 쓰기 가능
-- `families`: 가족 구성원만 읽기 가능, 가족 수정/삭제는 OWNER만 가능
+- `families`: 크루 구성원과 플랫폼 관리자만 읽기 가능, 크루 수정/삭제는 OWNER만 가능
 - `familyInvites`: 로그인 사용자는 초대 코드 단건 조회만 가능, 목록 조회는 차단
-- `familyMembers`: 가족 구성원은 같은 가족 멤버 목록을 읽을 수 있고, 신규 MEMBER 가입은 `familyInvites`의 초대코드와 `familyId` 일치 여부를 기준으로 제한
+- `familyMembers`: 크루 구성원은 같은 크루 멤버 목록을, 플랫폼 관리자는 운영 현황 목록을 읽을 수 있다. 신규 MEMBER 가입은 `familyInvites`의 초대코드와 `familyId` 일치 여부를 기준으로 제한한다.
 - `calendarEvents`, `memos`, `polls`, `chatRooms`, `messages`: 해당 `familyId`의 가족 구성원만 접근 가능
 - `pollVotes`: 투표가 속한 가족 구성원만 읽기 가능, 본인 투표만 생성/수정 가능
 - `messages.readBy`: 가족 구성원은 읽음 상태만 업데이트 가능

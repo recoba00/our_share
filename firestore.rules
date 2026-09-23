@@ -460,7 +460,7 @@ service cloud.firestore {
     }
 
     match /families/{familyId} {
-      allow read: if isFamilyMember(familyId) || isFamilyOwner(familyId);
+      allow read: if isPlatformAdmin() || isFamilyMember(familyId) || isFamilyOwner(familyId);
       allow create: if signedIn() &&
         request.resource.data.keys().hasOnly([
           "id",
@@ -563,7 +563,8 @@ service cloud.firestore {
 
     match /familyMembers/{memberId} {
       allow read: if signedIn() &&
-        (resource.data.userId == request.auth.uid ||
+        (isPlatformAdmin() ||
+          resource.data.userId == request.auth.uid ||
           isFamilyMember(resource.data.familyId) ||
           isFamilyOwner(resource.data.familyId));
       allow create: if signedIn() &&
