@@ -135,8 +135,8 @@ a {
 
 @keyframes guest-background-reveal {
   from {
-    filter: blur(12px) brightness(0.55);
-    transform: scale(1.06);
+    filter: blur(8px) brightness(0.62);
+    transform: scale(1.035);
   }
   to {
     filter: blur(0) brightness(1);
@@ -146,9 +146,9 @@ a {
 
 @keyframes guest-content-reveal {
   from {
-    filter: blur(5px);
+    filter: blur(3px);
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(10px);
   }
   to {
     filter: blur(0);
@@ -160,7 +160,7 @@ a {
 @keyframes guest-auth-reveal {
   from {
     opacity: 0;
-    transform: translateY(20px) scale(0.98);
+    transform: translateY(12px) scale(0.99);
   }
   to {
     opacity: 1;
@@ -169,24 +169,24 @@ a {
 }
 
 .guest-background-enter {
-  animation: guest-background-reveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: guest-background-reveal 2.8s cubic-bezier(0.22, 0.61, 0.36, 1) both;
   will-change: filter, transform;
 }
 
 .guest-logo-enter {
-  animation: guest-content-reveal 800ms 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: guest-content-reveal 950ms 250ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .guest-title-enter {
-  animation: guest-content-reveal 950ms 550ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: guest-content-reveal 1.15s 650ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .guest-copy-enter {
-  animation: guest-content-reveal 900ms 950ms cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: guest-content-reveal 1.05s 1.05s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .guest-auth-enter {
-  animation: guest-auth-reveal 1s 1.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: guest-auth-reveal 1.15s 1.75s cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
 
 .sheet-backdrop-enter {

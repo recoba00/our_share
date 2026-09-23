@@ -34,7 +34,10 @@ export function getFirebaseErrorMessage(error: unknown) {
 
 function getFirebaseErrorCode(error: unknown) {
   if (error && typeof error === "object" && "code" in error) {
-    return String((error as { code: unknown }).code);
+    return String((error as { code: unknown }).code)
+      .trim()
+      .toLowerCase()
+      .replaceAll("_", "-");
   }
 
   return "";

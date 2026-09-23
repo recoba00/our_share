@@ -36,8 +36,8 @@ export function AppLayout({ children }: PropsWithChildren) {
     }
   }, [pathname, status]);
 
-  if (status === "loading" && pathname !== "/") {
-    return null;
+  if (status === "loading") {
+    return <AuthLoadingScreen />;
   }
 
   if (status === "guest") {
@@ -70,5 +70,22 @@ export function AppLayout({ children }: PropsWithChildren) {
         </div>
       </div>
     </ChatMemberDrawerProvider>
+  );
+}
+
+function AuthLoadingScreen() {
+  return (
+    <div
+      aria-label="로그인 상태 확인 중"
+      className="fixed inset-0 grid h-[100dvh] w-full place-items-center overflow-hidden bg-slate-950"
+      role="status"
+    >
+      <img
+        alt=""
+        className="size-14 animate-pulse rounded-2xl object-cover"
+        src={`${import.meta.env.BASE_URL}brand-logo.svg`}
+      />
+      <span className="sr-only">로그인 상태를 확인하고 있어요.</span>
+    </div>
   );
 }

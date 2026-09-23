@@ -336,9 +336,7 @@ export function HomePage() {
   }, [clearLocationMessage, locationShareMessage, locationShareStatus, showToast]);
 
   if (status === "loading") {
-    return (
-      <GuestHome isLoading />
-    );
+    return null;
   }
 
   if (status === "guest") {
@@ -1101,7 +1099,7 @@ export function HomePage() {
   );
 }
 
-function GuestHome({ authError, isLoading = false }: { authError?: string | null; isLoading?: boolean }) {
+function GuestHome({ authError }: { authError?: string | null }) {
   return (
     <main
       className="relative isolate flex h-full min-h-0 w-full items-end overflow-hidden px-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-[max(1.5rem,env(safe-area-inset-top))] sm:items-center sm:px-8 lg:px-12"
@@ -1134,13 +1132,10 @@ function GuestHome({ authError, isLoading = false }: { authError?: string | null
         <section className="guest-auth-enter rounded-card border border-white/20 bg-slate-950/40 p-5 text-white shadow-xl backdrop-blur-md sm:p-7">
           <h2 className="text-xl font-semibold">우리끼리 시작하기</h2>
           <p className="mt-2 text-sm leading-6 text-white/75">
-            {isLoading
-              ? "로그인 상태를 확인하고 있어요."
-              : "Google 계정으로 가입하거나 로그인할 수 있어요."}
+            Google 계정으로 가입하거나 로그인할 수 있어요.
           </p>
           <SignInConsentButton
             className="mt-5 h-12 w-full"
-            disabled={isLoading}
             label="Google로 시작하기"
           />
           <p className="mt-4 text-center text-xs leading-5 text-white/65">

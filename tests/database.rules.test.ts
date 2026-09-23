@@ -153,6 +153,9 @@ describe("Realtime Database live location rules", () => {
     await assertSucceeds(
       set(ref(bobDb, "liveLocations/familyA/bob"), createLiveLocation())
     );
+    await assertSucceeds(
+      set(ref(testEnv.authenticatedContext("alice").database(), "liveLocations/familyA/alice"), createLiveLocation())
+    );
     await assertSucceeds(get(ref(bobDb, "liveLocations/familyA")));
   });
 

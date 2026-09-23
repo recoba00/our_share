@@ -90,6 +90,14 @@ jobs:
           printf '%s' "$SERVICE_ACCOUNT_JSON" > "$RUNNER_TEMP/firebase-service-account.json"
           echo "GOOGLE_APPLICATION_CREDENTIALS=$RUNNER_TEMP/firebase-service-account.json" >> "$GITHUB_ENV"
 
+      - name: Install membership backfill dependencies
+        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
+        run: npm ci --prefix functions --omit=dev
+
+      - name: Backfill Realtime Database membership mirrors
+        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
+        run: node functions/scripts/backfill-membership-mirrors.mjs
+
       - name: Deploy Firestore and Realtime Database Rules
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         run: |
