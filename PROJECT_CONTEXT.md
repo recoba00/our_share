@@ -332,6 +332,8 @@ Chat Room 타입:
 사용 컬렉션:
 
 - users
+- publicProfiles
+- serviceNotices
 - families
 - familyInvites
 - familyMembers
@@ -349,6 +351,10 @@ families/{familyId}/messages/{messageId}
 ```
 
 이 구조는 Firestore Security Rules에서 `familyId`를 경로 기준으로 검증해 목록 조회와 저장 권한을 안정적으로 처리하기 위한 MVP 기준 구조다.
+
+`users/{uid}`는 이메일과 약관 동의 기록을 포함하는 비공개 계정 문서이며 본인만 읽고 쓸 수 있다. 멤버 목록에 필요한 이름과 프로필 이미지는 `publicProfiles/{uid}`로 분리하고, 로그인 사용자에게 공개하되 이메일·동의·역할 정보는 저장하지 않는다.
+
+`serviceNotices/{noticeId}`는 운영 공지를 저장한다. 로그인 사용자는 `PUBLISHED` 상태만 조회하고, 고정된 플랫폼 운영 계정만 초안 조회와 생성·수정·삭제를 수행한다. `/admin` 운영자 도구에서 공지 상태를 관리하며 설정의 공지사항 화면은 게시된 문서를 실시간으로 구독한다.
 
 families 필드:
 

@@ -22,6 +22,7 @@ import {
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const projectId = "our-share-rules-test";
+const platformAdminUid = "fOMEpAePtlXUvUukUDClM4lUZC82";
 let testEnv: RulesTestEnvironment;
 
 beforeAll(async () => {
@@ -41,6 +42,127 @@ beforeEach(async () => {
 
 afterAll(async () => {
   await testEnv.cleanup();
+});
+
+describe("private and public profile rules", () => {
+  it("keeps email and consent private while allowing public profile reads", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "users", "alice"), createPrivateUser("alice"));
+      await setDoc(doc(db, "publicProfiles", "alice"), createPublicProfile("alice"));
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertSucceeds(getDoc(doc(aliceDb, "users", "alice")));
+    await assertFails(getDoc(doc(bobDb, "users", "alice")));
+    await assertSucceeds(getDoc(doc(bobDb, "publicProfiles", "alice")));
+  });
+
+  it("blocks cross-user profile writes and schema pollution", async () => {
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "users", "alice"), createPrivateUser("alice"))
+    );
+    await assertSucceeds(
+      setDoc(doc(aliceDb, "publicProfiles", "alice"), createPublicProfile("alice"))
+    );
+    await assertFails(
+      setDoc(doc(bobDb, "publicProfiles", "alice"), createPublicProfile("alice"))
+    );
+    await assertFails(
+      setDoc(doc(bobDb, "publicProfiles", "bob"), {
+        ...createPublicProfile("bob"),
+        email: "bob@example.com",
+      })
+    );
+  });
+});
+
+describe("service notice rules", () => {
+  it("lets signed-in users query published notices but hides drafts", async () => {
+    await seedServiceNotice("published", "PUBLISHED");
+    await seedServiceNotice("draft", "DRAFT");
+
+    const memberDb = testEnv.authenticatedContext("member").firestore();
+    const guestDb = testEnv.unauthenticatedContext().firestore();
+
+    const publishedQuery = query(
+      collection(memberDb, "serviceNotices"),
+      where("status", "==", "PUBLISHED")
+    );
+    const snapshot = await assertSucceeds(getDocs(publishedQuery));
+
+    expect(snapshot.size).toBe(1);
+    await assertFails(getDoc(doc(memberDb, "serviceNotices", "draft")));
+    await assertFails(getDocs(collection(memberDb, "serviceNotices")));
+    await assertFails(getDoc(doc(guestDb, "serviceNotices", "published")));
+  });
+
+  it("allows only the platform admin to manage valid notices", async () => {
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+    const memberDb = testEnv.authenticatedContext("member").firestore();
+    const notice = createServiceNotice("notice-a", "DRAFT");
+
+    await assertFails(setDoc(doc(memberDb, "serviceNotices", "notice-a"), notice));
+    await assertSucceeds(setDoc(doc(adminDb, "serviceNotices", "notice-a"), notice));
+    await assertSucceeds(
+      updateDoc(doc(adminDb, "serviceNotices", "notice-a"), {
+        status: "PUBLISHED",
+        publishedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(memberDb, "serviceNotices", "notice-a"), { title: "탈취한 공지" })
+    );
+    await assertSucceeds(deleteDoc(doc(adminDb, "serviceNotices", "notice-a")));
+  });
+
+  it("rejects invalid notice fields and immutable-field changes", async () => {
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+
+    await assertFails(
+      setDoc(doc(adminDb, "serviceNotices", "wrong-id"), createServiceNotice("another-id", "DRAFT"))
+    );
+    await assertFails(
+      setDoc(doc(adminDb, "serviceNotices", "oversized"), {
+        ...createServiceNotice("oversized", "DRAFT"),
+        body: "x".repeat(2001),
+      })
+    );
+    await assertFails(
+      setDoc(doc(adminDb, "serviceNotices", "polluted"), {
+        ...createServiceNotice("polluted", "DRAFT"),
+        role: "ADMIN",
+      })
+    );
+    await assertFails(
+      setDoc(doc(adminDb, "serviceNotices", "unpublished"), {
+        ...createServiceNotice("unpublished", "PUBLISHED"),
+        publishedAt: null,
+      })
+    );
+
+    await assertSucceeds(
+      setDoc(doc(adminDb, "serviceNotices", "notice-b"), createServiceNotice("notice-b", "DRAFT"))
+    );
+    await assertFails(
+      updateDoc(doc(adminDb, "serviceNotices", "notice-b"), {
+        createdBy: "another-user",
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(adminDb, "serviceNotices", "notice-b"), {
+        createdAt: new Date(0),
+        updatedAt: serverTimestamp(),
+      })
+    );
+  });
 });
 
 describe("family membership rules", () => {
@@ -1274,4 +1396,59 @@ function createMessage({
     createdAt: new Date(),
     readBy: [createdBy],
   };
+}
+
+function createPrivateUser(userId: string) {
+  return {
+    createdAt: new Date(),
+    displayName: userId,
+    email: `${userId}@example.com`,
+    id: userId,
+    photoURL: null,
+    requiredConsent: {
+      consentedAt: "2026-09-23T00:00:00.000Z",
+      privacy: true,
+      terms: true,
+      version: "2026-09-17",
+    },
+    updatedAt: new Date(),
+  };
+}
+
+function createPublicProfile(userId: string) {
+  return {
+    createdAt: new Date(),
+    displayName: userId,
+    id: userId,
+    photoURL: null,
+    updatedAt: new Date(),
+  };
+}
+
+function createServiceNotice(
+  noticeId: string,
+  status: "DRAFT" | "PUBLISHED"
+) {
+  return {
+    body: "서비스 공지 내용",
+    createdAt: serverTimestamp(),
+    createdBy: platformAdminUid,
+    id: noticeId,
+    publishedAt: status === "PUBLISHED" ? serverTimestamp() : null,
+    status,
+    title: "서비스 공지",
+    updatedAt: serverTimestamp(),
+  };
+}
+
+async function seedServiceNotice(
+  noticeId: string,
+  status: "DRAFT" | "PUBLISHED"
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(
+      doc(context.firestore(), "serviceNotices", noticeId),
+      createServiceNotice(noticeId, status)
+    );
+  });
 }

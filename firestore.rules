@@ -1,9 +1,129 @@
 rules_version = '2';
 
 service cloud.firestore {
+  // ===============================================================
+  // Assumed data model
+  // ===============================================================
+  // users/{uid}: private account profile, email, consent and timestamps.
+  // publicProfiles/{uid}: public-safe display name/photo and timestamps.
+  // serviceNotices/{noticeId}: title, body, status, author and timestamps.
+  // families/{familyId}: crew name, owner, invite code and vice owners.
+  // familyInvites/{inviteCode}: crew lookup fields for authenticated joins.
+  // familyMembers/{familyId}_{uid}: crew membership, role and display metadata.
+  // families/{familyId}/{calendarEvents|memos|polls|pollVotes|chatRooms|messages}:
+  // crew-scoped feature documents validated by the domain helpers below.
+  // Legacy top-level feature collections remain for compatibility and are
+  // guarded by the same membership and ownership checks.
+  // ===============================================================
   match /databases/{database}/documents {
     function signedIn() {
       return request.auth != null;
+    }
+
+    function isPlatformAdmin() {
+      return signedIn() && request.auth.uid == "fOMEpAePtlXUvUukUDClM4lUZC82";
+    }
+
+    function isValidPrivateUser(data, userId) {
+      return data.keys().hasOnly([
+          "id",
+          "displayName",
+          "email",
+          "photoURL",
+          "requiredConsent",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "displayName",
+          "email",
+          "photoURL",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.id == userId &&
+        (data.displayName == null || (data.displayName is string && data.displayName.size() <= 80)) &&
+        (data.email == null || (data.email is string && data.email.size() <= 320)) &&
+        (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        (
+          !("requiredConsent" in data) ||
+          (
+            data.requiredConsent is map &&
+            data.requiredConsent.keys().hasOnly(["privacy", "terms", "version", "consentedAt"]) &&
+            data.requiredConsent.keys().hasAll(["privacy", "terms", "version", "consentedAt"]) &&
+            data.requiredConsent.privacy == true &&
+            data.requiredConsent.terms == true &&
+            data.requiredConsent.version is string &&
+            data.requiredConsent.version.size() <= 30 &&
+            data.requiredConsent.consentedAt is string &&
+            data.requiredConsent.consentedAt.size() <= 40
+          )
+        );
+    }
+
+    function isValidPublicProfile(data, userId) {
+      return data.keys().hasOnly([
+          "id",
+          "displayName",
+          "photoURL",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "displayName",
+          "photoURL",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.id == userId &&
+        (data.displayName == null || (data.displayName is string && data.displayName.size() <= 80)) &&
+        (data.photoURL == null || (data.photoURL is string && data.photoURL.size() <= 2048)) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidServiceNotice(data, noticeId) {
+      return data.keys().hasOnly([
+          "id",
+          "title",
+          "body",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "publishedAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "title",
+          "body",
+          "status",
+          "createdBy",
+          "createdAt",
+          "updatedAt",
+          "publishedAt"
+        ]) &&
+        data.id == noticeId &&
+        data.title is string &&
+        data.title.size() > 0 &&
+        data.title.size() <= 80 &&
+        data.body is string &&
+        data.body.size() > 0 &&
+        data.body.size() <= 2000 &&
+        (data.status == "DRAFT" || data.status == "PUBLISHED") &&
+        data.createdBy is string &&
+        data.createdBy.size() > 0 &&
+        data.createdBy.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        (
+          (data.status == "DRAFT" && data.publishedAt == null) ||
+          (data.status == "PUBLISHED" && data.publishedAt is timestamp)
+        );
     }
 
     function membershipId(familyId) {
@@ -289,9 +409,54 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if signedIn();
-      allow create, update: if signedIn() && request.auth.uid == userId;
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn() &&
+        request.auth.uid == userId &&
+        isValidPrivateUser(request.resource.data, userId);
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidPrivateUser(request.resource.data, userId);
       allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /publicProfiles/{userId} {
+      allow read: if signedIn();
+      allow create: if signedIn() &&
+        request.auth.uid == userId &&
+        isValidPublicProfile(request.resource.data, userId);
+      allow update: if signedIn() &&
+        request.auth.uid == userId &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        isValidPublicProfile(request.resource.data, userId);
+      allow delete: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /serviceNotices/{noticeId} {
+      allow read: if signedIn() &&
+        (isPlatformAdmin() || resource.data.status == "PUBLISHED");
+      allow create: if isPlatformAdmin() &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        (
+          request.resource.data.publishedAt == null ||
+          request.resource.data.publishedAt == request.time
+        ) &&
+        isValidServiceNotice(request.resource.data, noticeId);
+      allow update: if isPlatformAdmin() &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time &&
+        (
+          request.resource.data.publishedAt == null ||
+          request.resource.data.publishedAt == request.time
+        ) &&
+        isValidServiceNotice(request.resource.data, noticeId);
+      allow delete: if isPlatformAdmin();
     }
 
     match /families/{familyId} {

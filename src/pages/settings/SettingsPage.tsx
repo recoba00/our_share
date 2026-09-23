@@ -8,9 +8,11 @@ import {
   ShieldCheck,
   Sun,
   Trash,
+  Wrench,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
@@ -25,9 +27,12 @@ import type { PolicyDocumentId } from "../../features/compliance/policyDocuments
 import { policyDocuments } from "../../features/compliance/policyDocuments";
 import { useTheme } from "../../features/theme/useTheme";
 import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
+import { isPlatformAdmin } from "../../features/admin/platformAdmin";
+import { ServiceNoticesView } from "../../components/compliance/ServiceNoticesView";
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const { families } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
@@ -143,6 +148,14 @@ export function SettingsPage() {
                 label="공지사항"
                 onClick={() => setActiveDocument("notices")}
               />
+              {isPlatformAdmin(user?.uid) ? (
+                <SettingsActionRow
+                  description="공지 작성과 게시 상태를 관리해요."
+                  icon={<Wrench size={20} weight="regular" />}
+                  label="운영자 도구"
+                  onClick={() => navigate("/admin")}
+                />
+              ) : null}
             </section>
 
             <section className="grid gap-2">
@@ -208,7 +221,10 @@ export function SettingsPage() {
         onClose={() => setActiveDocument(null)}
         title={activeDocument ? policyDocuments[activeDocument].title : "서비스 안내"}
       >
-        {activeDocument ? <PolicyDocumentView documentId={activeDocument} /> : null}
+        {activeDocument === "notices" ? <ServiceNoticesView /> : null}
+        {activeDocument && activeDocument !== "notices" ? (
+          <PolicyDocumentView documentId={activeDocument} />
+        ) : null}
       </BottomSheet>
     </>
   );

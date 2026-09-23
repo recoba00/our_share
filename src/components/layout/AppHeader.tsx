@@ -61,6 +61,7 @@ export function AppHeader() {
   const isHome = title === "우리끼리";
   const isProfile = pathname.startsWith("/profile");
   const isSettings = pathname.startsWith("/settings");
+  const isAdmin = pathname.startsWith("/admin");
   const isChatRoom = /^\/chat\/[^/]+/.test(pathname);
   const activeFamilyId = activeFamily?.id;
   const userId = user?.uid;
@@ -139,9 +140,13 @@ export function AppHeader() {
     <header className="fixed inset-x-0 top-0 z-30 h-[calc(4rem+env(safe-area-inset-top))] border-b border-white/60 bg-white/75 pt-[env(safe-area-inset-top)] shadow-sm backdrop-blur-xl">
       <div className="mx-auto flex h-16 w-full max-w-screen-2xl items-center justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex min-w-0 items-center gap-3">
-          {isSettings ? (
+          {isSettings || isAdmin ? (
             <>
-              <Link aria-label="내 정보로 돌아가기" className="grid size-8 place-items-center" to="/profile">
+              <Link
+                aria-label={isAdmin ? "설정으로 돌아가기" : "내 정보로 돌아가기"}
+                className="grid size-8 place-items-center"
+                to={isAdmin ? "/settings" : "/profile"}
+              >
                 <ArrowLeft size={22} />
               </Link>
               <h1 className="text-lg font-semibold leading-none">{title}</h1>
@@ -209,7 +214,7 @@ export function AppHeader() {
               <ListBullets size={headerIconSize} weight="regular" />
             </button>
           ) : null}
-          {status === "authenticated" && !isSettings ? (
+          {status === "authenticated" && !isSettings && !isAdmin ? (
             <button
               aria-label="알림"
               className="relative grid size-8 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-white/70 hover:text-[var(--color-text-primary)]"
@@ -554,6 +559,10 @@ function getPageTitle(pathname: string) {
 
   if (pathname.startsWith("/settings")) {
     return "설정";
+  }
+
+  if (pathname.startsWith("/admin")) {
+    return "운영자 도구";
   }
 
   return "우리끼리";

@@ -98,6 +98,10 @@ jobs:
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         run: node functions/scripts/backfill-membership-mirrors.mjs
 
+      - name: Backfill public profiles
+        if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
+        run: node functions/scripts/backfill-public-profiles.mjs
+
       - name: Deploy Firestore and Realtime Database Rules
         if: env.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 != ''
         run: |

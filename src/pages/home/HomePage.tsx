@@ -1164,7 +1164,6 @@ function MemberSheetProfile({ member }: { member: FamilyMemberProfile }) {
           ) : (
             roleLabels[member.role]
           )}
-          <span className="truncate">· {member.email ?? "이메일 없음"}</span>
         </div>
       </div>
     </div>

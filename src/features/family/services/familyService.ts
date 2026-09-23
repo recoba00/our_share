@@ -396,7 +396,7 @@ export async function getFamilyMembers(
   const memberSnapshot = await getDocs(membersQuery);
 
   const userIds = memberSnapshot.docs.map((memberDoc) => memberDoc.data().userId as string);
-  const userSnapshots = await getDocumentsByIds("users", userIds);
+  const userSnapshots = await getDocumentsByIds("publicProfiles", userIds);
   const profilesById = new Map(
     userSnapshots.map((userSnapshot) => [userSnapshot.id, userSnapshot.data()])
   );
@@ -415,7 +415,6 @@ export async function getFamilyMembers(
       permissions: (member.permissions ?? []) as string[],
       createdAt: member.createdAt,
       displayName: (profile.displayName as string | null) ?? null,
-      email: (profile.email as string | null) ?? null,
       photoURL: (profile.photoURL as string | null) ?? null,
     };
   });
@@ -760,7 +759,7 @@ function readViceOwnerIds(data: Record<string, unknown>) {
     : [];
 }
 
-async function getDocumentsByIds(collectionName: "families" | "users", ids: string[]) {
+async function getDocumentsByIds(collectionName: "families" | "publicProfiles", ids: string[]) {
   const uniqueIds = [...new Set(ids)].filter(Boolean);
 
   if (uniqueIds.length === 0) {

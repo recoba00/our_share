@@ -1,6 +1,7 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireAuth } from "../components/auth/RequireAuth";
+import { RequireAdmin } from "../components/auth/RequireAdmin";
 import { ErrorBoundary } from "../components/common/ErrorBoundary";
 import { ConfirmDialogProvider } from "../components/common/ConfirmDialog";
 import { ToastProvider } from "../components/common/Toast";
@@ -37,6 +38,9 @@ const ProfilePage = lazy(() =>
 const SettingsPage = lazy(() =>
   import("../pages/settings/SettingsPage").then(({ SettingsPage: page }) => ({ default: page }))
 );
+const AdminPage = lazy(() =>
+  import("../pages/admin/AdminPage").then(({ AdminPage: page }) => ({ default: page }))
+);
 
 export function App() {
   return (
@@ -58,6 +62,7 @@ export function App() {
                       <Route path="/calendar" element={<RequireAuth><CalendarPage /></RequireAuth>} />
                       <Route path="/profile" element={<RequireAuth><ProfilePage /></RequireAuth>} />
                       <Route path="/settings" element={<RequireAuth><SettingsPage /></RequireAuth>} />
+                      <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminPage /></RequireAdmin></RequireAuth>} />
                       <Route path="/diagnostics" element={<DiagnosticsPage />} />
                       <Route path="*" element={<Navigate to="/" replace />} />
                     </Routes>

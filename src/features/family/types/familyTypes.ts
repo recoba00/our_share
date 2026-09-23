@@ -23,6 +23,5 @@ export type FamilyMember = {
 
 export type FamilyMemberProfile = FamilyMember & {
   displayName: string | null;
-  email: string | null;
   photoURL: string | null;
 };

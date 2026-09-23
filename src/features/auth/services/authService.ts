@@ -17,7 +17,6 @@ import {
   getDocs,
   query,
   serverTimestamp,
-  setDoc,
   where,
   writeBatch,
 } from "firebase/firestore";
@@ -99,6 +98,7 @@ export async function deleteAccount({
 
   const batch = writeBatch(db);
   batch.delete(doc(db, "users", user.uid));
+  batch.delete(doc(db, "publicProfiles", user.uid));
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
   await batch.commit();
 
@@ -120,10 +120,15 @@ async function clearUserRealtimeData(familyId: string, userId: string) {
 
 export async function syncUserProfile(user: User) {
   const userRef = doc(db, "users", user.uid);
-  const userSnapshot = await getDoc(userRef);
+  const publicProfileRef = doc(db, "publicProfiles", user.uid);
+  const [userSnapshot, publicProfileSnapshot] = await Promise.all([
+    getDoc(userRef),
+    getDoc(publicProfileRef),
+  ]);
   const consent = getStoredRequiredConsent();
+  const batch = writeBatch(db);
 
-  await setDoc(
+  batch.set(
     userRef,
     {
       id: user.uid,
@@ -136,6 +141,18 @@ export async function syncUserProfile(user: User) {
     },
     { merge: true }
   );
+  batch.set(
+    publicProfileRef,
+    {
+      id: user.uid,
+      displayName: user.displayName,
+      photoURL: user.photoURL,
+      updatedAt: serverTimestamp(),
+      ...(!publicProfileSnapshot.exists() ? { createdAt: serverTimestamp() } : {}),
+    },
+    { merge: true }
+  );
+  await batch.commit();
 }
 
 export async function updateUserProfile({
@@ -159,8 +176,13 @@ export async function updateUserProfile({
     photoURL: normalizedPhotoURL || null,
   });
 
-  await setDoc(
-    doc(db, "users", user.uid),
+  const userRef = doc(db, "users", user.uid);
+  const publicProfileRef = doc(db, "publicProfiles", user.uid);
+  const publicProfileSnapshot = await getDoc(publicProfileRef);
+  const batch = writeBatch(db);
+
+  batch.set(
+    userRef,
     {
       id: user.uid,
       displayName: normalizedDisplayName,
@@ -170,6 +192,18 @@ export async function updateUserProfile({
     },
     { merge: true }
   );
+  batch.set(
+    publicProfileRef,
+    {
+      id: user.uid,
+      displayName: normalizedDisplayName,
+      photoURL: normalizedPhotoURL || null,
+      updatedAt: serverTimestamp(),
+      ...(!publicProfileSnapshot.exists() ? { createdAt: serverTimestamp() } : {}),
+    },
+    { merge: true }
+  );
+  await batch.commit();
 }
 
 export function getAuthErrorMessage(error: unknown) {
