@@ -365,7 +365,7 @@ families/{familyId}/messages/{messageId}
 
 신고는 `moderationReports/{reportId}`에 원본과 처리 결과를 저장하고, 미처리 항목은 같은 ID의 `moderationReportQueue/{reportId}`에도 저장한다. 운영자가 신고를 처리하면 원본 상태를 갱신하고 대기열 문서를 삭제한다. 이 구조는 복합 인덱스 없이도 처리 대기와 전체 기록을 각각 최신순으로 페이지 조회하기 위한 것이다. 설정에서는 사용자가 대상을 직접 입력할 수 있고, 홈·채팅 멤버와 상대방 채팅 메시지에서는 대상 사용자 ID와 표시 이름, 채팅 맥락을 자동 입력한다. `userRestrictions/{uid}` 문서가 존재하면 해당 계정의 Firestore 접근을 차단하고, 같은 상태를 Realtime Database `restrictedUsers/{uid}`에 미러링해 위치·접속 상태 접근도 차단한다. 플랫폼 운영 계정만 제한을 생성·해제할 수 있다.
 
-백오피스 권한은 최초 부트스트랩 계정과 `platformAdminRoles/{uid}` 역할 문서로 판별한다. 역할은 `SUPER_ADMIN`(전체 운영 및 권한 관리), `MODERATOR`(신고 처리·이용 제한), `CONTENT_MANAGER`(공지 관리), `VIEWER`(운영 현황 조회)로 구분한다. 역할은 Realtime Database `platformAdminRoles/{uid}`에도 최소 필드만 미러링해 이용 제한 작업 권한을 동일하게 검증한다. 운영 변경은 `adminAuditLogs/{logId}`에 작업자·역할·액션·대상·시각을 기록하며 로그 문서는 생성 후 수정·삭제할 수 없다. Cloud Functions를 사용하지 않는 Spark 요금제 구조이므로 감사 로그 생성은 각 운영 변경과 같은 Firestore batch에 포함하고, Firestore와 Realtime Database를 함께 바꾸는 작업은 보상 처리로 일관성을 유지한다.
+백오피스 권한은 최초 부트스트랩 계정과 `platformAdminRoles/{uid}` 역할 문서로 판별한다. 역할은 `SUPER_ADMIN`(전체 운영 및 권한 관리), `MODERATOR`(신고 처리·이용 제한), `CONTENT_MANAGER`(공지 관리), `VIEWER`(운영 현황 조회)로 구분한다. 역할은 Realtime Database `platformAdminRoles/{uid}`에도 최소 필드만 미러링해 이용 제한 작업 권한을 동일하게 검증한다. 운영 변경은 `adminAuditLogs/{logId}`에 작업자·역할·액션·대상·시각을 기록하며 로그 문서는 생성 후 수정·삭제할 수 없다. 감사 로그 조회는 최근 30일을 기본 범위로 날짜를 서버에서 제한하고, 통합 검색과 작업 유형 필터는 페이지당 최대 1,000건 안에서 처리한다. CSV는 현재 조건에 맞는 로그를 최대 5,000건까지 내보낸다. Cloud Functions를 사용하지 않는 Spark 요금제 구조이므로 감사 로그 생성은 각 운영 변경과 같은 Firestore batch에 포함하고, Firestore와 Realtime Database를 함께 바꾸는 작업은 보상 처리로 일관성을 유지한다.
 
 families 필드:
 
