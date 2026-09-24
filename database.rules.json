@@ -38,9 +38,25 @@
     },
     "restrictedUsers": {
       "$userId": {
-        ".read": "auth != null && (auth.uid == $userId || auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82')",
-        ".write": "auth != null && auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82' && $userId != 'fOMEpAePtlXUvUukUDClM4lUZC82'",
-        ".validate": "!newData.exists() || (newData.hasChildren(['userId', 'reason', 'createdBy', 'updatedAt']) && newData.child('userId').val() == $userId && newData.child('reason').isString() && newData.child('createdBy').isString() && newData.child('updatedAt').isNumber())"
+        ".read": "auth != null && (auth.uid == $userId || auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'SUPER_ADMIN' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'MODERATOR')",
+        ".write": "auth != null && (auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'SUPER_ADMIN' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'MODERATOR') && $userId != 'fOMEpAePtlXUvUukUDClM4lUZC82' && !root.child('platformAdminRoles').child($userId).exists()",
+        ".validate": "!newData.exists() || newData.hasChildren(['userId', 'reason', 'createdBy', 'updatedAt'])",
+        "userId": { ".validate": "newData.val() == $userId" },
+        "reason": { ".validate": "newData.isString() && newData.val().length <= 30" },
+        "createdBy": { ".validate": "newData.val() == auth.uid" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
+      }
+    },
+    "platformAdminRoles": {
+      "$userId": {
+        ".read": "auth != null && (auth.uid == $userId || auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'SUPER_ADMIN')",
+        ".write": "auth != null && $userId != auth.uid && $userId != 'fOMEpAePtlXUvUukUDClM4lUZC82' && !root.child('restrictedUsers').child($userId).exists() && (auth.uid == 'fOMEpAePtlXUvUukUDClM4lUZC82' || root.child('platformAdminRoles').child(auth.uid).child('role').val() == 'SUPER_ADMIN')",
+        ".validate": "!newData.exists() || newData.hasChildren(['userId', 'role', 'updatedAt'])",
+        "userId": { ".validate": "newData.val() == $userId" },
+        "role": { ".validate": "newData.val() == 'SUPER_ADMIN' || newData.val() == 'MODERATOR' || newData.val() == 'CONTENT_MANAGER' || newData.val() == 'VIEWER'" },
+        "updatedAt": { ".validate": "newData.isNumber()" },
+        "$other": { ".validate": false }
       }
     }
   }

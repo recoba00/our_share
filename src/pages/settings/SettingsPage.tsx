@@ -30,7 +30,7 @@ import { policyDocuments } from "../../features/compliance/policyDocuments";
 import { useTheme } from "../../features/theme/useTheme";
 import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
 import { getFirebaseErrorMessage } from "../../lib/firebase/firebaseErrorMessage";
-import { isPlatformAdmin } from "../../features/admin/platformAdmin";
+import { useAdminAccess } from "../../features/admin/useAdminAccess";
 import { ServiceNoticesView } from "../../components/compliance/ServiceNoticesView";
 import { createModerationReport } from "../../features/moderation/services/moderationService";
 import {
@@ -51,6 +51,7 @@ const emptyReportDraft: ModerationReportDraft = {
 
 export function SettingsPage() {
   const { user } = useAuth();
+  const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
   const { activeFamily, families } = useFamily();
   const { confirm } = useConfirmDialog();
@@ -204,7 +205,7 @@ export function SettingsPage() {
                 label="신고하기"
                 onClick={() => setIsReportOpen(true)}
               />
-              {isPlatformAdmin(user?.uid) ? (
+              {isAdmin ? (
                 <SettingsActionRow
                   description="공지 작성과 게시 상태를 관리해요."
                   icon={<Wrench size={20} weight="regular" />}

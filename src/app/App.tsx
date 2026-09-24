@@ -10,6 +10,7 @@ import { RequiredConsentGate } from "../components/compliance/RequiredConsentGat
 import { AccountRestrictionGate } from "../components/moderation/AccountRestrictionGate";
 import { PwaPrompt } from "../components/pwa/PwaPrompt";
 import { AuthProvider } from "../features/auth/AuthProvider";
+import { AdminAccessProvider } from "../features/admin/AdminAccessProvider";
 import { FamilyProvider } from "../features/family/FamilyProvider";
 
 const CalendarPage = lazy(() =>
@@ -46,15 +47,16 @@ const AdminPage = lazy(() =>
 export function App() {
   return (
     <AuthProvider>
-      <AccountRestrictionGate>
-        <RequiredConsentGate>
-          <FamilyProvider>
-            <ToastProvider>
-              <ConfirmDialogProvider>
-                <ErrorBoundary>
-                  <AppLayout>
-                    <Suspense fallback={<RouteLoading />}>
-                      <Routes>
+      <AdminAccessProvider>
+        <AccountRestrictionGate>
+          <RequiredConsentGate>
+            <FamilyProvider>
+              <ToastProvider>
+                <ConfirmDialogProvider>
+                  <ErrorBoundary>
+                    <AppLayout>
+                      <Suspense fallback={<RouteLoading />}>
+                        <Routes>
                         <Route path="/" element={<HomePage />} />
                         <Route path="/invite/:inviteCode" element={<InvitePage />} />
                         <Route path="/chat" element={<RequireAuth><ChatPage /></RequireAuth>} />
@@ -67,16 +69,17 @@ export function App() {
                         <Route path="/admin" element={<RequireAuth><RequireAdmin><AdminPage /></RequireAdmin></RequireAuth>} />
                         <Route path="/diagnostics" element={<DiagnosticsPage />} />
                         <Route path="*" element={<Navigate to="/" replace />} />
-                      </Routes>
-                    </Suspense>
-                    <PwaPrompt />
-                  </AppLayout>
-                </ErrorBoundary>
-              </ConfirmDialogProvider>
-            </ToastProvider>
-          </FamilyProvider>
-        </RequiredConsentGate>
-      </AccountRestrictionGate>
+                        </Routes>
+                      </Suspense>
+                      <PwaPrompt />
+                    </AppLayout>
+                  </ErrorBoundary>
+                </ConfirmDialogProvider>
+              </ToastProvider>
+            </FamilyProvider>
+          </RequiredConsentGate>
+        </AccountRestrictionGate>
+      </AdminAccessProvider>
     </AuthProvider>
   );
 }

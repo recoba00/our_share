@@ -10,6 +10,8 @@ service cloud.firestore {
   // moderationReports/{reportId}: user-submitted safety reports and review result.
   // moderationReportQueue/{reportId}: unresolved reports for the admin queue.
   // userRestrictions/{uid}: active platform access restrictions.
+  // platformAdminRoles/{uid}: scoped backoffice role assignments.
+  // adminAuditLogs/{logId}: immutable records of backoffice mutations.
   // families/{familyId}: crew name, owner, invite code and vice owners.
   // familyInvites/{inviteCode}: crew lookup fields for authenticated joins.
   // familyMembers/{familyId}_{uid}: crew membership, role and display metadata.
@@ -23,14 +25,52 @@ service cloud.firestore {
       return request.auth != null;
     }
 
-    function isPlatformAdmin() {
+    function isBootstrapPlatformAdmin() {
       return authenticated() && request.auth.uid == "fOMEpAePtlXUvUukUDClM4lUZC82";
+    }
+
+    function isValidPlatformAdminRole(role) {
+      return role == "SUPER_ADMIN" ||
+        role == "MODERATOR" ||
+        role == "CONTENT_MANAGER" ||
+        role == "VIEWER";
+    }
+
+    function hasPlatformRole(role) {
+      return authenticated() &&
+        !exists(/databases/$(database)/documents/userRestrictions/$(request.auth.uid)) &&
+        exists(/databases/$(database)/documents/platformAdminRoles/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/platformAdminRoles/$(request.auth.uid)).data.role == role;
+    }
+
+    function isPlatformAdmin() {
+      return isBootstrapPlatformAdmin() ||
+        hasPlatformRole("SUPER_ADMIN") ||
+        hasPlatformRole("MODERATOR") ||
+        hasPlatformRole("CONTENT_MANAGER") ||
+        hasPlatformRole("VIEWER");
+    }
+
+    function canManageAdmins() {
+      return isBootstrapPlatformAdmin() || hasPlatformRole("SUPER_ADMIN");
+    }
+
+    function canManageModeration() {
+      return isBootstrapPlatformAdmin() ||
+        hasPlatformRole("SUPER_ADMIN") ||
+        hasPlatformRole("MODERATOR");
+    }
+
+    function canManageNotices() {
+      return isBootstrapPlatformAdmin() ||
+        hasPlatformRole("SUPER_ADMIN") ||
+        hasPlatformRole("CONTENT_MANAGER");
     }
 
     function signedIn() {
       return authenticated() &&
         (
-          isPlatformAdmin() ||
+          isBootstrapPlatformAdmin() ||
           !exists(/databases/$(database)/documents/userRestrictions/$(request.auth.uid))
         );
     }
@@ -252,6 +292,105 @@ service cloud.firestore {
         data.createdBy.size() <= 128 &&
         data.createdAt is timestamp &&
         data.updatedAt is timestamp;
+    }
+
+    function isValidPlatformAdminAssignment(data, userId) {
+      return data.keys().hasOnly([
+          "id",
+          "userId",
+          "role",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "userId",
+          "role",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.id == userId &&
+        data.userId == userId &&
+        isValidPlatformAdminRole(data.role) &&
+        data.createdBy is string &&
+        data.createdBy.size() > 0 &&
+        data.createdBy.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
+    function isValidAdminAuditAction(action) {
+      return action == "NOTICE_CREATE" ||
+        action == "NOTICE_UPDATE" ||
+        action == "NOTICE_DELETE" ||
+        action == "REPORT_RESOLVE" ||
+        action == "REPORT_DISMISS" ||
+        action == "USER_RESTRICT" ||
+        action == "USER_RESTORE" ||
+        action == "ADMIN_ROLE_ASSIGN" ||
+        action == "ADMIN_ROLE_UPDATE" ||
+        action == "ADMIN_ROLE_REMOVE";
+    }
+
+    function canCreateAuditAction(action) {
+      return (
+          (action == "NOTICE_CREATE" || action == "NOTICE_UPDATE" || action == "NOTICE_DELETE") &&
+          canManageNotices()
+        ) || (
+          (action == "REPORT_RESOLVE" || action == "REPORT_DISMISS" || action == "USER_RESTRICT" || action == "USER_RESTORE") &&
+          canManageModeration()
+        ) || (
+          (action == "ADMIN_ROLE_ASSIGN" || action == "ADMIN_ROLE_UPDATE" || action == "ADMIN_ROLE_REMOVE") &&
+          canManageAdmins()
+        );
+    }
+
+    function actorRoleMatchesCurrentAccess(actorRole) {
+      return (isBootstrapPlatformAdmin() && actorRole == "SUPER_ADMIN") ||
+        (!isBootstrapPlatformAdmin() && hasPlatformRole(actorRole));
+    }
+
+    function isValidAdminAuditLog(data, logId) {
+      return data.keys().hasOnly([
+          "id",
+          "action",
+          "actorId",
+          "actorRole",
+          "targetType",
+          "targetId",
+          "description",
+          "createdAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "action",
+          "actorId",
+          "actorRole",
+          "targetType",
+          "targetId",
+          "description",
+          "createdAt"
+        ]) &&
+        data.id == logId &&
+        isValidAdminAuditAction(data.action) &&
+        data.actorId == request.auth.uid &&
+        data.actorRole is string &&
+        actorRoleMatchesCurrentAccess(data.actorRole) &&
+        (
+          data.targetType == "NOTICE" ||
+          data.targetType == "REPORT" ||
+          data.targetType == "USER" ||
+          data.targetType == "ADMIN_ROLE"
+        ) &&
+        data.targetId is string &&
+        data.targetId.size() > 0 &&
+        data.targetId.size() <= 128 &&
+        data.description is string &&
+        data.description.size() > 0 &&
+        data.description.size() <= 300 &&
+        data.createdAt == request.time;
     }
 
     function membershipId(familyId) {
@@ -565,7 +704,7 @@ service cloud.firestore {
     match /serviceNotices/{noticeId} {
       allow read: if signedIn() &&
         (isPlatformAdmin() || resource.data.status == "PUBLISHED");
-      allow create: if isPlatformAdmin() &&
+      allow create: if canManageNotices() &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.createdAt == request.time &&
         request.resource.data.updatedAt == request.time &&
@@ -574,7 +713,7 @@ service cloud.firestore {
           request.resource.data.publishedAt == request.time
         ) &&
         isValidServiceNotice(request.resource.data, noticeId);
-      allow update: if isPlatformAdmin() &&
+      allow update: if canManageNotices() &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
@@ -584,11 +723,11 @@ service cloud.firestore {
           request.resource.data.publishedAt == request.time
         ) &&
         isValidServiceNotice(request.resource.data, noticeId);
-      allow delete: if isPlatformAdmin();
+      allow delete: if canManageNotices();
     }
 
     match /moderationReports/{reportId} {
-      allow read: if isPlatformAdmin() ||
+      allow read: if canManageModeration() ||
         (signedIn() && resource.data.reporterId == request.auth.uid);
       allow create: if signedIn() &&
         request.resource.data.reporterId == request.auth.uid &&
@@ -599,7 +738,7 @@ service cloud.firestore {
         request.resource.data.reviewedBy == null &&
         request.resource.data.resolutionNote == "" &&
         isValidModerationReport(request.resource.data, reportId);
-      allow update: if isPlatformAdmin() &&
+      allow update: if canManageModeration() &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.reporterId == resource.data.reporterId &&
         request.resource.data.reporterName == resource.data.reporterName &&
@@ -619,11 +758,11 @@ service cloud.firestore {
           request.resource.data.status == "DISMISSED"
         ) &&
         isValidModerationReport(request.resource.data, reportId);
-      allow delete: if isPlatformAdmin();
+      allow delete: if canManageModeration();
     }
 
     match /moderationReportQueue/{reportId} {
-      allow read: if isPlatformAdmin();
+      allow read: if canManageModeration();
       allow create: if signedIn() &&
         request.resource.data.reporterId == request.auth.uid &&
         request.resource.data.status == "OPEN" &&
@@ -631,27 +770,61 @@ service cloud.firestore {
         request.resource.data ==
           getAfter(/databases/$(database)/documents/moderationReports/$(reportId)).data &&
         isValidModerationReport(request.resource.data, reportId);
-      allow delete: if isPlatformAdmin();
+      allow delete: if canManageModeration();
     }
 
     match /userRestrictions/{userId} {
       allow read: if authenticated() &&
         (isPlatformAdmin() || request.auth.uid == userId);
-      allow create: if isPlatformAdmin() &&
+      allow create: if canManageModeration() &&
         userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        !exists(/databases/$(database)/documents/platformAdminRoles/$(userId)) &&
         request.resource.data.createdBy == request.auth.uid &&
         request.resource.data.createdAt == request.time &&
         request.resource.data.updatedAt == request.time &&
         isValidUserRestriction(request.resource.data, userId);
-      allow update: if isPlatformAdmin() &&
+      allow update: if canManageModeration() &&
         userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        !exists(/databases/$(database)/documents/platformAdminRoles/$(userId)) &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.userId == resource.data.userId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         request.resource.data.updatedAt == request.time &&
         isValidUserRestriction(request.resource.data, userId);
-      allow delete: if isPlatformAdmin();
+      allow delete: if canManageModeration();
+    }
+
+    match /platformAdminRoles/{userId} {
+      allow read: if authenticated() &&
+        (request.auth.uid == userId || isPlatformAdmin());
+      allow create: if canManageAdmins() &&
+        userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        !exists(/databases/$(database)/documents/userRestrictions/$(userId)) &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        exists(/databases/$(database)/documents/publicProfiles/$(userId)) &&
+        isValidPlatformAdminAssignment(request.resource.data, userId);
+      allow update: if canManageAdmins() &&
+        userId != request.auth.uid &&
+        userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time &&
+        isValidPlatformAdminAssignment(request.resource.data, userId);
+      allow delete: if canManageAdmins() &&
+        userId != request.auth.uid &&
+        userId != "fOMEpAePtlXUvUukUDClM4lUZC82";
+    }
+
+    match /adminAuditLogs/{logId} {
+      allow read: if canManageAdmins();
+      allow create: if canCreateAuditAction(request.resource.data.action) &&
+        isValidAdminAuditLog(request.resource.data, logId);
+      allow update, delete: if false;
     }
 
     match /families/{familyId} {

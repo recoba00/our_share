@@ -165,7 +165,7 @@ async function loadCrewMemberCounts(crewIds: string[]) {
   return Object.fromEntries(entries) as Record<string, number>;
 }
 
-async function loadPublicProfilesByIds(userIds: string[]) {
+export async function loadPublicProfilesByIds(userIds: string[]) {
   const uniqueIds = [...new Set(userIds.filter(Boolean))];
   if (uniqueIds.length === 0) {
     return [];

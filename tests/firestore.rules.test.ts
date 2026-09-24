@@ -271,6 +271,133 @@ describe("moderation and user restriction rules", () => {
   });
 });
 
+describe("platform admin role and audit rules", () => {
+  it("lets the bootstrap admin assign scoped roles while blocking self escalation", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "publicProfiles", "moderator"), createPublicProfile("moderator"));
+      await setDoc(doc(db, "publicProfiles", "viewer"), createPublicProfile("viewer"));
+    });
+
+    const bootstrapDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+    const moderatorDb = testEnv.authenticatedContext("moderator").firestore();
+    const viewerDb = testEnv.authenticatedContext("viewer").firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(bootstrapDb, "platformAdminRoles", "moderator"),
+        createPlatformAdminAssignment("moderator", "MODERATOR")
+      )
+    );
+    await assertSucceeds(getDoc(doc(moderatorDb, "platformAdminRoles", "moderator")));
+    await assertFails(
+      updateDoc(doc(bootstrapDb, "platformAdminRoles", "moderator"), {
+        createdBy: "forged-actor",
+        role: "SUPER_ADMIN",
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(bootstrapDb, "platformAdminRoles", "viewer"), {
+        ...createPlatformAdminAssignment("viewer", "VIEWER"),
+        extraRole: "SUPER_ADMIN",
+      })
+    );
+    await assertFails(
+      setDoc(
+        doc(viewerDb, "platformAdminRoles", "viewer"),
+        createPlatformAdminAssignment("viewer", "SUPER_ADMIN", "viewer")
+      )
+    );
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "userRestrictions", "viewer"),
+        createUserRestriction("viewer")
+      );
+    });
+    await assertFails(
+      setDoc(
+        doc(bootstrapDb, "platformAdminRoles", "viewer"),
+        createPlatformAdminAssignment("viewer", "VIEWER")
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(bootstrapDb, "platformAdminRoles", platformAdminUid),
+        createPlatformAdminAssignment(platformAdminUid, "SUPER_ADMIN")
+      )
+    );
+  });
+
+  it("enforces notice, moderation, and viewer role boundaries", async () => {
+    await seedPlatformAdminRole("moderator", "MODERATOR");
+    await seedPlatformAdminRole("content", "CONTENT_MANAGER");
+    await seedPlatformAdminRole("viewer", "VIEWER");
+    await seedServiceNotice("draft-role-test", "DRAFT");
+
+    const moderatorDb = testEnv.authenticatedContext("moderator").firestore();
+    const contentDb = testEnv.authenticatedContext("content").firestore();
+    const viewerDb = testEnv.authenticatedContext("viewer").firestore();
+
+    await assertFails(
+      setDoc(
+        doc(moderatorDb, "serviceNotices", "moderator-notice"),
+        createServiceNoticeForActor("moderator-notice", "DRAFT", "moderator")
+      )
+    );
+    await assertSucceeds(
+      setDoc(
+        doc(contentDb, "serviceNotices", "content-notice"),
+        createServiceNoticeForActor("content-notice", "DRAFT", "content")
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(viewerDb, "serviceNotices", "viewer-notice"),
+        createServiceNoticeForActor("viewer-notice", "DRAFT", "viewer")
+      )
+    );
+    await assertSucceeds(getDocs(collection(viewerDb, "families")));
+    await assertFails(getDocs(collection(viewerDb, "moderationReportQueue")));
+  });
+
+  it("keeps audit logs immutable and rejects forged roles or actions", async () => {
+    await seedPlatformAdminRole("content", "CONTENT_MANAGER");
+    const contentDb = testEnv.authenticatedContext("content").firestore();
+    const bootstrapDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(contentDb, "adminAuditLogs", "log-a"),
+        createAdminAuditLog("log-a", "content", "CONTENT_MANAGER", "NOTICE_CREATE", "NOTICE")
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(contentDb, "adminAuditLogs", "log-b"),
+        createAdminAuditLog("log-b", "content", "SUPER_ADMIN", "NOTICE_CREATE", "NOTICE")
+      )
+    );
+    await assertFails(
+      setDoc(
+        doc(contentDb, "adminAuditLogs", "log-c"),
+        createAdminAuditLog("log-c", "content", "CONTENT_MANAGER", "USER_RESTRICT", "USER")
+      )
+    );
+    await assertFails(
+      setDoc(doc(contentDb, "adminAuditLogs", "log-polluted"), {
+        ...createAdminAuditLog("log-polluted", "content", "CONTENT_MANAGER", "NOTICE_CREATE", "NOTICE"),
+        role: "SUPER_ADMIN",
+      })
+    );
+    await assertFails(updateDoc(doc(contentDb, "adminAuditLogs", "log-a"), { description: "변조" }));
+    await assertFails(deleteDoc(doc(contentDb, "adminAuditLogs", "log-a")));
+    await assertSucceeds(getDocs(collection(bootstrapDb, "adminAuditLogs")));
+    await assertFails(getDocs(collection(contentDb, "adminAuditLogs")));
+  });
+});
+
 describe("family membership rules", () => {
   it("allows only the platform admin to list all crews and memberships", async () => {
     await seedFamilyWithMembers({
@@ -1589,6 +1716,51 @@ function createServiceNotice(
   };
 }
 
+function createServiceNoticeForActor(
+  noticeId: string,
+  status: "DRAFT" | "PUBLISHED",
+  actorId: string
+) {
+  return {
+    ...createServiceNotice(noticeId, status),
+    createdBy: actorId,
+  };
+}
+
+function createPlatformAdminAssignment(
+  userId: string,
+  role: "SUPER_ADMIN" | "MODERATOR" | "CONTENT_MANAGER" | "VIEWER",
+  createdBy = platformAdminUid
+) {
+  return {
+    createdAt: serverTimestamp(),
+    createdBy,
+    id: userId,
+    role,
+    updatedAt: serverTimestamp(),
+    userId,
+  };
+}
+
+function createAdminAuditLog(
+  logId: string,
+  actorId: string,
+  actorRole: "SUPER_ADMIN" | "MODERATOR" | "CONTENT_MANAGER" | "VIEWER",
+  action: string,
+  targetType: string
+) {
+  return {
+    action,
+    actorId,
+    actorRole,
+    createdAt: serverTimestamp(),
+    description: "운영 작업을 수행했어요.",
+    id: logId,
+    targetId: "target-a",
+    targetType,
+  };
+}
+
 function createModerationReport(reportId: string, reporterId: string) {
   return {
     createdAt: serverTimestamp(),
@@ -1630,6 +1802,20 @@ async function seedServiceNotice(
     await setDoc(
       doc(context.firestore(), "serviceNotices", noticeId),
       createServiceNotice(noticeId, status)
+    );
+  });
+}
+
+async function seedPlatformAdminRole(
+  userId: string,
+  role: "SUPER_ADMIN" | "MODERATOR" | "CONTENT_MANAGER" | "VIEWER"
+) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    await setDoc(doc(db, "publicProfiles", userId), createPublicProfile(userId));
+    await setDoc(
+      doc(db, "platformAdminRoles", userId),
+      createPlatformAdminAssignment(userId, role)
     );
   });
 }

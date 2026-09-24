@@ -5,6 +5,7 @@ import {
   CaretRight,
   ChartPieSlice,
   CheckCircle,
+  ClockCounterClockwise,
   Flag,
   MagnifyingGlass,
   Megaphone,
@@ -13,6 +14,7 @@ import {
   Trash,
   UserCircle,
   UsersThree,
+  ShieldCheck,
 } from "@phosphor-icons/react";
 import {
   useEffect,
@@ -24,6 +26,8 @@ import {
 import { ActionLayer } from "../../components/common/ActionLayer";
 import { ModerationPanel } from "../../components/admin/ModerationPanel";
 import { UserRestrictionLayer } from "../../components/admin/UserRestrictionLayer";
+import { AdminAuditPanel } from "../../components/admin/AdminAuditPanel";
+import { AdminRolesPanel } from "../../components/admin/AdminRolesPanel";
 import { Avatar } from "../../components/common/Avatar";
 import { Button } from "../../components/common/Button";
 import { IconButton } from "../../components/common/IconButton";
@@ -56,11 +60,27 @@ import type {
 } from "../../features/admin/types/serviceNoticeTypes";
 import { useAuth } from "../../features/auth/useAuth";
 import { isPlatformAdmin } from "../../features/admin/platformAdmin";
+import { useAdminAccess } from "../../features/admin/useAdminAccess";
+import {
+  loadPlatformAdminAssignments,
+} from "../../features/admin/services/platformAdminService";
+import type {
+  PlatformAdminAssignment,
+  PlatformAdminPermissions,
+} from "../../features/admin/types/platformAdminTypes";
+import { platformAdminRoleLabels } from "../../features/admin/types/platformAdminTypes";
 import { loadUserRestrictions } from "../../features/moderation/services/moderationService";
 import type { UserRestriction } from "../../features/moderation/types/moderationTypes";
 import { getFirebaseErrorMessage } from "../../lib/firebase/firebaseErrorMessage";
 
-type AdminSection = "dashboard" | "moderation" | "notices" | "users" | "crews";
+type AdminSection =
+  | "dashboard"
+  | "moderation"
+  | "notices"
+  | "users"
+  | "crews"
+  | "roles"
+  | "audit";
 
 const emptyDraft: ServiceNoticeDraft = {
   body: "",
@@ -82,16 +102,20 @@ const navigationItems: Array<{
   icon: ReactNode;
   id: AdminSection;
   label: string;
+  permission?: keyof PlatformAdminPermissions;
 }> = [
   { icon: <ChartPieSlice size={20} weight="regular" />, id: "dashboard", label: "대시보드" },
-  { icon: <Flag size={20} weight="regular" />, id: "moderation", label: "신고 관리" },
-  { icon: <Megaphone size={20} weight="regular" />, id: "notices", label: "공지 관리" },
+  { icon: <Flag size={20} weight="regular" />, id: "moderation", label: "신고 관리", permission: "canManageModeration" },
+  { icon: <Megaphone size={20} weight="regular" />, id: "notices", label: "공지 관리", permission: "canManageNotices" },
   { icon: <UserCircle size={20} weight="regular" />, id: "users", label: "사용자" },
   { icon: <UsersThree size={20} weight="regular" />, id: "crews", label: "크루" },
+  { icon: <ShieldCheck size={20} weight="regular" />, id: "roles", label: "관리자 권한", permission: "canManageAdmins" },
+  { icon: <ClockCounterClockwise size={20} weight="regular" />, id: "audit", label: "감사 로그", permission: "canManageAdmins" },
 ];
 
 export function AdminPage() {
   const { user } = useAuth();
+  const { permissions, role } = useAdminAccess();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
@@ -121,6 +145,7 @@ export function AdminPage() {
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState("");
   const [usersRefreshKey, setUsersRefreshKey] = useState(0);
+  const [adminAssignments, setAdminAssignments] = useState<PlatformAdminAssignment[]>([]);
   const [crews, setCrews] = useState<AdminCrew[]>([]);
   const [crewMemberCounts, setCrewMemberCounts] = useState<Record<string, number>>({});
   const [crewOwnerProfiles, setCrewOwnerProfiles] = useState<AdminPublicProfile[]>([]);
@@ -133,6 +158,11 @@ export function AdminPage() {
   const [isCrewsLoading, setIsCrewsLoading] = useState(false);
   const [crewsError, setCrewsError] = useState("");
   const [crewsRefreshKey, setCrewsRefreshKey] = useState(0);
+
+  const visibleNavigationItems = useMemo(
+    () => navigationItems.filter((item) => !item.permission || permissions[item.permission]),
+    [permissions]
+  );
 
   useEffect(
     () =>
@@ -149,6 +179,12 @@ export function AdminPage() {
       }),
     []
   );
+
+  useEffect(() => {
+    void loadPlatformAdminAssignments()
+      .then(setAdminAssignments)
+      .catch(() => setAdminAssignments([]));
+  }, []);
 
   useEffect(() => {
     let isActive = true;
@@ -290,6 +326,12 @@ export function AdminPage() {
     () => new Map(userRestrictions.map((restriction) => [restriction.userId, restriction])),
     [userRestrictions]
   );
+  const adminAssignmentByUser = useMemo(
+    () => new Map(adminAssignments.map((assignment) => [assignment.userId, assignment])),
+    [adminAssignments]
+  );
+
+  const actor = user && role ? { id: user.uid, role } : null;
 
   function openCreateEditor() {
     setEditingNotice(null);
@@ -306,7 +348,7 @@ export function AdminPage() {
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!user) {
+    if (!actor) {
       return;
     }
 
@@ -314,10 +356,10 @@ export function AdminPage() {
 
     try {
       if (editingNotice) {
-        await updateServiceNotice({ draft, noticeId: editingNotice.id });
+        await updateServiceNotice({ actor, draft, noticeId: editingNotice.id });
         showToast({ message: "공지를 수정했어요.", variant: "success" });
       } else {
-        await createServiceNotice({ createdBy: user.uid, draft });
+        await createServiceNotice({ actor, draft });
         showToast({
           message: draft.status === "PUBLISHED" ? "공지를 게시했어요." : "공지를 임시 저장했어요.",
           variant: "success",
@@ -336,6 +378,9 @@ export function AdminPage() {
   }
 
   async function handleDelete(notice: ServiceNotice) {
+    if (!actor) {
+      return;
+    }
     const confirmed = await confirm({
       confirmLabel: "삭제",
       description: `‘${notice.title}’ 공지를 삭제해요. 되돌릴 수 없어요.`,
@@ -348,7 +393,7 @@ export function AdminPage() {
     }
 
     try {
-      await deleteServiceNotice(notice.id);
+      await deleteServiceNotice({ actor, noticeId: notice.id, title: notice.title });
       showToast({ message: "공지를 삭제했어요.", variant: "success" });
     } catch (error) {
       showToast({
@@ -479,17 +524,23 @@ export function AdminPage() {
   return (
     <>
       <div className="min-h-[calc(100dvh-6rem)] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-        <AdminNavigation activeSection={activeSection} onChange={handleSectionChange} />
+        <AdminNavigation
+          activeSection={activeSection}
+          items={visibleNavigationItems}
+          onChange={handleSectionChange}
+          roleLabel={role ? platformAdminRoleLabels[role] : "운영자"}
+        />
 
         <main className="min-w-0 bg-[var(--color-background)]">
           {activeSection === "dashboard" ? (
             <DashboardOverview
               dashboard={dashboard}
+              canManageNotices={permissions.canManageNotices}
               errorMessage={dashboardError || noticeError}
               isLoading={isDashboardLoading || isNoticesLoading}
               memberCountByCrew={recentMemberCountByCrew}
               notices={notices}
-              onCreateNotice={openCreateEditor}
+              onCreateNotice={permissions.canManageNotices ? openCreateEditor : undefined}
               onNavigate={handleSectionChange}
               onRefresh={refreshDashboard}
               profileById={dashboardProfileById}
@@ -522,6 +573,8 @@ export function AdminPage() {
               onSearchChange={setUserSearch}
               onSearchSubmit={handleUserSearch}
               onSelectRestriction={setSelectedRestrictionProfile}
+              adminAssignmentByUser={adminAssignmentByUser}
+              canManageModeration={permissions.canManageModeration}
               pageNumber={userPageIndex + 1}
               profiles={profiles}
               restrictionByUser={restrictionByUser}
@@ -546,6 +599,8 @@ export function AdminPage() {
               totalCount={dashboard.crewCount}
             />
           ) : null}
+          {activeSection === "roles" && permissions.canManageAdmins ? <AdminRolesPanel /> : null}
+          {activeSection === "audit" && permissions.canManageAdmins ? <AdminAuditPanel /> : null}
         </main>
       </div>
 
@@ -577,10 +632,14 @@ export function AdminPage() {
 
 function AdminNavigation({
   activeSection,
+  items,
   onChange,
+  roleLabel,
 }: {
   activeSection: AdminSection;
+  items: typeof navigationItems;
   onChange: (section: AdminSection) => void;
+  roleLabel: string;
 }) {
   return (
     <>
@@ -594,12 +653,12 @@ function AdminNavigation({
             />
             <div>
               <strong className="block text-sm font-semibold">우리끼리</strong>
-              <span className="block text-xs text-[var(--color-text-secondary)]">관리자</span>
+              <span className="block text-xs text-[var(--color-text-secondary)]">{roleLabel}</span>
             </div>
           </div>
         </div>
         <nav aria-label="운영자 메뉴" className="grid gap-1 px-3">
-          {navigationItems.map((item) => (
+          {items.map((item) => (
             <button
               aria-current={activeSection === item.id ? "page" : undefined}
               className={`flex h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm font-semibold transition-colors ${
@@ -631,7 +690,7 @@ function AdminNavigation({
         aria-label="운영자 메뉴"
         className="flex gap-1 overflow-x-auto border-b border-[var(--color-border)] bg-[var(--color-surface)] p-2 scrollbar-none lg:hidden"
       >
-        {navigationItems.map((item) => (
+        {items.map((item) => (
           <button
             aria-current={activeSection === item.id ? "page" : undefined}
             className={`flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-sm font-semibold transition-colors ${
@@ -653,6 +712,7 @@ function AdminNavigation({
 }
 
 function DashboardOverview({
+  canManageNotices,
   dashboard,
   errorMessage,
   isLoading,
@@ -664,12 +724,13 @@ function DashboardOverview({
   profileById,
   publishedCount,
 }: {
+  canManageNotices: boolean;
   dashboard: AdminDashboardData;
   errorMessage: string;
   isLoading: boolean;
   memberCountByCrew: Map<string, number>;
   notices: ServiceNotice[];
-  onCreateNotice: () => void;
+  onCreateNotice?: () => void;
   onNavigate: (section: AdminSection) => void;
   onRefresh: () => void;
   profileById: Map<string, AdminPublicProfile>;
@@ -693,10 +754,12 @@ function DashboardOverview({
             />
             <span className="hidden sm:inline">새로고침</span>
           </Button>
-          <Button className="shrink-0" onClick={onCreateNotice} type="button">
-            <Plus size={18} weight="regular" />
-            공지 작성
-          </Button>
+          {onCreateNotice ? (
+            <Button className="shrink-0" onClick={onCreateNotice} type="button">
+              <Plus size={18} weight="regular" />
+              공지 작성
+            </Button>
+          ) : null}
         </div>
       }
       description="서비스 운영 현황을 한눈에 확인해요."
@@ -732,7 +795,11 @@ function DashboardOverview({
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.4fr)_minmax(280px,0.6fr)]">
-        <DashboardSection actionLabel="공지 전체 보기" onAction={() => onNavigate("notices")} title="최근 공지">
+        <DashboardSection
+          actionLabel={canManageNotices ? "공지 전체 보기" : undefined}
+          onAction={canManageNotices ? () => onNavigate("notices") : undefined}
+          title="최근 공지"
+        >
           {isLoading ? <LoadingRows /> : null}
           {!isLoading && notices.length === 0 ? (
             <EmptyPanel description="첫 공지를 작성해보세요." title="등록된 공지가 없어요." />
@@ -871,6 +938,8 @@ function NoticesPanel({
 }
 
 function UsersPanel({
+  adminAssignmentByUser,
+  canManageModeration,
   crewCountByUser,
   errorMessage,
   hasNext,
@@ -886,6 +955,8 @@ function UsersPanel({
   search,
   totalCount,
 }: {
+  adminAssignmentByUser: Map<string, PlatformAdminAssignment>;
+  canManageModeration: boolean;
   crewCountByUser: Map<string, number>;
   errorMessage: string;
   hasNext: boolean;
@@ -944,9 +1015,9 @@ function UsersPanel({
                         <UserAccessBadge restricted={restrictionByUser.has(profile.id)} />
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {isPlatformAdmin(profile.id) ? (
+                        {isPlatformAdmin(profile.id) || adminAssignmentByUser.has(profile.id) ? (
                           <span className="text-xs font-semibold text-[var(--color-text-secondary)]">운영자</span>
-                        ) : (
+                        ) : canManageModeration ? (
                           <Button
                             className="h-9 px-3"
                             onClick={() => onSelectRestriction(profile)}
@@ -955,7 +1026,7 @@ function UsersPanel({
                           >
                             관리
                           </Button>
-                        )}
+                        ) : <span className="text-xs text-[var(--color-text-secondary)]">조회 전용</span>}
                       </td>
                     </tr>
                   ))}
@@ -971,9 +1042,9 @@ function UsersPanel({
                       <span>참여 크루 {crewCountByUser.get(profile.id) ?? 0}개</span>
                       <span>{formatTimestamp(profile.createdAt)}</span>
                     </div>
-                    {isPlatformAdmin(profile.id) ? (
+                    {isPlatformAdmin(profile.id) || adminAssignmentByUser.has(profile.id) ? (
                       <span className="text-xs font-semibold text-[var(--color-text-secondary)]">운영자</span>
-                    ) : (
+                    ) : canManageModeration ? (
                       <Button
                         className="h-9 px-3"
                         onClick={() => onSelectRestriction(profile)}
@@ -982,7 +1053,7 @@ function UsersPanel({
                       >
                         {restrictionByUser.has(profile.id) ? "제한 관리" : "이용 제한"}
                       </Button>
-                    )}
+                    ) : <span className="text-xs text-[var(--color-text-secondary)]">조회 전용</span>}
                   </div>
                   <div className="mt-3"><UserAccessBadge restricted={restrictionByUser.has(profile.id)} /></div>
                 </div>

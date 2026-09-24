@@ -29,6 +29,8 @@ import type {
   UserRestriction,
   UserRestrictionReason,
 } from "../types/moderationTypes";
+import { appendAdminAuditLog } from "../../admin/services/adminAuditService";
+import type { AdminAuditActor } from "../../admin/types/adminAuditTypes";
 
 const pageSize = 25;
 const reportCollection = collection(db, "moderationReports");
@@ -97,25 +99,33 @@ export async function loadModerationReportsPage({
 }
 
 export async function resolveModerationReport({
+  actor,
   reportId,
   resolutionNote,
-  reviewedBy,
   status,
 }: {
+  actor: AdminAuditActor;
   reportId: string;
   resolutionNote: string;
-  reviewedBy: string;
   status: Exclude<ModerationReportStatus, "OPEN">;
 }) {
   const batch = writeBatch(db);
   batch.update(doc(reportCollection, reportId), {
     resolutionNote: resolutionNote.trim(),
     reviewedAt: serverTimestamp(),
-    reviewedBy,
+    reviewedBy: actor.id,
     status,
     updatedAt: serverTimestamp(),
   });
   batch.delete(doc(reportQueueCollection, reportId));
+  appendAdminAuditLog({
+    action: status === "RESOLVED" ? "REPORT_RESOLVE" : "REPORT_DISMISS",
+    actor,
+    batch,
+    description: status === "RESOLVED" ? "신고를 처리했어요." : "신고를 문제 없음으로 종료했어요.",
+    targetId: reportId,
+    targetType: "REPORT",
+  });
   await batch.commit();
 }
 
@@ -157,19 +167,19 @@ export function subscribeMyRestriction({
 }
 
 export async function restrictUser({
-  createdBy,
+  actor,
   note,
   reason,
   userId,
 }: {
-  createdBy: string;
+  actor: AdminAuditActor;
   note: string;
   reason: UserRestrictionReason;
   userId: string;
 }) {
   const payload = {
     createdAt: serverTimestamp(),
-    createdBy,
+    createdBy: actor.id,
     id: userId,
     note: note.trim(),
     reason,
@@ -180,7 +190,7 @@ export async function restrictUser({
   await setDoc(doc(db, "userRestrictions", userId), payload);
   try {
     await set(ref(realtimeDb, `restrictedUsers/${userId}`), {
-      createdBy,
+      createdBy: actor.id,
       reason,
       updatedAt: Date.now(),
       userId,
@@ -189,11 +199,38 @@ export async function restrictUser({
     await deleteDoc(doc(db, "userRestrictions", userId)).catch(() => undefined);
     throw error;
   }
+
+  const batch = writeBatch(db);
+  appendAdminAuditLog({
+    action: "USER_RESTRICT",
+    actor,
+    batch,
+    description: `${userId} 계정의 이용을 제한했어요.`,
+    targetId: userId,
+    targetType: "USER",
+  });
+  await batch.commit();
 }
 
-export async function restoreUserAccess(userId: string) {
+export async function restoreUserAccess({
+  actor,
+  userId,
+}: {
+  actor: AdminAuditActor;
+  userId: string;
+}) {
   await remove(ref(realtimeDb, `restrictedUsers/${userId}`));
-  await deleteDoc(doc(db, "userRestrictions", userId));
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "userRestrictions", userId));
+  appendAdminAuditLog({
+    action: "USER_RESTORE",
+    actor,
+    batch,
+    description: `${userId} 계정의 이용 제한을 해제했어요.`,
+    targetId: userId,
+    targetType: "USER",
+  });
+  await batch.commit();
 }
 
 function readModerationReport(

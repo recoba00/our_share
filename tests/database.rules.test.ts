@@ -332,6 +332,70 @@ describe("Realtime Database user restriction rules", () => {
       })
     );
   });
+
+  it("lets a scoped moderator manage restrictions but blocks content managers", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+      await set(ref(db, "platformAdminRoles/moderator"), {
+        role: "MODERATOR",
+        updatedAt: Date.now(),
+        userId: "moderator",
+      });
+      await set(ref(db, "platformAdminRoles/content"), {
+        role: "CONTENT_MANAGER",
+        updatedAt: Date.now(),
+        userId: "content",
+      });
+    });
+
+    const moderatorDb = testEnv.authenticatedContext("moderator").database();
+    const contentDb = testEnv.authenticatedContext("content").database();
+    const restriction = {
+      createdBy: "moderator",
+      reason: "SPAM",
+      updatedAt: Date.now(),
+      userId: "member",
+    };
+
+    await assertSucceeds(set(ref(moderatorDb, "restrictedUsers/member"), restriction));
+    await assertFails(
+      set(ref(contentDb, "restrictedUsers/another-member"), {
+        ...restriction,
+        createdBy: "content",
+        userId: "another-member",
+      })
+    );
+    await assertSucceeds(remove(ref(moderatorDb, "restrictedUsers/member")));
+  });
+});
+
+describe("Realtime Database platform admin role rules", () => {
+  it("lets the bootstrap admin mirror roles and blocks self escalation", async () => {
+    const bootstrapDb = testEnv.authenticatedContext(platformAdminUid).database();
+    const memberDb = testEnv.authenticatedContext("member").database();
+
+    await assertSucceeds(
+      set(ref(bootstrapDb, "platformAdminRoles/moderator"), {
+        role: "MODERATOR",
+        updatedAt: Date.now(),
+        userId: "moderator",
+      })
+    );
+    await assertFails(
+      set(ref(memberDb, "platformAdminRoles/member"), {
+        role: "SUPER_ADMIN",
+        updatedAt: Date.now(),
+        userId: "member",
+      })
+    );
+    await assertFails(
+      set(ref(bootstrapDb, `platformAdminRoles/${platformAdminUid}`), {
+        role: "SUPER_ADMIN",
+        updatedAt: Date.now(),
+        userId: platformAdminUid,
+      })
+    );
+  });
 });
 
 async function seedFamilyMembersMirror({

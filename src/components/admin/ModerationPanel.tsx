@@ -12,6 +12,7 @@ import { SegmentedControl } from "../common/SegmentedControl";
 import { useToast } from "../common/toastContext";
 import type { AdminPageCursor } from "../../features/admin/services/adminDashboardService";
 import { useAuth } from "../../features/auth/useAuth";
+import { useAdminAccess } from "../../features/admin/useAdminAccess";
 import {
   loadModerationReportsPage,
   resolveModerationReport,
@@ -28,6 +29,7 @@ type ModerationView = "QUEUE" | "HISTORY";
 
 export function ModerationPanel() {
   const { user } = useAuth();
+  const { role } = useAdminAccess();
   const { showToast } = useToast();
   const [view, setView] = useState<ModerationView>("QUEUE");
   const [reports, setReports] = useState<ModerationReport[]>([]);
@@ -107,16 +109,16 @@ export function ModerationPanel() {
 
   async function handleResolve(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user || !selectedReport) {
+    if (!user || !role || !selectedReport) {
       return;
     }
 
     setIsResolving(true);
     try {
       await resolveModerationReport({
+        actor: { id: user.uid, role },
         reportId: selectedReport.id,
         resolutionNote,
-        reviewedBy: user.uid,
         status: resolutionStatus,
       });
       setSelectedReport(null);

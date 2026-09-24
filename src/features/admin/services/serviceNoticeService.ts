@@ -1,12 +1,10 @@
 import {
   collection,
-  deleteDoc,
   doc,
   onSnapshot,
   query,
   serverTimestamp,
-  setDoc,
-  updateDoc,
+  writeBatch,
   where,
   type DocumentData,
   type QueryDocumentSnapshot,
@@ -17,6 +15,8 @@ import type {
   ServiceNotice,
   ServiceNoticeDraft,
 } from "../types/serviceNoticeTypes";
+import { appendAdminAuditLog } from "./adminAuditService";
+import type { AdminAuditActor } from "../types/adminAuditTypes";
 
 const serviceNoticesCollection = collection(db, "serviceNotices");
 
@@ -49,43 +49,81 @@ export function subscribeAdminServiceNotices({
 }
 
 export async function createServiceNotice({
-  createdBy,
+  actor,
   draft,
 }: {
-  createdBy: string;
+  actor: AdminAuditActor;
   draft: ServiceNoticeDraft;
 }) {
   const noticeRef = doc(serviceNoticesCollection);
   const normalizedDraft = normalizeDraft(draft);
-
-  await setDoc(noticeRef, {
+  const batch = writeBatch(db);
+  batch.set(noticeRef, {
     ...normalizedDraft,
     createdAt: serverTimestamp(),
-    createdBy,
+    createdBy: actor.id,
     id: noticeRef.id,
     publishedAt: normalizedDraft.status === "PUBLISHED" ? serverTimestamp() : null,
     updatedAt: serverTimestamp(),
   });
+  appendAdminAuditLog({
+    action: "NOTICE_CREATE",
+    actor,
+    batch,
+    description: `‘${normalizedDraft.title}’ 공지를 작성했어요.`,
+    targetId: noticeRef.id,
+    targetType: "NOTICE",
+  });
+  await batch.commit();
 }
 
 export async function updateServiceNotice({
+  actor,
   draft,
   noticeId,
 }: {
+  actor: AdminAuditActor;
   draft: ServiceNoticeDraft;
   noticeId: string;
 }) {
   const normalizedDraft = normalizeDraft(draft);
-
-  await updateDoc(doc(db, "serviceNotices", noticeId), {
+  const batch = writeBatch(db);
+  batch.update(doc(db, "serviceNotices", noticeId), {
     ...normalizedDraft,
     publishedAt: normalizedDraft.status === "PUBLISHED" ? serverTimestamp() : null,
     updatedAt: serverTimestamp(),
   });
+  appendAdminAuditLog({
+    action: "NOTICE_UPDATE",
+    actor,
+    batch,
+    description: `‘${normalizedDraft.title}’ 공지를 수정했어요.`,
+    targetId: noticeId,
+    targetType: "NOTICE",
+  });
+  await batch.commit();
 }
 
-export async function deleteServiceNotice(noticeId: string) {
-  await deleteDoc(doc(db, "serviceNotices", noticeId));
+export async function deleteServiceNotice({
+  actor,
+  noticeId,
+  title,
+}: {
+  actor: AdminAuditActor;
+  noticeId: string;
+  title: string;
+}) {
+  const batch = writeBatch(db);
+  batch.delete(doc(db, "serviceNotices", noticeId));
+  appendAdminAuditLog({
+    action: "NOTICE_DELETE",
+    actor,
+    batch,
+    description: `‘${title.trim()}’ 공지를 삭제했어요.`,
+    targetId: noticeId,
+    targetType: "NOTICE",
+  });
+  await batch.commit();
 }
 
 function normalizeDraft(draft: ServiceNoticeDraft): ServiceNoticeDraft {

@@ -6,6 +6,7 @@ import { useConfirmDialog } from "../common/confirmDialogContext";
 import { useToast } from "../common/toastContext";
 import type { AdminPublicProfile } from "../../features/admin/types/adminDashboardTypes";
 import { useAuth } from "../../features/auth/useAuth";
+import { useAdminAccess } from "../../features/admin/useAdminAccess";
 import {
   restoreUserAccess,
   restrictUser,
@@ -29,6 +30,7 @@ export function UserRestrictionLayer({
   restriction: UserRestriction | null;
 }) {
   const { user } = useAuth();
+  const { role } = useAdminAccess();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const [reason, setReason] = useState<UserRestrictionReason>("ABUSE");
@@ -37,13 +39,13 @@ export function UserRestrictionLayer({
 
   async function handleRestrict(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!user || !profile) {
+    if (!user || !role || !profile) {
       return;
     }
 
     setIsSaving(true);
     try {
-      await restrictUser({ createdBy: user.uid, note, reason, userId: profile.id });
+      await restrictUser({ actor: { id: user.uid, role }, note, reason, userId: profile.id });
       showToast({ message: "사용자 이용을 제한했어요.", variant: "success" });
       onChanged();
       onClose();
@@ -55,7 +57,7 @@ export function UserRestrictionLayer({
   }
 
   async function handleRestore() {
-    if (!profile) {
+    if (!user || !role || !profile) {
       return;
     }
 
@@ -70,7 +72,7 @@ export function UserRestrictionLayer({
 
     setIsSaving(true);
     try {
-      await restoreUserAccess(profile.id);
+      await restoreUserAccess({ actor: { id: user.uid, role }, userId: profile.id });
       showToast({ message: "이용 제한을 해제했어요.", variant: "success" });
       onChanged();
       onClose();
