@@ -6,6 +6,7 @@ import {
   ChatCircleDots,
   CopySimple,
   DotsThreeVertical,
+  Flag,
   LinkSimple,
   MapPin,
   Note,
@@ -26,6 +27,7 @@ import { SignInConsentButton } from "../../components/compliance/SignInConsentBu
 import { PolicyDocumentView } from "../../components/compliance/PolicyDocumentView";
 import { FamilyRoleIndicator } from "../../components/common/FamilyRoleIndicator";
 import { CrewMemberRow } from "../../components/family/CrewMemberRow";
+import { ModerationReportLayer } from "../../components/moderation/ModerationReportLayer";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { IconButton } from "../../components/common/IconButton";
 import { Input } from "../../components/common/Input";
@@ -73,6 +75,8 @@ import {
 } from "../../features/notification/services/notificationService";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
+import type { ModerationReportTarget } from "../../features/moderation/utils/moderationReportTarget";
+import { buildUserReportTarget } from "../../features/moderation/utils/moderationReportTarget";
 
 const quickMessages = ["어디야?", "언제 와?", "오는 길에 마트 들러줘!"];
 const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = ["VICE_OWNER", "MEMBER"];
@@ -183,6 +187,7 @@ export function HomePage() {
   const [selectedManageMemberId, setSelectedManageMemberId] = useState("");
   const [memberManageView, setMemberManageView] = useState<"ACTIONS" | "ROLE">("ACTIONS");
   const [pendingMemberRole, setPendingMemberRole] = useState<Exclude<FamilyRole, "OWNER"> | null>(null);
+  const [reportTarget, setReportTarget] = useState<ModerationReportTarget | null>(null);
   const [memos, setMemos] = useState<Memo[]>([]);
   const [polls, setPolls] = useState<Poll[]>([]);
   const [inviteCode, setInviteCode] = useState("");
@@ -723,9 +728,9 @@ export function HomePage() {
                     >
                       <GearSix size={18} weight="regular" />
                     </Link>
-                  ) : isFamilyOwner && member.role !== "OWNER" ? (
+                  ) : member.userId !== user?.uid ? (
                     <button
-                      aria-label={`${memberName} 관리`}
+                      aria-label={`${memberName} 멤버 옵션`}
                       className="grid size-8 shrink-0 place-items-center text-[var(--color-text-secondary)] transition hover:text-brand"
                       onClick={() => {
                         setSelectedManageMemberId(member.userId);
@@ -1016,35 +1021,54 @@ export function HomePage() {
           <MemberSheetProfile member={selectedManageMember} />
           <BottomSheetItem
             onClick={() => {
-              setPendingMemberRole(
-                selectedManageMember.role as Exclude<FamilyRole, "OWNER">
-              );
-              setMemberManageView("ROLE");
+              setReportTarget(buildUserReportTarget({
+                userId: selectedManageMember.userId,
+                userName: selectedManageMember.displayName ?? selectedManageMember.nickname,
+              }));
+              setSelectedManageMemberId("");
             }}
             type="button"
+          >
+            <span>사용자 신고</span>
+            <Flag size={18} weight="regular" />
+          </BottomSheetItem>
+          {isFamilyOwner && selectedManageMember.role !== "OWNER" ? (
+            <BottomSheetItem
+              onClick={() => {
+                setPendingMemberRole(
+                  selectedManageMember.role as Exclude<FamilyRole, "OWNER">
+                );
+                setMemberManageView("ROLE");
+              }}
+              type="button"
+              >
+              <span>멤버 역할 변경</span>
+              <span className="text-xs text-[var(--color-text-secondary)]">
+                {roleLabels[selectedManageMember.role]}
+              </span>
+            </BottomSheetItem>
+          ) : null}
+          {isFamilyOwner && selectedManageMember.role !== "OWNER" ? (
+            <BottomSheetItem
+              disabled={transferringOwnerId === selectedManageMember.userId}
+              onClick={() => void handleTransferOwnership(selectedManageMember)}
+              type="button"
             >
-            <span>멤버 역할 변경</span>
-            <span className="text-xs text-[var(--color-text-secondary)]">
-              {roleLabels[selectedManageMember.role]}
-            </span>
-          </BottomSheetItem>
-          <BottomSheetItem
-            disabled={transferringOwnerId === selectedManageMember.userId}
-            onClick={() => void handleTransferOwnership(selectedManageMember)}
-            type="button"
-          >
-            <span>크루장 승계</span>
-            <FamilyRoleIndicator role="OWNER" />
-          </BottomSheetItem>
-          <BottomSheetItem
-            disabled={deletingMemberId === selectedManageMember.userId}
-            onClick={() => void handleDeleteMember(selectedManageMember)}
-            tone="danger"
-            type="button"
-          >
-            <span>크루에서 내보내기</span>
-            <Trash size={18} />
-          </BottomSheetItem>
+              <span>크루장 승계</span>
+              <FamilyRoleIndicator role="OWNER" />
+            </BottomSheetItem>
+          ) : null}
+          {isFamilyOwner && selectedManageMember.role !== "OWNER" ? (
+            <BottomSheetItem
+              disabled={deletingMemberId === selectedManageMember.userId}
+              onClick={() => void handleDeleteMember(selectedManageMember)}
+              tone="danger"
+              type="button"
+            >
+              <span>크루에서 내보내기</span>
+              <Trash size={18} />
+            </BottomSheetItem>
+          ) : null}
         </div>
       ) : null}
       {selectedManageMember && memberManageView === "ROLE" ? (
@@ -1095,6 +1119,11 @@ export function HomePage() {
         </div>
       ) : null}
     </BottomSheet>
+    <ModerationReportLayer
+      isOpen={Boolean(reportTarget)}
+      onClose={() => setReportTarget(null)}
+      target={reportTarget}
+    />
     </>
   );
 }

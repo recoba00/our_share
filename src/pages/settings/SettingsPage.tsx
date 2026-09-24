@@ -11,11 +11,10 @@ import {
   Trash,
   Wrench,
 } from "@phosphor-icons/react";
-import type { FormEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../components/common/BottomSheet";
-import { ActionLayer } from "../../components/common/ActionLayer";
 import { Button } from "../../components/common/Button";
 import { Card } from "../../components/common/Card";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
@@ -29,39 +28,21 @@ import type { PolicyDocumentId } from "../../features/compliance/policyDocuments
 import { policyDocuments } from "../../features/compliance/policyDocuments";
 import { useTheme } from "../../features/theme/useTheme";
 import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
-import { getFirebaseErrorMessage } from "../../lib/firebase/firebaseErrorMessage";
 import { useAdminAccess } from "../../features/admin/useAdminAccess";
 import { ServiceNoticesView } from "../../components/compliance/ServiceNoticesView";
-import { createModerationReport } from "../../features/moderation/services/moderationService";
-import {
-  moderationReasonLabels,
-  moderationTargetLabels,
-  type ModerationReportDraft,
-  type ModerationReportReason,
-  type ModerationTargetType,
-} from "../../features/moderation/types/moderationTypes";
-
-const emptyReportDraft: ModerationReportDraft = {
-  details: "",
-  reason: "HARASSMENT",
-  targetLabel: "",
-  targetType: "USER",
-  targetUserId: null,
-};
+import { ModerationReportLayer } from "../../components/moderation/ModerationReportLayer";
 
 export function SettingsPage() {
   const { user } = useAuth();
   const { isAdmin } = useAdminAccess();
   const navigate = useNavigate();
-  const { activeFamily, families } = useFamily();
+  const { families } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
   const { mode, resolvedTheme, setThemeMode } = useTheme();
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeDocument, setActiveDocument] = useState<PolicyDocumentId | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
-  const [isReporting, setIsReporting] = useState(false);
-  const [reportDraft, setReportDraft] = useState<ModerationReportDraft>(emptyReportDraft);
 
   async function handleDeleteAccount() {
     if (!user) {
@@ -93,34 +74,6 @@ export function SettingsPage() {
       showToast({ message: getAuthErrorMessage(error), variant: "error" });
     } finally {
       setIsDeleting(false);
-    }
-  }
-
-  async function handleSubmitReport(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!user || !reportDraft.targetLabel.trim() || !reportDraft.details.trim()) {
-      return;
-    }
-
-    setIsReporting(true);
-    try {
-      await createModerationReport({
-        draft: reportDraft,
-        familyId: activeFamily?.id ?? null,
-        familyName: activeFamily?.name ?? null,
-        reporterId: user.uid,
-        reporterName: user.displayName ?? "사용자",
-      });
-      setReportDraft(emptyReportDraft);
-      setIsReportOpen(false);
-      showToast({ message: "신고를 접수했어요.", variant: "success" });
-    } catch (error) {
-      showToast({
-        message: getFirebaseErrorMessage(error),
-        variant: "error",
-      });
-    } finally {
-      setIsReporting(false);
     }
   }
 
@@ -283,93 +236,10 @@ export function SettingsPage() {
           <PolicyDocumentView documentId={activeDocument} />
         ) : null}
       </BottomSheet>
-      <ActionLayer
-        desktop
+      <ModerationReportLayer
         isOpen={isReportOpen}
         onClose={() => setIsReportOpen(false)}
-        title="신고하기"
-      >
-        <form className="mx-auto grid w-full max-w-2xl gap-4" onSubmit={handleSubmitReport}>
-          <label className="grid gap-2 text-sm font-semibold">
-            신고 대상
-            <select
-              className="h-12 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-base font-normal text-[var(--color-text-primary)] outline-none focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) =>
-                setReportDraft((current) => ({
-                  ...current,
-                  targetType: event.target.value as ModerationTargetType,
-                }))
-              }
-              value={reportDraft.targetType}
-            >
-              {Object.entries(moderationTargetLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            누구 또는 어떤 내용인가요?
-            <input
-              autoFocus
-              className="h-12 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-base font-normal text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              inputMode="text"
-              maxLength={120}
-              onChange={(event) =>
-                setReportDraft((current) => ({ ...current, targetLabel: event.target.value }))
-              }
-              placeholder="닉네임, 채팅방 또는 게시글을 적어주세요."
-              required
-              value={reportDraft.targetLabel}
-            />
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            신고 사유
-            <select
-              className="h-12 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-base font-normal text-[var(--color-text-primary)] outline-none focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              onChange={(event) =>
-                setReportDraft((current) => ({
-                  ...current,
-                  reason: event.target.value as ModerationReportReason,
-                }))
-              }
-              value={reportDraft.reason}
-            >
-              {Object.entries(moderationReasonLabels).map(([value, label]) => (
-                <option key={value} value={value}>{label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="grid gap-2 text-sm font-semibold">
-            자세한 내용
-            <textarea
-              className="min-h-48 resize-y rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-3 text-base font-normal leading-6 text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-              inputMode="text"
-              maxLength={1000}
-              onChange={(event) =>
-                setReportDraft((current) => ({ ...current, details: event.target.value }))
-              }
-              placeholder="확인에 필요한 상황을 적어주세요."
-              required
-              value={reportDraft.details}
-            />
-            <span className="text-right text-xs font-normal text-[var(--color-text-secondary)]">
-              {reportDraft.details.length}/1,000
-            </span>
-          </label>
-          <p className="text-sm leading-6 text-[var(--color-text-secondary)]">
-            신고 내용은 운영 확인에만 사용하며, 상대방에게 신고자 정보를 보여주지 않아요.
-          </p>
-          <Button
-            disabled={
-              isReporting || !reportDraft.targetLabel.trim() || !reportDraft.details.trim()
-            }
-            loading={isReporting}
-            type="submit"
-          >
-            신고 접수
-          </Button>
-        </form>
-      </ActionLayer>
+      />
     </>
   );
 }

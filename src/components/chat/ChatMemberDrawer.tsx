@@ -2,6 +2,7 @@ import {
   ArrowLeft,
   Check,
   DotsThreeVertical,
+  Flag,
   X,
 } from "@phosphor-icons/react";
 import { useEffect, useMemo, useState } from "react";
@@ -13,6 +14,7 @@ import { Button } from "../common/Button";
 import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { IconButton } from "../common/IconButton";
 import { CrewMemberRow } from "../family/CrewMemberRow";
+import { ModerationReportLayer } from "../moderation/ModerationReportLayer";
 import { useConfirmDialog } from "../common/confirmDialogContext";
 import { useToast } from "../common/toastContext";
 import {
@@ -24,6 +26,8 @@ import {
 import { removeChatRoomMember } from "../../features/chat/services/chatService";
 import type { FamilyMemberProfile, FamilyRole } from "../../features/family/types/familyTypes";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
+import type { ModerationReportTarget } from "../../features/moderation/utils/moderationReportTarget";
+import { buildUserReportTarget } from "../../features/moderation/utils/moderationReportTarget";
 
 const editableRoleOptions: Exclude<FamilyRole, "OWNER">[] = ["VICE_OWNER", "MEMBER"];
 const roleLabels: Record<FamilyRole, string> = {
@@ -59,6 +63,7 @@ export function ChatMemberDrawer({
   const [memberManageView, setMemberManageView] = useState<"ACTIONS" | "ROLE">("ACTIONS");
   const [pendingRole, setPendingRole] = useState<Exclude<FamilyRole, "OWNER"> | null>(null);
   const [isBusy, setIsBusy] = useState(false);
+  const [reportTarget, setReportTarget] = useState<ModerationReportTarget | null>(null);
 
   useEffect(() => {
     if (!isOpen) {
@@ -69,6 +74,11 @@ export function ChatMemberDrawer({
     document.body.style.overflow = "hidden";
 
     let active = true;
+    queueMicrotask(() => {
+      if (active) {
+        setIsLoading(true);
+      }
+    });
     getFamilyMembers(familyId)
       .then((nextMembers) => {
         if (active) {
@@ -104,6 +114,12 @@ export function ChatMemberDrawer({
   }, [members, room]);
 
   const canManageMembers = currentUserRole === "OWNER";
+  const canManageSelectedMember = Boolean(
+    canManageMembers &&
+    selectedMember &&
+    selectedMember.userId !== currentUserId &&
+    selectedMember.role !== "OWNER"
+  );
 
   function closeActions() {
     setSelectedMember(null);
@@ -265,6 +281,18 @@ export function ChatMemberDrawer({
     setMembers(await getFamilyMembers(familyId));
   }
 
+  function handleOpenMemberReport() {
+    if (!selectedMember || selectedMember.userId === currentUserId) {
+      return;
+    }
+
+    setReportTarget(buildUserReportTarget({
+      userId: selectedMember.userId,
+      userName: selectedMember.displayName ?? selectedMember.nickname,
+    }));
+    closeActions();
+  }
+
   return (
     <>
       {isOpen
@@ -300,10 +328,10 @@ export function ChatMemberDrawer({
                     <div className="grid gap-2">
                       {visibleMembers.map((member) => (
                         <CrewMemberRow
-                          action={canManageMembers && member.userId !== currentUserId && member.role !== "OWNER" ? (
+                          action={member.userId !== currentUserId ? (
                             <IconButton
                               className="size-8 shrink-0"
-                              label={`${member.displayName ?? member.nickname} 멤버 관리`}
+                              label={`${member.displayName ?? member.nickname} 멤버 옵션`}
                               onClick={() => {
                                 setSelectedMember(member);
                                 setMemberManageView("ACTIONS");
@@ -354,22 +382,30 @@ export function ChatMemberDrawer({
                 </span>
               </div>
             </div>
-            <BottomSheetItem
-              disabled={isBusy}
-              onClick={() => {
-                setPendingRole(selectedMember.role === "OWNER" ? "MEMBER" : selectedMember.role);
-                setMemberManageView("ROLE");
-              }}
-              type="button"
-            >
-              <span>멤버 역할 변경</span>
-              <span className="text-xs text-[var(--color-text-secondary)]">{roleLabels[selectedMember.role]}</span>
+            <BottomSheetItem disabled={isBusy} onClick={handleOpenMemberReport} type="button">
+              <span>사용자 신고</span>
+              <Flag size={18} weight="regular" />
             </BottomSheetItem>
-            <BottomSheetItem disabled={isBusy} onClick={() => void handleTransferOwnership()} type="button">
-              <span>크루장 승계</span>
-              <FamilyRoleIndicator role="OWNER" />
-            </BottomSheetItem>
-            {room?.type === "PRIVATE_GROUP" ? (
+            {canManageSelectedMember ? (
+              <BottomSheetItem
+                disabled={isBusy}
+                onClick={() => {
+                  setPendingRole(selectedMember.role === "OWNER" ? "MEMBER" : selectedMember.role);
+                  setMemberManageView("ROLE");
+                }}
+                type="button"
+              >
+                <span>멤버 역할 변경</span>
+                <span className="text-xs text-[var(--color-text-secondary)]">{roleLabels[selectedMember.role]}</span>
+              </BottomSheetItem>
+            ) : null}
+            {canManageSelectedMember ? (
+              <BottomSheetItem disabled={isBusy} onClick={() => void handleTransferOwnership()} type="button">
+                <span>크루장 승계</span>
+                <FamilyRoleIndicator role="OWNER" />
+              </BottomSheetItem>
+            ) : null}
+            {canManageSelectedMember && room?.type === "PRIVATE_GROUP" ? (
               <BottomSheetItem
                 disabled={isBusy}
                 onClick={() => void handleDeleteMember()}
@@ -380,15 +416,17 @@ export function ChatMemberDrawer({
                 <DotsThreeVertical size={18} />
               </BottomSheetItem>
             ) : null}
-            <BottomSheetItem
-              disabled={isBusy}
-              onClick={() => void handleRemoveFromCrew()}
-              tone="danger"
-              type="button"
-            >
-              <span>크루에서 내보내기</span>
-              <DotsThreeVertical size={18} />
-            </BottomSheetItem>
+            {canManageSelectedMember ? (
+              <BottomSheetItem
+                disabled={isBusy}
+                onClick={() => void handleRemoveFromCrew()}
+                tone="danger"
+                type="button"
+              >
+                <span>크루에서 내보내기</span>
+                <DotsThreeVertical size={18} />
+              </BottomSheetItem>
+            ) : null}
           </div>
         ) : null}
         {selectedMember && memberManageView === "ROLE" ? (
@@ -423,6 +461,11 @@ export function ChatMemberDrawer({
           </div>
         ) : null}
       </BottomSheet>
+      <ModerationReportLayer
+        isOpen={Boolean(reportTarget)}
+        onClose={() => setReportTarget(null)}
+        target={reportTarget}
+      />
     </>
   );
 }

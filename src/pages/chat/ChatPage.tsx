@@ -2,6 +2,7 @@ import {
   CalendarDots,
   ChartBar,
   ChatCircleDots,
+  Flag,
   LockKey,
   ListBullets,
   MagnifyingGlass,
@@ -26,6 +27,7 @@ import { Input } from "../../components/common/Input";
 import { IconButton } from "../../components/common/IconButton";
 import { LoadingState } from "../../components/common/LoadingState";
 import { SectionHeading } from "../../components/common/SectionHeading";
+import { ModerationReportLayer } from "../../components/moderation/ModerationReportLayer";
 import { useChatMemberDrawer } from "../../components/chat/useChatMemberDrawer";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useToast } from "../../components/common/toastContext";
@@ -55,6 +57,8 @@ import { PollOptionEditor } from "../../features/poll/components/PollOptionEdito
 import { subscribePolls } from "../../features/poll/services/pollService";
 import { createPoll } from "../../features/poll/services/pollService";
 import type { Poll, PollType } from "../../features/poll/types/pollTypes";
+import type { ModerationReportTarget } from "../../features/moderation/utils/moderationReportTarget";
+import { buildChatMessageReportTarget } from "../../features/moderation/utils/moderationReportTarget";
 import {
   getNormalizedPollOptions,
   hasDuplicatePollOptions,
@@ -106,6 +110,7 @@ export function ChatPage() {
   const [busyMessageId, setBusyMessageId] = useState("");
   const [editingMessageId, setEditingMessageId] = useState("");
   const [editingMessageText, setEditingMessageText] = useState("");
+  const [reportTarget, setReportTarget] = useState<ModerationReportTarget | null>(null);
   const [pollTitle, setPollTitle] = useState("");
   const [pollDescription, setPollDescription] = useState("");
   const [pollType, setPollType] = useState<PollType>("GENERAL");
@@ -469,6 +474,21 @@ export function ChatPage() {
 
     setEditingMessageId(message.id);
     setEditingMessageText(message.text);
+  }
+
+  function handleReportMessage(message: ChatMessage) {
+    if (!selectedRoom || message.createdBy === user?.uid) {
+      return;
+    }
+
+    const sender = members.find((member) => member.userId === message.createdBy);
+    setReportTarget(buildChatMessageReportTarget({
+      messageId: message.id,
+      messageText: message.text,
+      roomName: getRoomDisplayName(selectedRoom, members, user?.uid),
+      senderId: message.createdBy,
+      senderName: sender?.displayName ?? sender?.nickname ?? "사용자",
+    }));
   }
 
   async function handleSubmitMessageEdit(event: FormEvent<HTMLFormElement>) {
@@ -879,6 +899,11 @@ export function ChatPage() {
           </div>
         </form>
       </ActionLayer>
+      <ModerationReportLayer
+        isOpen={Boolean(reportTarget)}
+        onClose={() => setReportTarget(null)}
+        target={reportTarget}
+      />
 
     <div className="grid w-full min-w-0 max-w-full gap-4 lg:h-[calc(100dvh-112px)] lg:min-h-0 lg:items-start lg:grid-cols-[minmax(0,360px)_minmax(0,1fr)]">
       <div
@@ -1092,6 +1117,7 @@ export function ChatPage() {
                       message={message}
                       onDelete={handleDeleteMessage}
                       onEdit={handleEditMessage}
+                      onReport={handleReportMessage}
                       poll={message.pollId ? pollMap.get(message.pollId) : undefined}
                       readLabel={
                         isMine
@@ -1309,6 +1335,7 @@ function MessageRow({
   message,
   onDelete,
   onEdit,
+  onReport,
   poll,
   readLabel,
 }: {
@@ -1318,6 +1345,7 @@ function MessageRow({
   message: ChatMessage;
   onDelete: (message: ChatMessage) => void;
   onEdit: (message: ChatMessage) => void;
+  onReport: (message: ChatMessage) => void;
   poll: Poll | undefined;
   readLabel: string;
 }) {
@@ -1375,6 +1403,17 @@ function MessageRow({
                 <Trash size={15} />
               </button>
             </div>
+          ) : null}
+          {!isMine ? (
+            <button
+              aria-label="메시지 신고"
+              className="grid size-7 shrink-0 place-items-center rounded-full bg-white/80 text-slate-500 shadow-sm transition hover:text-red-500"
+              onClick={() => onReport(message)}
+              title="메시지 신고"
+              type="button"
+            >
+              <Flag size={15} weight="regular" />
+            </button>
           ) : null}
         </div>
         <span className="px-2 text-[11px] font-normal text-[var(--color-text-secondary)]">
