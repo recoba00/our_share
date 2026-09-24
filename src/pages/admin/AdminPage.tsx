@@ -5,6 +5,7 @@ import {
   CaretRight,
   ChartPieSlice,
   CheckCircle,
+  Flag,
   MagnifyingGlass,
   Megaphone,
   NotePencil,
@@ -21,6 +22,8 @@ import {
   type ReactNode,
 } from "react";
 import { ActionLayer } from "../../components/common/ActionLayer";
+import { ModerationPanel } from "../../components/admin/ModerationPanel";
+import { UserRestrictionLayer } from "../../components/admin/UserRestrictionLayer";
 import { Avatar } from "../../components/common/Avatar";
 import { Button } from "../../components/common/Button";
 import { IconButton } from "../../components/common/IconButton";
@@ -52,9 +55,12 @@ import type {
   ServiceNoticeStatus,
 } from "../../features/admin/types/serviceNoticeTypes";
 import { useAuth } from "../../features/auth/useAuth";
+import { isPlatformAdmin } from "../../features/admin/platformAdmin";
+import { loadUserRestrictions } from "../../features/moderation/services/moderationService";
+import type { UserRestriction } from "../../features/moderation/types/moderationTypes";
 import { getFirebaseErrorMessage } from "../../lib/firebase/firebaseErrorMessage";
 
-type AdminSection = "dashboard" | "notices" | "users" | "crews";
+type AdminSection = "dashboard" | "moderation" | "notices" | "users" | "crews";
 
 const emptyDraft: ServiceNoticeDraft = {
   body: "",
@@ -78,6 +84,7 @@ const navigationItems: Array<{
   label: string;
 }> = [
   { icon: <ChartPieSlice size={20} weight="regular" />, id: "dashboard", label: "대시보드" },
+  { icon: <Flag size={20} weight="regular" />, id: "moderation", label: "신고 관리" },
   { icon: <Megaphone size={20} weight="regular" />, id: "notices", label: "공지 관리" },
   { icon: <UserCircle size={20} weight="regular" />, id: "users", label: "사용자" },
   { icon: <UsersThree size={20} weight="regular" />, id: "crews", label: "크루" },
@@ -102,6 +109,9 @@ export function AdminPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [profiles, setProfiles] = useState<AdminPublicProfile[]>([]);
   const [userCrewCounts, setUserCrewCounts] = useState<Record<string, number>>({});
+  const [userRestrictions, setUserRestrictions] = useState<UserRestriction[]>([]);
+  const [selectedRestrictionProfile, setSelectedRestrictionProfile] =
+    useState<AdminPublicProfile | null>(null);
   const [userSearch, setUserSearch] = useState("");
   const [appliedUserSearch, setAppliedUserSearch] = useState("");
   const [userPageIndex, setUserPageIndex] = useState(0);
@@ -177,12 +187,17 @@ export function AdminPage() {
 
     void loadAdminProfilesPage({ cursor: userCursor, search: appliedUserSearch })
       .then(async (page) => {
-        const counts = await loadUserCrewCounts(page.items.map((profile) => profile.id));
+        const userIds = page.items.map((profile) => profile.id);
+        const [counts, restrictions] = await Promise.all([
+          loadUserCrewCounts(userIds),
+          loadUserRestrictions(userIds),
+        ]);
         if (!isActive) {
           return;
         }
         setProfiles(page.items);
         setUserCrewCounts(counts);
+        setUserRestrictions(restrictions);
         setUserHasNext(page.hasNext);
         setUserNextCursor(page.nextCursor);
         setUsersError("");
@@ -270,6 +285,10 @@ export function AdminPage() {
   const crewProfileById = useMemo(
     () => new Map(crewOwnerProfiles.map((profile) => [profile.id, profile])),
     [crewOwnerProfiles]
+  );
+  const restrictionByUser = useMemo(
+    () => new Map(userRestrictions.map((restriction) => [restriction.userId, restriction])),
+    [userRestrictions]
   );
 
   function openCreateEditor() {
@@ -491,6 +510,7 @@ export function AdminPage() {
               visibleStatus={visibleStatus}
             />
           ) : null}
+          {activeSection === "moderation" ? <ModerationPanel /> : null}
           {activeSection === "users" ? (
             <UsersPanel
               crewCountByUser={crewCountByUser}
@@ -501,8 +521,10 @@ export function AdminPage() {
               onPrevious={showPreviousUsersPage}
               onSearchChange={setUserSearch}
               onSearchSubmit={handleUserSearch}
+              onSelectRestriction={setSelectedRestrictionProfile}
               pageNumber={userPageIndex + 1}
               profiles={profiles}
+              restrictionByUser={restrictionByUser}
               search={userSearch}
               totalCount={dashboard.userCount}
             />
@@ -535,6 +557,20 @@ export function AdminPage() {
       >
         {editorForm}
       </ActionLayer>
+      <UserRestrictionLayer
+        key={selectedRestrictionProfile?.id ?? "closed"}
+        onChanged={() => {
+          setIsUsersLoading(true);
+          setUsersRefreshKey((current) => current + 1);
+        }}
+        onClose={() => setSelectedRestrictionProfile(null)}
+        profile={selectedRestrictionProfile}
+        restriction={
+          selectedRestrictionProfile
+            ? restrictionByUser.get(selectedRestrictionProfile.id) ?? null
+            : null
+        }
+      />
     </>
   );
 }
@@ -843,8 +879,10 @@ function UsersPanel({
   onPrevious,
   onSearchChange,
   onSearchSubmit,
+  onSelectRestriction,
   pageNumber,
   profiles,
+  restrictionByUser,
   search,
   totalCount,
 }: {
@@ -856,8 +894,10 @@ function UsersPanel({
   onPrevious: () => void;
   onSearchChange: (value: string) => void;
   onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onSelectRestriction: (profile: AdminPublicProfile) => void;
   pageNumber: number;
   profiles: AdminPublicProfile[];
+  restrictionByUser: Map<string, UserRestriction>;
   search: string;
   totalCount: number;
 }) {
@@ -882,13 +922,15 @@ function UsersPanel({
         {!isLoading && profiles.length > 0 ? (
           <>
             <div className="hidden overflow-x-auto md:block">
-              <table className="w-full min-w-[680px] border-collapse text-left">
+              <table className="w-full min-w-[900px] border-collapse text-left">
                 <thead className="bg-[var(--color-surface-muted)] text-xs text-[var(--color-text-secondary)]">
                   <tr>
                     <th className="px-4 py-3 font-semibold">사용자</th>
                     <th className="px-4 py-3 font-semibold">사용자 ID</th>
                     <th className="px-4 py-3 font-semibold">참여 크루</th>
                     <th className="px-4 py-3 font-semibold">가입일</th>
+                    <th className="px-4 py-3 font-semibold">이용 상태</th>
+                    <th className="px-4 py-3 text-right font-semibold">관리</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[var(--color-border)]">
@@ -898,6 +940,23 @@ function UsersPanel({
                       <td className="max-w-56 truncate px-4 py-3 text-sm text-[var(--color-text-secondary)]">{profile.id}</td>
                       <td className="px-4 py-3 text-sm">{crewCountByUser.get(profile.id) ?? 0}개</td>
                       <td className="px-4 py-3 text-sm text-[var(--color-text-secondary)]">{formatTimestamp(profile.createdAt)}</td>
+                      <td className="px-4 py-3">
+                        <UserAccessBadge restricted={restrictionByUser.has(profile.id)} />
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {isPlatformAdmin(profile.id) ? (
+                          <span className="text-xs font-semibold text-[var(--color-text-secondary)]">운영자</span>
+                        ) : (
+                          <Button
+                            className="h-9 px-3"
+                            onClick={() => onSelectRestriction(profile)}
+                            type="button"
+                            variant="secondary"
+                          >
+                            관리
+                          </Button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -907,10 +966,25 @@ function UsersPanel({
               {profiles.map((profile) => (
                 <div className="p-4" key={profile.id}>
                   <ProfileIdentity profile={profile} />
-                  <div className="mt-3 grid grid-cols-2 gap-2 text-xs text-[var(--color-text-secondary)]">
-                    <span>참여 크루 {crewCountByUser.get(profile.id) ?? 0}개</span>
-                    <span className="text-right">{formatTimestamp(profile.createdAt)}</span>
+                  <div className="mt-3 flex items-center justify-between gap-3">
+                    <div className="grid gap-1 text-xs text-[var(--color-text-secondary)]">
+                      <span>참여 크루 {crewCountByUser.get(profile.id) ?? 0}개</span>
+                      <span>{formatTimestamp(profile.createdAt)}</span>
+                    </div>
+                    {isPlatformAdmin(profile.id) ? (
+                      <span className="text-xs font-semibold text-[var(--color-text-secondary)]">운영자</span>
+                    ) : (
+                      <Button
+                        className="h-9 px-3"
+                        onClick={() => onSelectRestriction(profile)}
+                        type="button"
+                        variant="secondary"
+                      >
+                        {restrictionByUser.has(profile.id) ? "제한 관리" : "이용 제한"}
+                      </Button>
+                    )}
                   </div>
+                  <div className="mt-3"><UserAccessBadge restricted={restrictionByUser.has(profile.id)} /></div>
                 </div>
               ))}
             </div>
@@ -1222,6 +1296,20 @@ function StatusBadge({ active }: { active: boolean }) {
         : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300"
     }`}>
       {active ? "게시 중" : "임시 저장"}
+    </span>
+  );
+}
+
+function UserAccessBadge({ restricted }: { restricted: boolean }) {
+  return (
+    <span
+      className={`inline-flex h-6 items-center rounded-full px-2 text-xs font-semibold ${
+        restricted
+          ? "bg-red-50 text-red-600 dark:bg-red-400/10 dark:text-red-300"
+          : "bg-emerald-100 text-emerald-700 dark:bg-emerald-400/15 dark:text-emerald-300"
+      }`}
+    >
+      {restricted ? "이용 제한" : "정상"}
     </span>
   );
 }

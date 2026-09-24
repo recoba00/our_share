@@ -185,6 +185,92 @@ describe("service notice rules", () => {
   });
 });
 
+describe("moderation and user restriction rules", () => {
+  it("lets a signed-in user submit a private report and lets only the admin review it", async () => {
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+    const reportId = "report-a";
+    const report = createModerationReport(reportId, "alice");
+    const submit = writeBatch(aliceDb);
+    submit.set(doc(aliceDb, "moderationReports", reportId), report);
+    submit.set(doc(aliceDb, "moderationReportQueue", reportId), report);
+
+    await assertSucceeds(submit.commit());
+    await assertSucceeds(getDoc(doc(aliceDb, "moderationReports", reportId)));
+    await assertFails(getDoc(doc(bobDb, "moderationReports", reportId)));
+    await assertFails(getDocs(collection(bobDb, "moderationReportQueue")));
+
+    const queue = await assertSucceeds(
+      getDocs(
+        query(
+          collection(adminDb, "moderationReportQueue"),
+          orderBy("createdAt", "desc"),
+          limit(26)
+        )
+      )
+    );
+    expect(queue.size).toBe(1);
+
+    const resolve = writeBatch(adminDb);
+    resolve.update(doc(adminDb, "moderationReports", reportId), {
+      resolutionNote: "확인하고 처리함",
+      reviewedAt: serverTimestamp(),
+      reviewedBy: platformAdminUid,
+      status: "RESOLVED",
+      updatedAt: serverTimestamp(),
+    });
+    resolve.delete(doc(adminDb, "moderationReportQueue", reportId));
+    await assertSucceeds(resolve.commit());
+
+    expect((await getDoc(doc(adminDb, "moderationReports", reportId))).data()?.status).toBe("RESOLVED");
+    expect((await getDoc(doc(adminDb, "moderationReportQueue", reportId))).exists()).toBe(false);
+  });
+
+  it("blocks report impersonation, direct queue writes, and schema pollution", async () => {
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const report = createModerationReport("report-b", "bob");
+
+    await assertFails(setDoc(doc(aliceDb, "moderationReports", "report-b"), report));
+    await assertFails(
+      setDoc(doc(aliceDb, "moderationReportQueue", "report-b"), {
+        ...createModerationReport("report-b", "alice"),
+        role: "ADMIN",
+      })
+    );
+  });
+
+  it("lets the admin restrict access while preserving the user's own restriction read", async () => {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "publicProfiles", "alice"), createPublicProfile("alice"));
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).firestore();
+
+    await assertSucceeds(
+      setDoc(
+        doc(adminDb, "userRestrictions", "alice"),
+        createUserRestriction("alice")
+      )
+    );
+    await assertSucceeds(getDoc(doc(aliceDb, "userRestrictions", "alice")));
+    await assertFails(getDoc(doc(bobDb, "userRestrictions", "alice")));
+    await assertFails(getDoc(doc(aliceDb, "publicProfiles", "alice")));
+    await assertFails(
+      setDoc(
+        doc(adminDb, "userRestrictions", platformAdminUid),
+        createUserRestriction(platformAdminUid)
+      )
+    );
+
+    await assertSucceeds(deleteDoc(doc(adminDb, "userRestrictions", "alice")));
+    await assertSucceeds(getDoc(doc(aliceDb, "publicProfiles", "alice")));
+  });
+});
+
 describe("family membership rules", () => {
   it("allows only the platform admin to list all crews and memberships", async () => {
     await seedFamilyWithMembers({
@@ -1500,6 +1586,39 @@ function createServiceNotice(
     status,
     title: "서비스 공지",
     updatedAt: serverTimestamp(),
+  };
+}
+
+function createModerationReport(reportId: string, reporterId: string) {
+  return {
+    createdAt: serverTimestamp(),
+    details: "채팅에서 반복적으로 불편한 메시지를 받았어요.",
+    familyId: "familyA",
+    familyName: "테스트 크루",
+    id: reportId,
+    reason: "HARASSMENT",
+    reporterId,
+    reporterName: reporterId,
+    resolutionNote: "",
+    reviewedAt: null,
+    reviewedBy: null,
+    status: "OPEN",
+    targetLabel: "신고 대상 사용자",
+    targetType: "USER",
+    targetUserId: "target-user",
+    updatedAt: serverTimestamp(),
+  };
+}
+
+function createUserRestriction(userId: string) {
+  return {
+    createdAt: serverTimestamp(),
+    createdBy: platformAdminUid,
+    id: userId,
+    note: "운영 정책 위반 내용을 확인하고 있어요.",
+    reason: "ABUSE",
+    updatedAt: serverTimestamp(),
+    userId,
   };
 }
 

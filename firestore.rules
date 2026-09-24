@@ -7,6 +7,9 @@ service cloud.firestore {
   // users/{uid}: private account profile, email, consent and timestamps.
   // publicProfiles/{uid}: public-safe display name/photo and timestamps.
   // serviceNotices/{noticeId}: title, body, status, author and timestamps.
+  // moderationReports/{reportId}: user-submitted safety reports and review result.
+  // moderationReportQueue/{reportId}: unresolved reports for the admin queue.
+  // userRestrictions/{uid}: active platform access restrictions.
   // families/{familyId}: crew name, owner, invite code and vice owners.
   // familyInvites/{inviteCode}: crew lookup fields for authenticated joins.
   // familyMembers/{familyId}_{uid}: crew membership, role and display metadata.
@@ -16,12 +19,20 @@ service cloud.firestore {
   // guarded by the same membership and ownership checks.
   // ===============================================================
   match /databases/{database}/documents {
-    function signedIn() {
+    function authenticated() {
       return request.auth != null;
     }
 
     function isPlatformAdmin() {
-      return signedIn() && request.auth.uid == "fOMEpAePtlXUvUukUDClM4lUZC82";
+      return authenticated() && request.auth.uid == "fOMEpAePtlXUvUukUDClM4lUZC82";
+    }
+
+    function signedIn() {
+      return authenticated() &&
+        (
+          isPlatformAdmin() ||
+          !exists(/databases/$(database)/documents/userRestrictions/$(request.auth.uid))
+        );
     }
 
     function isValidPrivateUser(data, userId) {
@@ -124,6 +135,123 @@ service cloud.firestore {
           (data.status == "DRAFT" && data.publishedAt == null) ||
           (data.status == "PUBLISHED" && data.publishedAt is timestamp)
         );
+    }
+
+    function isValidModerationReport(data, reportId) {
+      return data.keys().hasOnly([
+          "id",
+          "reporterId",
+          "reporterName",
+          "targetType",
+          "targetLabel",
+          "targetUserId",
+          "familyId",
+          "familyName",
+          "reason",
+          "details",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "reviewedAt",
+          "reviewedBy",
+          "resolutionNote"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "reporterId",
+          "reporterName",
+          "targetType",
+          "targetLabel",
+          "targetUserId",
+          "familyId",
+          "familyName",
+          "reason",
+          "details",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "reviewedAt",
+          "reviewedBy",
+          "resolutionNote"
+        ]) &&
+        data.id == reportId &&
+        data.reporterId is string &&
+        data.reporterId.size() > 0 &&
+        data.reporterId.size() <= 128 &&
+        data.reporterName is string &&
+        data.reporterName.size() > 0 &&
+        data.reporterName.size() <= 80 &&
+        (
+          data.targetType == "USER" ||
+          data.targetType == "CHAT" ||
+          data.targetType == "CREW" ||
+          data.targetType == "CONTENT" ||
+          data.targetType == "OTHER"
+        ) &&
+        data.targetLabel is string &&
+        data.targetLabel.size() > 0 &&
+        data.targetLabel.size() <= 120 &&
+        (data.targetUserId == null || (data.targetUserId is string && data.targetUserId.size() <= 128)) &&
+        (data.familyId == null || (data.familyId is string && data.familyId.size() <= 128)) &&
+        (data.familyName == null || (data.familyName is string && data.familyName.size() <= 40)) &&
+        (
+          data.reason == "HARASSMENT" ||
+          data.reason == "SPAM" ||
+          data.reason == "PRIVACY" ||
+          data.reason == "INAPPROPRIATE" ||
+          data.reason == "OTHER"
+        ) &&
+        data.details is string &&
+        data.details.size() > 0 &&
+        data.details.size() <= 1000 &&
+        (
+          data.status == "OPEN" ||
+          data.status == "RESOLVED" ||
+          data.status == "DISMISSED"
+        ) &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp &&
+        (data.reviewedAt == null || data.reviewedAt is timestamp) &&
+        (data.reviewedBy == null || (data.reviewedBy is string && data.reviewedBy.size() <= 128)) &&
+        data.resolutionNote is string &&
+        data.resolutionNote.size() <= 500;
+    }
+
+    function isValidUserRestriction(data, userId) {
+      return data.keys().hasOnly([
+          "id",
+          "userId",
+          "reason",
+          "note",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.keys().hasAll([
+          "id",
+          "userId",
+          "reason",
+          "note",
+          "createdBy",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.id == userId &&
+        data.userId == userId &&
+        (
+          data.reason == "ABUSE" ||
+          data.reason == "HARASSMENT" ||
+          data.reason == "SPAM" ||
+          data.reason == "PRIVACY" ||
+          data.reason == "OTHER"
+        ) &&
+        data.note is string &&
+        data.note.size() <= 500 &&
+        data.createdBy is string &&
+        data.createdBy.size() > 0 &&
+        data.createdBy.size() <= 128 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
     }
 
     function membershipId(familyId) {
@@ -456,6 +584,73 @@ service cloud.firestore {
           request.resource.data.publishedAt == request.time
         ) &&
         isValidServiceNotice(request.resource.data, noticeId);
+      allow delete: if isPlatformAdmin();
+    }
+
+    match /moderationReports/{reportId} {
+      allow read: if isPlatformAdmin() ||
+        (signedIn() && resource.data.reporterId == request.auth.uid);
+      allow create: if signedIn() &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == "OPEN" &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.reviewedAt == null &&
+        request.resource.data.reviewedBy == null &&
+        request.resource.data.resolutionNote == "" &&
+        isValidModerationReport(request.resource.data, reportId);
+      allow update: if isPlatformAdmin() &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.reporterId == resource.data.reporterId &&
+        request.resource.data.reporterName == resource.data.reporterName &&
+        request.resource.data.targetType == resource.data.targetType &&
+        request.resource.data.targetLabel == resource.data.targetLabel &&
+        request.resource.data.targetUserId == resource.data.targetUserId &&
+        request.resource.data.familyId == resource.data.familyId &&
+        request.resource.data.familyName == resource.data.familyName &&
+        request.resource.data.reason == resource.data.reason &&
+        request.resource.data.details == resource.data.details &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time &&
+        request.resource.data.reviewedAt == request.time &&
+        request.resource.data.reviewedBy == request.auth.uid &&
+        (
+          request.resource.data.status == "RESOLVED" ||
+          request.resource.data.status == "DISMISSED"
+        ) &&
+        isValidModerationReport(request.resource.data, reportId);
+      allow delete: if isPlatformAdmin();
+    }
+
+    match /moderationReportQueue/{reportId} {
+      allow read: if isPlatformAdmin();
+      allow create: if signedIn() &&
+        request.resource.data.reporterId == request.auth.uid &&
+        request.resource.data.status == "OPEN" &&
+        existsAfter(/databases/$(database)/documents/moderationReports/$(reportId)) &&
+        request.resource.data ==
+          getAfter(/databases/$(database)/documents/moderationReports/$(reportId)).data &&
+        isValidModerationReport(request.resource.data, reportId);
+      allow delete: if isPlatformAdmin();
+    }
+
+    match /userRestrictions/{userId} {
+      allow read: if authenticated() &&
+        (isPlatformAdmin() || request.auth.uid == userId);
+      allow create: if isPlatformAdmin() &&
+        userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        request.resource.data.createdBy == request.auth.uid &&
+        request.resource.data.createdAt == request.time &&
+        request.resource.data.updatedAt == request.time &&
+        isValidUserRestriction(request.resource.data, userId);
+      allow update: if isPlatformAdmin() &&
+        userId != "fOMEpAePtlXUvUukUDClM4lUZC82" &&
+        request.resource.data.id == resource.data.id &&
+        request.resource.data.userId == resource.data.userId &&
+        request.resource.data.createdBy == resource.data.createdBy &&
+        request.resource.data.createdAt == resource.data.createdAt &&
+        request.resource.data.updatedAt == request.time &&
+        isValidUserRestriction(request.resource.data, userId);
       allow delete: if isPlatformAdmin();
     }
 

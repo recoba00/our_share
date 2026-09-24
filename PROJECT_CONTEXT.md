@@ -334,6 +334,9 @@ Chat Room 타입:
 - users
 - publicProfiles
 - serviceNotices
+- moderationReports
+- moderationReportQueue
+- userRestrictions
 - families
 - familyInvites
 - familyMembers
@@ -357,6 +360,8 @@ families/{familyId}/messages/{messageId}
 `serviceNotices/{noticeId}`는 운영 공지를 저장한다. 로그인 사용자는 `PUBLISHED` 상태만 조회하고, 고정된 플랫폼 운영 계정만 초안 조회와 생성·수정·삭제를 수행한다. `/admin`은 대시보드·공지·사용자·크루 메뉴로 구성된 백오피스이며, 사용자 화면에는 공개 프로필만 표시하고 이메일·동의 정보가 있는 `users` 문서는 읽지 않는다. 설정의 공지사항 화면은 게시된 문서를 실시간으로 구독한다.
 
 백오피스는 전체 컬렉션을 실시간 구독하지 않는다. 사용자·크루·멤버십 수는 Firestore 집계 쿼리로 계산하고, 대시보드의 최근 항목은 5개만 읽는다. 사용자와 크루 디렉터리는 25개 단위 커서 페이지네이션과 이름 접두어 검색을 사용한다. 공지는 운영자가 즉시 변경 상태를 확인해야 하고 데이터 규모가 제한적이므로 실시간 구독을 유지한다.
+
+신고는 `moderationReports/{reportId}`에 원본과 처리 결과를 저장하고, 미처리 항목은 같은 ID의 `moderationReportQueue/{reportId}`에도 저장한다. 운영자가 신고를 처리하면 원본 상태를 갱신하고 대기열 문서를 삭제한다. 이 구조는 복합 인덱스 없이도 처리 대기와 전체 기록을 각각 최신순으로 페이지 조회하기 위한 것이다. `userRestrictions/{uid}` 문서가 존재하면 해당 계정의 Firestore 접근을 차단하고, 같은 상태를 Realtime Database `restrictedUsers/{uid}`에 미러링해 위치·접속 상태 접근도 차단한다. 플랫폼 운영 계정만 제한을 생성·해제할 수 있다.
 
 families 필드:
 

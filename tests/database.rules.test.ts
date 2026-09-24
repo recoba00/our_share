@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from "vitest";
 
 const projectId = "our-share-rtdb-rules-test";
+const platformAdminUid = "fOMEpAePtlXUvUukUDClM4lUZC82";
 let testEnv: RulesTestEnvironment;
 
 beforeAll(async () => {
@@ -275,6 +276,61 @@ describe("Realtime Database live location rules", () => {
         expect((await get(ref(db, path))).exists()).toBe(false);
       }
     });
+  });
+});
+
+describe("Realtime Database user restriction rules", () => {
+  it("lets the platform admin mirror a restriction and blocks the restricted user", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).database();
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+    const bobDb = testEnv.authenticatedContext("bob").database();
+    const restriction = {
+      createdBy: platformAdminUid,
+      reason: "ABUSE",
+      updatedAt: Date.now(),
+      userId: "bob",
+    };
+
+    await assertSucceeds(set(ref(adminDb, "restrictedUsers/bob"), restriction));
+    await assertSucceeds(get(ref(bobDb, "restrictedUsers/bob")));
+    await assertFails(get(ref(aliceDb, "restrictedUsers/bob")));
+    await assertFails(get(ref(bobDb, "familyMembers/familyA/alice")));
+    await assertFails(
+      set(ref(bobDb, "liveLocations/familyA/bob"), createLiveLocation())
+    );
+
+    await assertSucceeds(remove(ref(adminDb, "restrictedUsers/bob")));
+    await assertSucceeds(get(ref(bobDb, "familyMembers/familyA/alice")));
+  });
+
+  it("blocks non-admin restriction writes", async () => {
+    const aliceDb = testEnv.authenticatedContext("alice").database();
+    const adminDb = testEnv.authenticatedContext(platformAdminUid).database();
+
+    await assertFails(
+      set(ref(aliceDb, "restrictedUsers/bob"), {
+        createdBy: "alice",
+        reason: "ABUSE",
+        updatedAt: Date.now(),
+        userId: "bob",
+      })
+    );
+    await assertFails(
+      set(ref(adminDb, `restrictedUsers/${platformAdminUid}`), {
+        createdBy: platformAdminUid,
+        reason: "ABUSE",
+        updatedAt: Date.now(),
+        userId: platformAdminUid,
+      })
+    );
   });
 });
 
