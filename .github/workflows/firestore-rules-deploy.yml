@@ -13,7 +13,7 @@ concurrency:
 jobs:
   deploy-firestore-rules:
     name: Test and deploy Firestore Rules
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
 

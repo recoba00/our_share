@@ -13,7 +13,7 @@ jobs:
   deploy-functions:
     if: ${{ inputs.confirm_blaze_deploy == true }}
     name: Build, test, and deploy Firebase Functions
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     env:
       FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_OUR_SHARE_6BAF5 }}
 
