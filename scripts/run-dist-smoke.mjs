@@ -43,6 +43,8 @@ if (!existsSync(indexPath)) {
     failures.push("dist/index.html does not reference built assets.");
   }
 
+  validateIndexMetadata(html);
+
   for (const assetPath of referencedAssets) {
     const filePath = toDistFilePath(assetPath);
 
@@ -61,6 +63,9 @@ validateDistFile("og-image.png");
 validateAssetsDirectory();
 validateManifest();
 validateServiceWorker();
+validatePngDimensions("pwa-icon-192.png", 192, 192);
+validatePngDimensions("pwa-icon-512.png", 512, 512);
+validatePngDimensions("og-image.png", 1200, 630);
 
 if (failures.length > 0) {
   console.error("Dist smoke check failed:");
@@ -103,7 +108,18 @@ function validateManifest() {
     return;
   }
 
-  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  let manifest;
+
+  try {
+    manifest = JSON.parse(readFileSync(manifestPath, "utf8"));
+  } catch {
+    failures.push("manifest.webmanifest is not valid JSON.");
+    return;
+  }
+
+  if (manifest.name !== "우리끼리" || manifest.short_name !== "우리끼리") {
+    failures.push("manifest app name should be 우리끼리.");
+  }
 
   if (manifest.start_url !== "." || manifest.scope !== ".") {
     failures.push("manifest start_url and scope should stay relative.");
@@ -113,6 +129,61 @@ function validateManifest() {
     manifest.icons?.some((icon) => String(icon.src).startsWith("/our_share/"))
   ) {
     failures.push("manifest icons should not hardcode /our_share/.");
+  }
+
+  if (manifest.display !== "standalone") {
+    failures.push("manifest display should be standalone.");
+  }
+
+  const iconSizes = new Set(
+    (manifest.icons ?? []).map((icon) => `${icon.sizes}:${icon.type}`)
+  );
+
+  for (const requiredIcon of ["192x192:image/png", "512x512:image/png"]) {
+    if (!iconSizes.has(requiredIcon)) {
+      failures.push(`manifest is missing ${requiredIcon}.`);
+    }
+  }
+}
+
+function validateIndexMetadata(html) {
+  const requiredMetadata = [
+    '<title>우리끼리</title>',
+    'property="og:site_name" content="우리끼리"',
+    'property="og:image:width" content="1200"',
+    'property="og:image:height" content="630"',
+    'name="twitter:card" content="summary_large_image"',
+  ];
+
+  for (const metadata of requiredMetadata) {
+    if (!html.includes(metadata)) {
+      failures.push(`dist/index.html is missing metadata: ${metadata}`);
+    }
+  }
+}
+
+function validatePngDimensions(fileName, expectedWidth, expectedHeight) {
+  const filePath = join(distDir, fileName);
+
+  if (!existsSync(filePath)) {
+    return;
+  }
+
+  const image = readFileSync(filePath);
+  const pngSignature = "89504e470d0a1a0a";
+
+  if (image.length < 24 || image.subarray(0, 8).toString("hex") !== pngSignature) {
+    failures.push(`dist/${fileName} is not a valid PNG.`);
+    return;
+  }
+
+  const width = image.readUInt32BE(16);
+  const height = image.readUInt32BE(20);
+
+  if (width !== expectedWidth || height !== expectedHeight) {
+    failures.push(
+      `dist/${fileName} should be ${expectedWidth}x${expectedHeight}, received ${width}x${height}.`
+    );
   }
 }
 

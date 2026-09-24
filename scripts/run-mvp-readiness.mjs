@@ -9,10 +9,8 @@ const checks = [
   ["npm", ["run", "test:unit"], "Unit tests"],
   ["npm", ["run", "test:ui-feedback"], "UI feedback"],
   ["npm", ["run", "test:rules"], "Firebase rules"],
-  ["npm", ["run", "build"], "Dothome build"],
-  ["npm", ["run", "test:dist"], "Dothome dist"],
-  ["npm", ["run", "build:firebase"], "Firebase Hosting build"],
-  ["npm", ["run", "test:dist:firebase"], "Firebase Hosting dist"],
+  ["npm", ["run", "build:firebase"], "Production build"],
+  ["npm", ["run", "test:dist:firebase"], "Production artifact"],
 ];
 
 for (const [command, args, label] of checks) {
@@ -25,12 +23,12 @@ for (const [command, args, label] of checks) {
   });
 
   if (result.status !== 0) {
-    console.error(`\nMVP readiness check failed at: ${label}`);
+    console.error(`\nRelease readiness check failed at: ${label}`);
     process.exit(result.status ?? 1);
   }
 }
 
-console.log("\nMVP readiness check passed.");
+console.log("\nRelease readiness check passed.");
 
 function getCommandInvocation(command, args) {
   if (

@@ -14,7 +14,8 @@
     "test:dist": "node scripts/run-dist-smoke.mjs --base=/our_share/",
     "test:dist:firebase": "node scripts/run-dist-smoke.mjs --base=/",
     "test:hosting": "node scripts/run-hosting-smoke.mjs",
-    "test:mvp": "node scripts/run-mvp-readiness.mjs",
+    "test:release": "node scripts/run-mvp-readiness.mjs",
+    "test:mvp": "npm run test:release",
     "test:rules": "node scripts/run-firestore-rules-tests.mjs",
     "test:functions": "node scripts/run-functions-emulator-tests.mjs"
   },

@@ -310,6 +310,14 @@
 - [x] 운영 작업 감사 로그와 관리자 역할 세분화
 - [x] 감사 로그 검색·기간 필터와 CSV 내보내기
 
+## Release Readiness
+
+- [x] Firebase Hosting 단일 운영 빌드로 출시 전 통합 검사 정리
+- [x] 관리자·초대 링크를 포함한 주요 SPA 경로 실배포 검사
+- [x] PWA manifest·서비스 워커·앱 아이콘·OG 이미지 실배포 검사
+- [x] 정적 청크 immutable 캐시와 업데이트 자산 no-cache 검사
+- [x] 기본 보안 응답 헤더 자동 검사
+
 ## Security
 
 - [x] Firestore Rules Draft
