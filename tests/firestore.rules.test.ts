@@ -9,12 +9,16 @@ import {
   collection,
   deleteDoc,
   doc,
+  endAt,
+  getCountFromServer,
   getDoc,
   getDocs,
+  limit,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAt,
   updateDoc,
   where,
   writeBatch,
@@ -60,6 +64,20 @@ describe("private and public profile rules", () => {
     await assertFails(getDoc(doc(bobDb, "users", "alice")));
     await assertFails(getDoc(doc(adminDb, "users", "alice")));
     await assertSucceeds(getDoc(doc(bobDb, "publicProfiles", "alice")));
+    const profileDirectoryQuery = query(
+      collection(adminDb, "publicProfiles"),
+      orderBy("displayName"),
+      startAt("a"),
+      endAt(`a\uf8ff`),
+      limit(26)
+    );
+    const profileDirectory = await assertSucceeds(getDocs(profileDirectoryQuery));
+    const profileCount = await assertSucceeds(
+      getCountFromServer(collection(adminDb, "publicProfiles"))
+    );
+
+    expect(profileDirectory.size).toBe(1);
+    expect(profileCount.data().count).toBe(1);
   });
 
   it("blocks cross-user profile writes and schema pollution", async () => {
@@ -181,11 +199,33 @@ describe("family membership rules", () => {
 
     const crews = await assertSucceeds(getDocs(collection(adminDb, "families")));
     const memberships = await assertSucceeds(getDocs(collection(adminDb, "familyMembers")));
+    const crewDirectory = await assertSucceeds(
+      getDocs(
+        query(
+          collection(adminDb, "families"),
+          orderBy("name"),
+          startAt("테"),
+          endAt(`테\uf8ff`),
+          limit(26)
+        )
+      )
+    );
+    const crewCount = await assertSucceeds(
+      getCountFromServer(collection(adminDb, "families"))
+    );
+    const membershipCount = await assertSucceeds(
+      getCountFromServer(collection(adminDb, "familyMembers"))
+    );
 
     expect(crews.size).toBe(1);
     expect(memberships.size).toBe(2);
+    expect(crewDirectory.size).toBe(1);
+    expect(crewCount.data().count).toBe(1);
+    expect(membershipCount.data().count).toBe(2);
     await assertFails(getDocs(collection(outsiderDb, "families")));
     await assertFails(getDocs(collection(outsiderDb, "familyMembers")));
+    await assertFails(getCountFromServer(collection(outsiderDb, "families")));
+    await assertFails(getCountFromServer(collection(outsiderDb, "familyMembers")));
   });
 
   it("allows owner bootstrap and invite-code member join", async () => {

@@ -27,8 +27,11 @@ export type AdminCrewMember = {
 };
 
 export type AdminDashboardData = {
-  crews: AdminCrew[];
-  members: AdminCrewMember[];
-  profiles: AdminPublicProfile[];
+  crewCount: number;
+  membershipCount: number;
+  ownerProfiles: AdminPublicProfile[];
+  recentCrewMemberCounts: Record<string, number>;
+  recentCrews: AdminCrew[];
+  recentProfiles: AdminPublicProfile[];
+  userCount: number;
 };
-

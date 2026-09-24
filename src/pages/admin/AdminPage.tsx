@@ -1,5 +1,8 @@
 import {
+  ArrowClockwise,
   Buildings,
+  CaretLeft,
+  CaretRight,
   ChartPieSlice,
   CheckCircle,
   MagnifyingGlass,
@@ -25,7 +28,13 @@ import { Input } from "../../components/common/Input";
 import { SegmentedControl } from "../../components/common/SegmentedControl";
 import { useConfirmDialog } from "../../components/common/confirmDialogContext";
 import { useToast } from "../../components/common/toastContext";
-import { subscribeAdminDashboard } from "../../features/admin/services/adminDashboardService";
+import {
+  loadAdminCrewsPage,
+  loadAdminDashboard,
+  loadAdminProfilesPage,
+  loadUserCrewCounts,
+  type AdminPageCursor,
+} from "../../features/admin/services/adminDashboardService";
 import {
   createServiceNotice,
   deleteServiceNotice,
@@ -43,6 +52,7 @@ import type {
   ServiceNoticeStatus,
 } from "../../features/admin/types/serviceNoticeTypes";
 import { useAuth } from "../../features/auth/useAuth";
+import { getFirebaseErrorMessage } from "../../lib/firebase/firebaseErrorMessage";
 
 type AdminSection = "dashboard" | "notices" | "users" | "crews";
 
@@ -53,9 +63,13 @@ const emptyDraft: ServiceNoticeDraft = {
 };
 
 const emptyDashboard: AdminDashboardData = {
-  crews: [],
-  members: [],
-  profiles: [],
+  crewCount: 0,
+  membershipCount: 0,
+  ownerProfiles: [],
+  recentCrewMemberCounts: {},
+  recentCrews: [],
+  recentProfiles: [],
+  userCount: 0,
 };
 
 const navigationItems: Array<{
@@ -75,6 +89,7 @@ export function AdminPage() {
   const { showToast } = useToast();
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [dashboard, setDashboard] = useState<AdminDashboardData>(emptyDashboard);
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
   const [notices, setNotices] = useState<ServiceNotice[]>([]);
   const [visibleStatus, setVisibleStatus] = useState<ServiceNoticeStatus>("PUBLISHED");
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
@@ -85,8 +100,29 @@ export function AdminPage() {
   const [editingNotice, setEditingNotice] = useState<ServiceNotice | null>(null);
   const [draft, setDraft] = useState<ServiceNoticeDraft>(emptyDraft);
   const [isSaving, setIsSaving] = useState(false);
+  const [profiles, setProfiles] = useState<AdminPublicProfile[]>([]);
+  const [userCrewCounts, setUserCrewCounts] = useState<Record<string, number>>({});
   const [userSearch, setUserSearch] = useState("");
+  const [appliedUserSearch, setAppliedUserSearch] = useState("");
+  const [userPageIndex, setUserPageIndex] = useState(0);
+  const [userCursors, setUserCursors] = useState<AdminPageCursor[]>([null]);
+  const [userNextCursor, setUserNextCursor] = useState<AdminPageCursor>(null);
+  const [userHasNext, setUserHasNext] = useState(false);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState("");
+  const [usersRefreshKey, setUsersRefreshKey] = useState(0);
+  const [crews, setCrews] = useState<AdminCrew[]>([]);
+  const [crewMemberCounts, setCrewMemberCounts] = useState<Record<string, number>>({});
+  const [crewOwnerProfiles, setCrewOwnerProfiles] = useState<AdminPublicProfile[]>([]);
   const [crewSearch, setCrewSearch] = useState("");
+  const [appliedCrewSearch, setAppliedCrewSearch] = useState("");
+  const [crewPageIndex, setCrewPageIndex] = useState(0);
+  const [crewCursors, setCrewCursors] = useState<AdminPageCursor[]>([null]);
+  const [crewNextCursor, setCrewNextCursor] = useState<AdminPageCursor>(null);
+  const [crewHasNext, setCrewHasNext] = useState(false);
+  const [isCrewsLoading, setIsCrewsLoading] = useState(false);
+  const [crewsError, setCrewsError] = useState("");
+  const [crewsRefreshKey, setCrewsRefreshKey] = useState(0);
 
   useEffect(
     () =>
@@ -104,21 +140,104 @@ export function AdminPage() {
     []
   );
 
-  useEffect(
-    () =>
-      subscribeAdminDashboard({
-        onChange: (nextDashboard) => {
-          setDashboard(nextDashboard);
-          setDashboardError("");
+  useEffect(() => {
+    let isActive = true;
+
+    void loadAdminDashboard()
+      .then((nextDashboard) => {
+        if (!isActive) {
+          return;
+        }
+        setDashboard(nextDashboard);
+        setDashboardError("");
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setDashboardError(getFirebaseErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (isActive) {
           setIsDashboardLoading(false);
-        },
-        onError: (message) => {
-          setDashboardError(message);
-          setIsDashboardLoading(false);
-        },
-      }),
-    []
-  );
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [dashboardRefreshKey]);
+
+  const userCursor = userCursors[userPageIndex] ?? null;
+  useEffect(() => {
+    if (activeSection !== "users") {
+      return;
+    }
+
+    let isActive = true;
+
+    void loadAdminProfilesPage({ cursor: userCursor, search: appliedUserSearch })
+      .then(async (page) => {
+        const counts = await loadUserCrewCounts(page.items.map((profile) => profile.id));
+        if (!isActive) {
+          return;
+        }
+        setProfiles(page.items);
+        setUserCrewCounts(counts);
+        setUserHasNext(page.hasNext);
+        setUserNextCursor(page.nextCursor);
+        setUsersError("");
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setUsersError(getFirebaseErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsUsersLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [activeSection, appliedUserSearch, userCursor, usersRefreshKey]);
+
+  const crewCursor = crewCursors[crewPageIndex] ?? null;
+  useEffect(() => {
+    if (activeSection !== "crews") {
+      return;
+    }
+
+    let isActive = true;
+
+    void loadAdminCrewsPage({ cursor: crewCursor, search: appliedCrewSearch })
+      .then((page) => {
+        if (!isActive) {
+          return;
+        }
+        setCrews(page.items);
+        setCrewMemberCounts(page.memberCounts);
+        setCrewOwnerProfiles(page.ownerProfiles);
+        setCrewHasNext(page.hasNext);
+        setCrewNextCursor(page.nextCursor);
+        setCrewsError("");
+      })
+      .catch((error: unknown) => {
+        if (isActive) {
+          setCrewsError(getFirebaseErrorMessage(error));
+        }
+      })
+      .finally(() => {
+        if (isActive) {
+          setIsCrewsLoading(false);
+        }
+      });
+
+    return () => {
+      isActive = false;
+    };
+  }, [activeSection, appliedCrewSearch, crewCursor, crewsRefreshKey]);
 
   const publishedCount = notices.filter((notice) => notice.status === "PUBLISHED").length;
   const draftCount = notices.length - publishedCount;
@@ -126,44 +245,32 @@ export function AdminPage() {
     () => notices.filter((notice) => notice.status === visibleStatus),
     [notices, visibleStatus]
   );
-  const profileById = useMemo(
-    () => new Map(dashboard.profiles.map((profile) => [profile.id, profile])),
-    [dashboard.profiles]
+  const dashboardProfileById = useMemo(
+    () =>
+      new Map(
+        [...dashboard.recentProfiles, ...dashboard.ownerProfiles].map((profile) => [
+          profile.id,
+          profile,
+        ])
+      ),
+    [dashboard.ownerProfiles, dashboard.recentProfiles]
   );
-  const memberCountByCrew = useMemo(() => {
-    const counts = new Map<string, number>();
-    dashboard.members.forEach((member) => {
-      counts.set(member.familyId, (counts.get(member.familyId) ?? 0) + 1);
-    });
-    return counts;
-  }, [dashboard.members]);
-  const crewCountByUser = useMemo(() => {
-    const counts = new Map<string, number>();
-    dashboard.members.forEach((member) => {
-      counts.set(member.userId, (counts.get(member.userId) ?? 0) + 1);
-    });
-    return counts;
-  }, [dashboard.members]);
-  const filteredProfiles = useMemo(() => {
-    const keyword = userSearch.trim().toLocaleLowerCase("ko-KR");
-    if (!keyword) {
-      return dashboard.profiles;
-    }
-    return dashboard.profiles.filter((profile) =>
-      `${profile.displayName ?? ""} ${profile.id}`.toLocaleLowerCase("ko-KR").includes(keyword)
-    );
-  }, [dashboard.profiles, userSearch]);
-  const filteredCrews = useMemo(() => {
-    const keyword = crewSearch.trim().toLocaleLowerCase("ko-KR");
-    if (!keyword) {
-      return dashboard.crews;
-    }
-    return dashboard.crews.filter((crew) =>
-      `${crew.name} ${profileById.get(crew.ownerId)?.displayName ?? ""}`
-        .toLocaleLowerCase("ko-KR")
-        .includes(keyword)
-    );
-  }, [crewSearch, dashboard.crews, profileById]);
+  const recentMemberCountByCrew = useMemo(
+    () => new Map(Object.entries(dashboard.recentCrewMemberCounts)),
+    [dashboard.recentCrewMemberCounts]
+  );
+  const crewCountByUser = useMemo(
+    () => new Map(Object.entries(userCrewCounts)),
+    [userCrewCounts]
+  );
+  const memberCountByCrew = useMemo(
+    () => new Map(Object.entries(crewMemberCounts)),
+    [crewMemberCounts]
+  );
+  const crewProfileById = useMemo(
+    () => new Map(crewOwnerProfiles.map((profile) => [profile.id, profile])),
+    [crewOwnerProfiles]
+  );
 
   function openCreateEditor() {
     setEditingNotice(null);
@@ -232,6 +339,82 @@ export function AdminPage() {
     }
   }
 
+  function handleUserSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextSearch = userSearch.trim();
+    setIsUsersLoading(true);
+    setAppliedUserSearch(nextSearch);
+    setUserPageIndex(0);
+    setUserCursors([null]);
+    if (nextSearch === appliedUserSearch) {
+      setUsersRefreshKey((current) => current + 1);
+    }
+  }
+
+  function handleCrewSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const nextSearch = crewSearch.trim();
+    setIsCrewsLoading(true);
+    setAppliedCrewSearch(nextSearch);
+    setCrewPageIndex(0);
+    setCrewCursors([null]);
+    if (nextSearch === appliedCrewSearch) {
+      setCrewsRefreshKey((current) => current + 1);
+    }
+  }
+
+  function showNextUsersPage() {
+    if (!userNextCursor) {
+      return;
+    }
+    setIsUsersLoading(true);
+    setUserCursors((current) => [
+      ...current.slice(0, userPageIndex + 1),
+      userNextCursor,
+    ]);
+    setUserPageIndex((current) => current + 1);
+  }
+
+  function showNextCrewsPage() {
+    if (!crewNextCursor) {
+      return;
+    }
+    setIsCrewsLoading(true);
+    setCrewCursors((current) => [
+      ...current.slice(0, crewPageIndex + 1),
+      crewNextCursor,
+    ]);
+    setCrewPageIndex((current) => current + 1);
+  }
+
+  function showPreviousUsersPage() {
+    setIsUsersLoading(true);
+    setUserPageIndex((current) => Math.max(0, current - 1));
+  }
+
+  function showPreviousCrewsPage() {
+    setIsCrewsLoading(true);
+    setCrewPageIndex((current) => Math.max(0, current - 1));
+  }
+
+  function handleSectionChange(section: AdminSection) {
+    if (section === activeSection) {
+      return;
+    }
+    setActiveSection(section);
+    if (section === "users") {
+      setIsUsersLoading(true);
+    }
+    if (section === "crews") {
+      setIsCrewsLoading(true);
+    }
+  }
+
+  function refreshDashboard() {
+    setIsDashboardLoading(true);
+    setDashboardRefreshKey((current) => current + 1);
+  }
+
   const editorForm = (
     <form className="mx-auto grid w-full max-w-2xl gap-4" onSubmit={handleSave}>
       <Input
@@ -277,7 +460,7 @@ export function AdminPage() {
   return (
     <>
       <div className="min-h-[calc(100dvh-6rem)] overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] lg:grid lg:grid-cols-[240px_minmax(0,1fr)]">
-        <AdminNavigation activeSection={activeSection} onChange={setActiveSection} />
+        <AdminNavigation activeSection={activeSection} onChange={handleSectionChange} />
 
         <main className="min-w-0 bg-[var(--color-background)]">
           {activeSection === "dashboard" ? (
@@ -285,11 +468,12 @@ export function AdminPage() {
               dashboard={dashboard}
               errorMessage={dashboardError || noticeError}
               isLoading={isDashboardLoading || isNoticesLoading}
-              memberCountByCrew={memberCountByCrew}
+              memberCountByCrew={recentMemberCountByCrew}
               notices={notices}
               onCreateNotice={openCreateEditor}
-              onNavigate={setActiveSection}
-              profileById={profileById}
+              onNavigate={handleSectionChange}
+              onRefresh={refreshDashboard}
+              profileById={dashboardProfileById}
               publishedCount={publishedCount}
             />
           ) : null}
@@ -310,24 +494,34 @@ export function AdminPage() {
           {activeSection === "users" ? (
             <UsersPanel
               crewCountByUser={crewCountByUser}
-              errorMessage={dashboardError}
-              isLoading={isDashboardLoading}
+              errorMessage={usersError}
+              hasNext={userHasNext}
+              isLoading={isUsersLoading}
+              onNext={showNextUsersPage}
+              onPrevious={showPreviousUsersPage}
               onSearchChange={setUserSearch}
-              profiles={filteredProfiles}
+              onSearchSubmit={handleUserSearch}
+              pageNumber={userPageIndex + 1}
+              profiles={profiles}
               search={userSearch}
-              totalCount={dashboard.profiles.length}
+              totalCount={dashboard.userCount}
             />
           ) : null}
           {activeSection === "crews" ? (
             <CrewsPanel
-              crews={filteredCrews}
-              errorMessage={dashboardError}
-              isLoading={isDashboardLoading}
+              crews={crews}
+              errorMessage={crewsError}
+              hasNext={crewHasNext}
+              isLoading={isCrewsLoading}
               memberCountByCrew={memberCountByCrew}
+              onNext={showNextCrewsPage}
+              onPrevious={showPreviousCrewsPage}
               onSearchChange={setCrewSearch}
-              profileById={profileById}
+              onSearchSubmit={handleCrewSearch}
+              pageNumber={crewPageIndex + 1}
+              profileById={crewProfileById}
               search={crewSearch}
-              totalCount={dashboard.crews.length}
+              totalCount={dashboard.crewCount}
             />
           ) : null}
         </main>
@@ -430,6 +624,7 @@ function DashboardOverview({
   notices,
   onCreateNotice,
   onNavigate,
+  onRefresh,
   profileById,
   publishedCount,
 }: {
@@ -440,19 +635,33 @@ function DashboardOverview({
   notices: ServiceNotice[];
   onCreateNotice: () => void;
   onNavigate: (section: AdminSection) => void;
+  onRefresh: () => void;
   profileById: Map<string, AdminPublicProfile>;
   publishedCount: number;
 }) {
-  const recentUsers = countRecent(dashboard.profiles.map((profile) => profile.createdAt));
-  const recentCrews = countRecent(dashboard.crews.map((crew) => crew.createdAt));
-
   return (
     <AdminContent
       action={
-        <Button className="shrink-0" onClick={onCreateNotice} type="button">
-          <Plus size={18} weight="regular" />
-          공지 작성
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            aria-label="대시보드 새로고침"
+            disabled={isLoading}
+            onClick={onRefresh}
+            type="button"
+            variant="secondary"
+          >
+            <ArrowClockwise
+              className={isLoading ? "animate-spin" : undefined}
+              size={18}
+              weight="regular"
+            />
+            <span className="hidden sm:inline">새로고침</span>
+          </Button>
+          <Button className="shrink-0" onClick={onCreateNotice} type="button">
+            <Plus size={18} weight="regular" />
+            공지 작성
+          </Button>
+        </div>
       }
       description="서비스 운영 현황을 한눈에 확인해요."
       eyebrow="Overview"
@@ -463,20 +672,20 @@ function DashboardOverview({
         <MetricCard
           icon={<UserCircle size={22} weight="regular" />}
           label="전체 사용자"
-          note={`최근 7일 +${recentUsers}`}
-          value={dashboard.profiles.length}
+          note="공개 프로필 기준"
+          value={dashboard.userCount}
         />
         <MetricCard
           icon={<UsersThree size={22} weight="regular" />}
           label="운영 크루"
-          note={`최근 7일 +${recentCrews}`}
-          value={dashboard.crews.length}
+          note="전체 생성 크루"
+          value={dashboard.crewCount}
         />
         <MetricCard
           icon={<Buildings size={22} weight="regular" />}
           label="크루 멤버십"
           note="중복 참여 포함"
-          value={dashboard.members.length}
+          value={dashboard.membershipCount}
         />
         <MetricCard
           icon={<Megaphone size={22} weight="regular" />}
@@ -511,7 +720,7 @@ function DashboardOverview({
         <DashboardSection title="운영 상태">
           <div className="grid gap-2">
             <SystemRow label="관리자 인증" value="정상" />
-            <SystemRow label="Firestore 동기화" value={errorMessage ? "확인 필요" : "정상"} />
+            <SystemRow label="Firestore 조회" value={errorMessage ? "확인 필요" : "정상"} />
             <SystemRow label="Firebase Hosting" value="운영 중" />
             <SystemRow label="Storage" muted value="MVP 미사용" />
           </div>
@@ -520,12 +729,12 @@ function DashboardOverview({
 
       <DashboardSection actionLabel="크루 전체 보기" onAction={() => onNavigate("crews")} title="최근 생성된 크루">
         {isLoading ? <LoadingRows /> : null}
-        {!isLoading && dashboard.crews.length === 0 ? (
+        {!isLoading && dashboard.recentCrews.length === 0 ? (
           <EmptyPanel description="사용자가 크루를 만들면 여기에 표시돼요." title="생성된 크루가 없어요." />
         ) : null}
-        {!isLoading && dashboard.crews.length > 0 ? (
+        {!isLoading && dashboard.recentCrews.length > 0 ? (
           <CrewTable
-            crews={dashboard.crews.slice(0, 5)}
+            crews={dashboard.recentCrews}
             memberCountByCrew={memberCountByCrew}
             profileById={profileById}
           />
@@ -628,16 +837,26 @@ function NoticesPanel({
 function UsersPanel({
   crewCountByUser,
   errorMessage,
+  hasNext,
   isLoading,
+  onNext,
+  onPrevious,
   onSearchChange,
+  onSearchSubmit,
+  pageNumber,
   profiles,
   search,
   totalCount,
 }: {
   crewCountByUser: Map<string, number>;
   errorMessage: string;
+  hasNext: boolean;
   isLoading: boolean;
+  onNext: () => void;
+  onPrevious: () => void;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  pageNumber: number;
   profiles: AdminPublicProfile[];
   search: string;
   totalCount: number;
@@ -648,7 +867,12 @@ function UsersPanel({
       eyebrow="Members"
       title={`사용자 ${totalCount}`}
     >
-      <SearchField onChange={onSearchChange} placeholder="이름 또는 사용자 ID 검색" value={search} />
+      <SearchField
+        onChange={onSearchChange}
+        onSubmit={onSearchSubmit}
+        placeholder="이름 앞부분 검색"
+        value={search}
+      />
       {errorMessage ? <ErrorPanel message={errorMessage} /> : null}
       <section className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
         {isLoading ? <LoadingRows /> : null}
@@ -693,6 +917,13 @@ function UsersPanel({
           </>
         ) : null}
       </section>
+      <Pagination
+        hasNext={hasNext}
+        isLoading={isLoading}
+        onNext={onNext}
+        onPrevious={onPrevious}
+        pageNumber={pageNumber}
+      />
     </AdminContent>
   );
 }
@@ -700,18 +931,28 @@ function UsersPanel({
 function CrewsPanel({
   crews,
   errorMessage,
+  hasNext,
   isLoading,
   memberCountByCrew,
+  onNext,
+  onPrevious,
   onSearchChange,
+  onSearchSubmit,
+  pageNumber,
   profileById,
   search,
   totalCount,
 }: {
   crews: AdminCrew[];
   errorMessage: string;
+  hasNext: boolean;
   isLoading: boolean;
   memberCountByCrew: Map<string, number>;
+  onNext: () => void;
+  onPrevious: () => void;
   onSearchChange: (value: string) => void;
+  onSearchSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  pageNumber: number;
   profileById: Map<string, AdminPublicProfile>;
   search: string;
   totalCount: number;
@@ -722,7 +963,12 @@ function CrewsPanel({
       eyebrow="Crews"
       title={`크루 ${totalCount}`}
     >
-      <SearchField onChange={onSearchChange} placeholder="크루명 또는 크루장 검색" value={search} />
+      <SearchField
+        onChange={onSearchChange}
+        onSubmit={onSearchSubmit}
+        placeholder="크루명 앞부분 검색"
+        value={search}
+      />
       {errorMessage ? <ErrorPanel message={errorMessage} /> : null}
       <section className="overflow-hidden rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
         {isLoading ? <LoadingRows /> : null}
@@ -733,6 +979,13 @@ function CrewsPanel({
           <CrewTable crews={crews} memberCountByCrew={memberCountByCrew} profileById={profileById} />
         ) : null}
       </section>
+      <Pagination
+        hasNext={hasNext}
+        isLoading={isLoading}
+        onNext={onNext}
+        onPrevious={onPrevious}
+        pageNumber={pageNumber}
+      />
     </AdminContent>
   );
 }
@@ -871,30 +1124,77 @@ function ProfileIdentity({ profile }: { profile: AdminPublicProfile }) {
 
 function SearchField({
   onChange,
+  onSubmit,
   placeholder,
   value,
 }: {
   onChange: (value: string) => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   placeholder: string;
   value: string;
 }) {
   return (
-    <label className="relative block max-w-md">
-      <span className="sr-only">검색</span>
-      <MagnifyingGlass
-        className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
-        size={18}
-        weight="regular"
-      />
-      <input
-        className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-10 pr-4 text-sm text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
-        inputMode="search"
-        onChange={(event) => onChange(event.target.value)}
-        placeholder={placeholder}
-        type="search"
-        value={value}
-      />
-    </label>
+    <form className="flex max-w-lg items-center gap-2" onSubmit={onSubmit}>
+      <label className="relative min-w-0 flex-1">
+        <span className="sr-only">검색</span>
+        <MagnifyingGlass
+          className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-secondary)]"
+          size={18}
+          weight="regular"
+        />
+        <input
+          className="h-11 w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] pl-10 pr-4 text-sm text-[var(--color-text-primary)] outline-none transition placeholder:text-slate-400 focus:border-brand focus:ring-4 focus:ring-emerald-100"
+          inputMode="search"
+          onChange={(event) => onChange(event.target.value)}
+          placeholder={placeholder}
+          type="search"
+          value={value}
+        />
+      </label>
+      <Button className="shrink-0" type="submit" variant="secondary">
+        검색
+      </Button>
+    </form>
+  );
+}
+
+function Pagination({
+  hasNext,
+  isLoading,
+  onNext,
+  onPrevious,
+  pageNumber,
+}: {
+  hasNext: boolean;
+  isLoading: boolean;
+  onNext: () => void;
+  onPrevious: () => void;
+  pageNumber: number;
+}) {
+  return (
+    <nav aria-label="목록 페이지" className="flex items-center justify-center gap-3">
+      <Button
+        disabled={isLoading || pageNumber <= 1}
+        onClick={onPrevious}
+        type="button"
+        variant="secondary"
+      >
+        <CaretLeft size={16} weight="regular" />
+        이전
+      </Button>
+      <span className="min-w-14 text-center text-sm font-semibold tabular-nums">
+        {pageNumber}페이지
+      </span>
+      <Button
+        disabled={isLoading || !hasNext}
+        onClick={onNext}
+        type="button"
+        variant="secondary"
+      >
+        다음
+        <CaretRight size={16} weight="regular" />
+      </Button>
+    </nav>
   );
 }
 
@@ -960,9 +1260,4 @@ function formatTimestamp(timestamp: { toDate: () => Date } | null) {
     month: "2-digit",
     year: "numeric",
   }).format(timestamp.toDate());
-}
-
-function countRecent(timestamps: Array<{ toMillis: () => number } | null>) {
-  const threshold = Date.now() - 7 * 24 * 60 * 60 * 1000;
-  return timestamps.filter((timestamp) => (timestamp?.toMillis() ?? 0) >= threshold).length;
 }
