@@ -13,7 +13,10 @@ import {
   notifyDashboardReminders,
   sendBrowserNotification,
 } from "../../features/notification/services/notificationService";
-import { refreshPushDeviceRegistration } from "../../features/notification/services/pushNotificationService";
+import {
+  isPushNotificationsEnabled,
+  refreshPushDeviceRegistration,
+} from "../../features/notification/services/pushNotificationService";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
@@ -48,7 +51,11 @@ export function NotificationManager() {
   }, []);
 
   useEffect(() => {
-    if (!user || getNotificationPermission() !== "granted") {
+    if (
+      !user ||
+      !isPushNotificationsEnabled(user.uid) ||
+      getNotificationPermission() !== "granted"
+    ) {
       return;
     }
 
@@ -83,7 +90,12 @@ export function NotificationManager() {
     pollIdsRef.current = null;
     memoIdsRef.current = null;
 
-    if (!activeFamily || !user || getNotificationPermission() !== "granted") {
+    if (
+      !activeFamily ||
+      !user ||
+      !isPushNotificationsEnabled(user.uid) ||
+      getNotificationPermission() !== "granted"
+    ) {
       return;
     }
 

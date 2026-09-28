@@ -54,9 +54,13 @@ export function SettingsPage() {
   const [isUpdatingPush, setIsUpdatingPush] = useState(false);
 
   useEffect(() => {
+    if (!user) {
+      return;
+    }
+
     let isMounted = true;
 
-    void getPushNotificationState().then((state) => {
+    void getPushNotificationState(user.uid).then((state) => {
       if (isMounted) {
         setPushState(state);
       }
@@ -65,7 +69,7 @@ export function SettingsPage() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
 
   async function handlePushToggle() {
     if (!user || isUpdatingPush) {
@@ -87,7 +91,7 @@ export function SettingsPage() {
 
       window.dispatchEvent(new Event(notificationPermissionChangedEvent));
     } catch (error) {
-      const nextState = await getPushNotificationState();
+      const nextState = await getPushNotificationState(user.uid);
       setPushState(nextState);
       showToast({
         message: error instanceof Error ? error.message : "알림 설정을 바꾸지 못했어요.",

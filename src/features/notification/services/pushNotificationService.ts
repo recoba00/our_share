@@ -8,6 +8,8 @@ import {
 import { db, firebaseApp } from "../../../lib/firebase/app";
 
 const pushDeviceStorageKey = "our-share:push-device-id";
+const pushPreferenceStoragePrefix = "our-share:push-enabled";
+const sessionPushPreferences = new Map<string, boolean>();
 const defaultVapidKey =
   "BAEw5HTkUQ_cXnsqHU2W8bg3alE6ABFu3xV0QOfQwBu4DPGgS8RU8-1pWqrQuKK5Na4sf62ckMBAlKsJcZj-dbQ";
 
@@ -17,7 +19,7 @@ export type PushNotificationState =
   | "enabled"
   | "unsupported";
 
-export async function getPushNotificationState(): Promise<PushNotificationState> {
+export async function getPushNotificationState(userId: string): Promise<PushNotificationState> {
   if (!(await supportsPushNotifications())) {
     return "unsupported";
   }
@@ -26,7 +28,9 @@ export async function getPushNotificationState(): Promise<PushNotificationState>
     return "blocked";
   }
 
-  return Notification.permission === "granted" ? "enabled" : "disabled";
+  return Notification.permission === "granted" && isPushNotificationsEnabled(userId)
+    ? "enabled"
+    : "disabled";
 }
 
 export async function enablePushNotifications(userId: string) {
@@ -44,11 +48,17 @@ export async function enablePushNotifications(userId: string) {
     );
   }
 
-  return registerPushDevice(userId);
+  const token = await registerPushDevice(userId);
+  setPushNotificationsEnabled(userId, true);
+  return token;
 }
 
 export async function refreshPushDeviceRegistration(userId: string) {
-  if (typeof Notification === "undefined" || Notification.permission !== "granted") {
+  if (
+    !isPushNotificationsEnabled(userId) ||
+    typeof Notification === "undefined" ||
+    Notification.permission !== "granted"
+  ) {
     return null;
   }
 
@@ -60,6 +70,7 @@ export async function refreshPushDeviceRegistration(userId: string) {
 }
 
 export async function disablePushNotifications(userId: string) {
+  setPushNotificationsEnabled(userId, false);
   const deviceId = readPushDeviceId();
 
   if (deviceId) {
@@ -76,6 +87,20 @@ export async function disablePushNotifications(userId: string) {
     }
   } catch {
     // 브라우저 푸시 구독 정리에 실패해도 서버의 기기 문서를 지우면 발송 대상에서 제외된다.
+  }
+}
+
+export function isPushNotificationsEnabled(userId: string) {
+  const sessionPreference = sessionPushPreferences.get(userId);
+
+  if (sessionPreference !== undefined) {
+    return sessionPreference;
+  }
+
+  try {
+    return window.localStorage.getItem(getPushPreferenceStorageKey(userId)) === "true";
+  } catch {
+    return false;
   }
 }
 
@@ -158,6 +183,23 @@ function readPushDeviceId() {
   } catch {
     return null;
   }
+}
+
+function setPushNotificationsEnabled(userId: string, enabled: boolean) {
+  sessionPushPreferences.set(userId, enabled);
+
+  try {
+    window.localStorage.setItem(
+      getPushPreferenceStorageKey(userId),
+      enabled ? "true" : "false"
+    );
+  } catch {
+    // 저장소가 막혀도 현재 세션에서는 메모리 설정을 사용한다.
+  }
+}
+
+function getPushPreferenceStorageKey(userId: string) {
+  return `${pushPreferenceStoragePrefix}:${userId}`;
 }
 
 function getPlatformName() {
