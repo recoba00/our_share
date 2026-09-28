@@ -44,6 +44,7 @@ if (!existsSync(indexPath)) {
   }
 
   validateIndexMetadata(html);
+  validateNoEagerIconBundle(html);
 
   for (const assetPath of referencedAssets) {
     const filePath = toDistFilePath(assetPath);
@@ -159,6 +160,19 @@ function validateIndexMetadata(html) {
     if (!html.includes(metadata)) {
       failures.push(`dist/index.html is missing metadata: ${metadata}`);
     }
+  }
+}
+
+function validateNoEagerIconBundle(html) {
+  const eagerPreloads = Array.from(
+    html.matchAll(/rel="modulepreload"[^>]+href="([^"]+)"/g),
+    (match) => match[1]
+  );
+
+  if (eagerPreloads.some((assetPath) => /\/icons-[^/]+\.js$/.test(assetPath))) {
+    failures.push(
+      "dist/index.html should not preload one monolithic icon bundle. Keep route icons code-split."
+    );
   }
 }
 

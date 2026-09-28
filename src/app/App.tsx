@@ -12,36 +12,48 @@ import { PwaPrompt } from "../components/pwa/PwaPrompt";
 import { AuthProvider } from "../features/auth/AuthProvider";
 import { AdminAccessProvider } from "../features/admin/AdminAccessProvider";
 import { FamilyProvider } from "../features/family/FamilyProvider";
+import {
+  loadAdminPage,
+  loadCalendarPage,
+  loadChatPage,
+  loadDiagnosticsPage,
+  loadHomePage,
+  loadInvitePage,
+  loadMemoPage,
+  loadPollPage,
+  loadProfilePage,
+  loadSettingsPage,
+} from "./routeModules";
 
 const CalendarPage = lazy(() =>
-  import("../pages/calendar/CalendarPage").then(({ CalendarPage: page }) => ({ default: page }))
+  loadCalendarPage().then(({ CalendarPage: page }) => ({ default: page }))
 );
 const ChatPage = lazy(() =>
-  import("../pages/chat/ChatPage").then(({ ChatPage: page }) => ({ default: page }))
+  loadChatPage().then(({ ChatPage: page }) => ({ default: page }))
 );
 const DiagnosticsPage = lazy(() =>
-  import("../pages/diagnostics/DiagnosticsPage").then(({ DiagnosticsPage: page }) => ({ default: page }))
+  loadDiagnosticsPage().then(({ DiagnosticsPage: page }) => ({ default: page }))
 );
 const HomePage = lazy(() =>
-  import("../pages/home/HomePage").then(({ HomePage: page }) => ({ default: page }))
+  loadHomePage().then(({ HomePage: page }) => ({ default: page }))
 );
 const InvitePage = lazy(() =>
-  import("../pages/invite/InvitePage").then(({ InvitePage: page }) => ({ default: page }))
+  loadInvitePage().then(({ InvitePage: page }) => ({ default: page }))
 );
 const MemoPage = lazy(() =>
-  import("../pages/memo/MemoPage").then(({ MemoPage: page }) => ({ default: page }))
+  loadMemoPage().then(({ MemoPage: page }) => ({ default: page }))
 );
 const PollPage = lazy(() =>
-  import("../pages/poll/PollPage").then(({ PollPage: page }) => ({ default: page }))
+  loadPollPage().then(({ PollPage: page }) => ({ default: page }))
 );
 const ProfilePage = lazy(() =>
-  import("../pages/profile/ProfilePage").then(({ ProfilePage: page }) => ({ default: page }))
+  loadProfilePage().then(({ ProfilePage: page }) => ({ default: page }))
 );
 const SettingsPage = lazy(() =>
-  import("../pages/settings/SettingsPage").then(({ SettingsPage: page }) => ({ default: page }))
+  loadSettingsPage().then(({ SettingsPage: page }) => ({ default: page }))
 );
 const AdminPage = lazy(() =>
-  import("../pages/admin/AdminPage").then(({ AdminPage: page }) => ({ default: page }))
+  loadAdminPage().then(({ AdminPage: page }) => ({ default: page }))
 );
 
 export function App() {

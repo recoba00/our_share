@@ -12,7 +12,7 @@ import {
   UsersThree,
   X,
 } from "@phosphor-icons/react";
-import { useEffect, useState, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
@@ -21,21 +21,26 @@ import { truncateFamilyName } from "../../features/family/utils/familyName";
 import { BottomSheet } from "../common/BottomSheet";
 import { BottomSheetItem } from "../common/BottomSheetItem";
 import { Button } from "../common/Button";
-import { CreateFamilySheet } from "../common/CreateFamilySheet";
 import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { SegmentedControl } from "../common/SegmentedControl";
 import type { Family } from "../../features/family/types/familyTypes";
-import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
-import { subscribeChatRooms, subscribeMessages } from "../../features/chat/services/chatService";
-import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
-import { subscribeMemos } from "../../features/memo/services/memoService";
+import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import type { Memo } from "../../features/memo/types/memoTypes";
-import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 import { mainNavigationItems } from "../navigation/navigationItems";
-import { ChatMemberDrawer } from "../chat/ChatMemberDrawer";
 import { useChatMemberDrawer } from "../chat/useChatMemberDrawer";
+
+const LazyChatMemberDrawer = lazy(() =>
+  import("../chat/ChatMemberDrawer").then(({ ChatMemberDrawer }) => ({
+    default: ChatMemberDrawer,
+  }))
+);
+const LazyCreateFamilySheet = lazy(() =>
+  import("../common/CreateFamilySheet").then(({ CreateFamilySheet }) => ({
+    default: CreateFamilySheet,
+  }))
+);
 
 type LocationState = {
   chatRoomName?: string;
@@ -50,9 +55,6 @@ export function AppHeader() {
   const [notificationCalendarEvents, setNotificationCalendarEvents] = useState<CalendarEvent[]>([]);
   const [notificationPolls, setNotificationPolls] = useState<Poll[]>([]);
   const [notificationChatRooms, setNotificationChatRooms] = useState<ChatRoom[]>([]);
-  const [notificationIncomingMessages, setNotificationIncomingMessages] = useState<
-    Record<string, ChatMessage | null>
-  >({});
   const [notificationMemos, setNotificationMemos] = useState<Memo[]>([]);
   const { close: closeChatMembers, isOpen: isChatMembersOpen, open: openChatMembers, room: chatRoom } =
     useChatMemberDrawer();
@@ -72,55 +74,47 @@ export function AppHeader() {
       return;
     }
 
-    const unsubscribes = [
-      subscribeCalendarEvents({
-        familyId: activeFamilyId,
-        onChange: setNotificationCalendarEvents,
-        userId,
-      }),
-      subscribePolls({
-        familyId: activeFamilyId,
-        onChange: setNotificationPolls,
-      }),
-      subscribeChatRooms({
-        familyId: activeFamilyId,
-        onChange: setNotificationChatRooms,
-        userId,
-      }),
-      subscribeMemos({
-        familyId: activeFamilyId,
-        onChange: setNotificationMemos,
-        userId,
-      }),
-    ];
+    let cancelled = false;
+    const unsubscribes: Array<() => void> = [];
 
-    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+    void Promise.all([
+      import("../../features/calendar/services/calendarService"),
+      import("../../features/chat/services/chatService"),
+      import("../../features/memo/services/memoService"),
+      import("../../features/poll/services/pollService"),
+    ]).then(([calendarService, chatService, memoService, pollService]) => {
+      if (cancelled) {
+        return;
+      }
+
+      unsubscribes.push(
+        calendarService.subscribeCalendarEvents({
+          familyId: activeFamilyId,
+          onChange: setNotificationCalendarEvents,
+          userId,
+        }),
+        pollService.subscribePolls({
+          familyId: activeFamilyId,
+          onChange: setNotificationPolls,
+        }),
+        chatService.subscribeChatRooms({
+          familyId: activeFamilyId,
+          onChange: setNotificationChatRooms,
+          userId,
+        }),
+        memoService.subscribeMemos({
+          familyId: activeFamilyId,
+          onChange: setNotificationMemos,
+          userId,
+        })
+      );
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
   }, [activeFamilyId, isNotificationsOpen, userId]);
-
-  useEffect(() => {
-    if (!isNotificationsOpen || !activeFamilyId || !userId || notificationChatRooms.length === 0) {
-      return;
-    }
-
-    const unsubscribes = notificationChatRooms.slice(0, 6).map((room) =>
-      subscribeMessages({
-        familyId: activeFamilyId,
-        onChange: (messages) => {
-          const incomingMessage = [...messages]
-            .reverse()
-            .find((message) => message.createdBy !== userId);
-
-          setNotificationIncomingMessages((current) => ({
-            ...current,
-            [room.id]: incomingMessage ?? null,
-          }));
-        },
-        roomId: room.id,
-      })
-    );
-
-    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
-  }, [activeFamilyId, isNotificationsOpen, notificationChatRooms, userId]);
 
   useEffect(() => {
     if (!isNotificationsOpen) {
@@ -134,6 +128,17 @@ export function AppHeader() {
       document.body.style.overflow = previousOverflow;
     };
   }, [isNotificationsOpen]);
+
+  function toggleNotifications() {
+    if (!isNotificationsOpen) {
+      setNotificationCalendarEvents([]);
+      setNotificationPolls([]);
+      setNotificationChatRooms([]);
+      setNotificationMemos([]);
+    }
+
+    setIsNotificationsOpen((isOpen) => !isOpen);
+  }
 
   return (
     <>
@@ -222,7 +227,7 @@ export function AppHeader() {
             <button
               aria-label="알림"
               className="relative grid size-8 place-items-center rounded-full text-[var(--color-text-secondary)] transition hover:bg-white/70 hover:text-[var(--color-text-primary)]"
-              onClick={() => setIsNotificationsOpen((isOpen) => !isOpen)}
+              onClick={toggleNotifications}
               type="button"
             >
               <Bell size={headerIconSize} />
@@ -252,32 +257,36 @@ export function AppHeader() {
           ) : null}
         </div>
       </div>
-      {user ? (
-        <CreateFamilySheet
-          isOpen={isCreateFamilyOpen}
-          onClose={() => setIsCreateFamilyOpen(false)}
-        />
+      {user && isCreateFamilyOpen ? (
+        <Suspense fallback={null}>
+          <LazyCreateFamilySheet
+            isOpen={isCreateFamilyOpen}
+            onClose={() => setIsCreateFamilyOpen(false)}
+          />
+        </Suspense>
       ) : null}
     </header>
     {isNotificationsOpen ? (
       <NotificationDrawer
         calendarEvents={notificationCalendarEvents}
         chatRooms={notificationChatRooms}
-        incomingMessages={notificationIncomingMessages}
+        currentUserId={userId ?? ""}
         memos={notificationMemos}
         onClose={() => setIsNotificationsOpen(false)}
         polls={notificationPolls}
       />
     ) : null}
     {isChatMembersOpen && activeFamily && user ? (
-      <ChatMemberDrawer
-        currentUserId={user.uid}
-        currentUserRole={activeFamily.role}
-        familyId={activeFamily.id}
-        isOpen={isChatMembersOpen}
-        onClose={closeChatMembers}
-        room={chatRoom}
-      />
+      <Suspense fallback={null}>
+        <LazyChatMemberDrawer
+          currentUserId={user.uid}
+          currentUserRole={activeFamily.role}
+          familyId={activeFamily.id}
+          isOpen={isChatMembersOpen}
+          onClose={closeChatMembers}
+          room={chatRoom}
+        />
+      </Suspense>
     ) : null}
     </>
   );
@@ -300,9 +309,18 @@ function GroupSwitcher({
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [groupTab, setGroupTab] = useState<"OWNER" | "MEMBER">("OWNER");
-  const activeFamily = families.find((family) => family.id === activeFamilyId) ?? families[0] ?? null;
-  const ownerFamilies = families.filter((family) => family.role === "OWNER" || family.ownerId === userId);
-  const memberFamilies = families.filter((family) => family.role !== "OWNER" && family.ownerId !== userId);
+  const activeFamily = useMemo(
+    () => families.find((family) => family.id === activeFamilyId) ?? families[0] ?? null,
+    [activeFamilyId, families]
+  );
+  const ownerFamilies = useMemo(
+    () => families.filter((family) => family.role === "OWNER" || family.ownerId === userId),
+    [families, userId]
+  );
+  const memberFamilies = useMemo(
+    () => families.filter((family) => family.role !== "OWNER" && family.ownerId !== userId),
+    [families, userId]
+  );
   const visibleGroupTab = groupTab === "OWNER" && ownerFamilies.length === 0 && memberFamilies.length > 0
     ? "MEMBER"
     : groupTab;
@@ -387,14 +405,14 @@ function GroupSwitcher({
 function NotificationDrawer({
   calendarEvents,
   chatRooms,
-  incomingMessages,
+  currentUserId,
   memos,
   onClose,
   polls,
 }: {
   calendarEvents: CalendarEvent[];
   chatRooms: ChatRoom[];
-  incomingMessages: Record<string, ChatMessage | null>;
+  currentUserId: string;
   memos: Memo[];
   onClose: () => void;
   polls: Poll[];
@@ -445,16 +463,16 @@ function NotificationDrawer({
             <NotificationSection
               icon={<ChatCircleDots size={18} weight="bold" />}
               items={chatRooms
-                .map((room) => ({
-                  message: incomingMessages[room.id],
-                  room,
-                }))
-                .filter(({ message }) => message !== null && message !== undefined)
+                .filter(
+                  (room) =>
+                    Boolean(room.lastMessageText) &&
+                    room.lastMessageCreatedBy !== currentUserId
+                )
                 .slice(0, 3)
-                .map(({ message, room }) => ({
-                  description: truncateNotificationText(message?.text ?? "새 메시지가 있어요."),
+                .map((room) => ({
+                  description: truncateNotificationText(room.lastMessageText ?? "새 메시지가 있어요."),
                   label: room.name,
-                  to: "/chat",
+                  to: `/chat/${room.id}`,
                 }))}
               title="채팅"
             />

@@ -7,6 +7,7 @@ import { ChatMemberDrawerProvider } from "../chat/ChatMemberDrawerProvider";
 import { useAuth } from "../../features/auth/useAuth";
 import { savePendingInviteCode } from "../../features/family/services/pendingInviteService";
 import { NotificationManager } from "../notification/NotificationManager";
+import { preloadPrimaryRouteModules } from "../../app/routeModules";
 
 export function AppLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
@@ -37,6 +38,28 @@ export function AppLayout({ children }: PropsWithChildren) {
       savePendingInviteCode(inviteCode.toUpperCase());
     }
   }, [pathname, status]);
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      return;
+    }
+
+    const preload = () => {
+      void preloadPrimaryRouteModules();
+    };
+    const browserWindow = window as Window & {
+      cancelIdleCallback?: (handle: number) => void;
+      requestIdleCallback?: (callback: () => void, options?: { timeout: number }) => number;
+    };
+
+    if (browserWindow.requestIdleCallback) {
+      const idleHandle = browserWindow.requestIdleCallback(preload, { timeout: 2000 });
+      return () => browserWindow.cancelIdleCallback?.(idleHandle);
+    }
+
+    const timeoutId = window.setTimeout(preload, 800);
+    return () => window.clearTimeout(timeoutId);
+  }, [status]);
 
   if (status === "loading") {
     return <AuthLoadingScreen />;

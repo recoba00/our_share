@@ -1,13 +1,10 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../../features/auth/useAuth";
-import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
-import { subscribeChatRooms } from "../../features/chat/services/chatService";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import { getTimestampMilliseconds } from "../../features/chat/utils/chatMessagePreview";
 import { useFamily } from "../../features/family/useFamily";
-import { subscribeMemos } from "../../features/memo/services/memoService";
 import {
   getNotificationPermission,
   notifyDashboardReminders,
@@ -17,7 +14,6 @@ import {
   isPushNotificationsEnabled,
   refreshPushDeviceRegistration,
 } from "../../features/notification/services/pushNotificationService";
-import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 
 export const notificationPermissionChangedEvent =
@@ -114,63 +110,82 @@ export function NotificationManager() {
       });
     }
 
-    const unsubscribes = [
-      subscribeChatRooms({
-        familyId,
-        onChange: (rooms) => notifyChangedRooms(rooms, userId, baseUrl, pathnameRef, roomStateRef),
-        userId,
-      }),
-      subscribeCalendarEvents({
-        familyId,
-        onChange: (events) => {
-          notifyNewItems({
-            body: (event) => event.title,
-            currentUserId: userId,
-            items: events,
-            previousIdsRef: eventIdsRef,
-            tagPrefix: `calendar:${familyId}`,
-            title: "새 일정이 등록됐어요",
-            url: `${baseUrl}calendar`,
-          });
-          currentEvents = events;
-          remindDashboard();
-        },
-        userId,
-      }),
-      subscribePolls({
-        familyId,
-        onChange: (polls) => {
-          notifyNewItems({
-            body: (poll) => poll.title,
-            currentUserId: userId,
-            items: polls,
-            previousIdsRef: pollIdsRef,
-            tagPrefix: `poll:${familyId}`,
-            title: "새 투표가 열렸어요",
-            url: `${baseUrl}poll`,
-          });
-          currentPolls = polls;
-          remindDashboard();
-        },
-      }),
-      subscribeMemos({
-        familyId,
-        onChange: (memos) => {
-          notifyNewItems({
-            body: (memo) => memo.type === "SENSITIVE" ? "민감 메모를 확인해주세요." : memo.title,
-            currentUserId: userId,
-            items: memos,
-            previousIdsRef: memoIdsRef,
-            tagPrefix: `memo:${familyId}`,
-            title: "새 메모가 도착했어요",
-            url: `${baseUrl}memo`,
-          });
-        },
-        userId,
-      }),
-    ];
+    let cancelled = false;
+    const unsubscribes: Array<() => void> = [];
 
-    return () => unsubscribes.forEach((unsubscribe) => unsubscribe());
+    void Promise.all([
+      import("../../features/calendar/services/calendarService"),
+      import("../../features/chat/services/chatService"),
+      import("../../features/memo/services/memoService"),
+      import("../../features/poll/services/pollService"),
+    ]).then(([calendarService, chatService, memoService, pollService]) => {
+      if (cancelled) {
+        return;
+      }
+
+      unsubscribes.push(
+        chatService.subscribeChatRooms({
+          familyId,
+          onChange: (rooms) =>
+            notifyChangedRooms(rooms, userId, baseUrl, pathnameRef, roomStateRef),
+          userId,
+        }),
+        calendarService.subscribeCalendarEvents({
+          familyId,
+          onChange: (events) => {
+            notifyNewItems({
+              body: (event) => event.title,
+              currentUserId: userId,
+              items: events,
+              previousIdsRef: eventIdsRef,
+              tagPrefix: `calendar:${familyId}`,
+              title: "새 일정이 등록됐어요",
+              url: `${baseUrl}calendar`,
+            });
+            currentEvents = events;
+            remindDashboard();
+          },
+          userId,
+        }),
+        pollService.subscribePolls({
+          familyId,
+          onChange: (polls) => {
+            notifyNewItems({
+              body: (poll) => poll.title,
+              currentUserId: userId,
+              items: polls,
+              previousIdsRef: pollIdsRef,
+              tagPrefix: `poll:${familyId}`,
+              title: "새 투표가 열렸어요",
+              url: `${baseUrl}poll`,
+            });
+            currentPolls = polls;
+            remindDashboard();
+          },
+        }),
+        memoService.subscribeMemos({
+          familyId,
+          onChange: (memos) => {
+            notifyNewItems({
+              body: (memo) =>
+                memo.type === "SENSITIVE" ? "민감 메모를 확인해주세요." : memo.title,
+              currentUserId: userId,
+              items: memos,
+              previousIdsRef: memoIdsRef,
+              tagPrefix: `memo:${familyId}`,
+              title: "새 메모가 도착했어요",
+              url: `${baseUrl}memo`,
+            });
+          },
+          userId,
+        })
+      );
+    });
+
+    return () => {
+      cancelled = true;
+      unsubscribes.forEach((unsubscribe) => unsubscribe());
+    };
   }, [activeFamily, permissionVersion, user]);
 
   return null;

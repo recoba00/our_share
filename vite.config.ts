@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
             }
 
             if (id.includes("@phosphor-icons")) {
-              return "icons";
+              return;
             }
 
             if (id.includes("react")) {
