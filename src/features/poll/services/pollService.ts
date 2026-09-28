@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
+import { chunkFirestoreInValues } from "../../../lib/firebase/firestoreQuery";
 import type { Poll, PollType, PollVote } from "../types/pollTypes";
 
 type CreatePollInput = {
@@ -168,21 +169,30 @@ export async function getPollVotes(
   familyId: string,
   pollIds: string[]
 ): Promise<Record<string, PollVote[]>> {
-  if (pollIds.length === 0) {
+  const pollIdChunks = chunkFirestoreInValues(pollIds.filter(Boolean));
+
+  if (pollIdChunks.length === 0) {
     return {};
   }
 
-  const votesQuery = query(
-    collection(db, "families", familyId, "pollVotes"),
-    where("pollId", "in", pollIds.slice(0, 10))
+  const snapshots = await Promise.all(
+    pollIdChunks.map((pollIdChunk) =>
+      getDocs(
+        query(
+          collection(db, "families", familyId, "pollVotes"),
+          where("pollId", "in", pollIdChunk)
+        )
+      )
+    )
   );
-  const snapshot = await getDocs(votesQuery);
 
-  return snapshot.docs.reduce<Record<string, PollVote[]>>((acc, voteDoc) => {
-    const vote = voteDoc.data() as PollVote;
-    acc[vote.pollId] = [...(acc[vote.pollId] ?? []), vote];
-    return acc;
-  }, {});
+  return snapshots
+    .flatMap((snapshot) => snapshot.docs)
+    .reduce<Record<string, PollVote[]>>((acc, voteDoc) => {
+      const vote = voteDoc.data() as PollVote;
+      acc[vote.pollId] = [...(acc[vote.pollId] ?? []), vote];
+      return acc;
+    }, {});
 }
 
 function getTime(value: unknown) {

@@ -14,6 +14,7 @@ import {
 } from "firebase/firestore";
 import { ref, remove, set, update } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
+import { chunkFirestoreInValues } from "../../../lib/firebase/firestoreQuery";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 import { MAX_FAMILY_NAME_LENGTH } from "../utils/familyName";
 
@@ -766,9 +767,7 @@ async function getDocumentsByIds(collectionName: "families" | "publicProfiles", 
     return [];
   }
 
-  const chunks = Array.from({ length: Math.ceil(uniqueIds.length / 30) }, (_, index) =>
-    uniqueIds.slice(index * 30, index * 30 + 30)
-  );
+  const chunks = chunkFirestoreInValues(uniqueIds);
   const snapshots = await Promise.all(
     chunks.map((chunk) =>
       getDocs(query(collection(db, collectionName), where(documentId(), "in", chunk)))
