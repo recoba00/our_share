@@ -14,6 +14,7 @@ export type ChatRoom = {
   lastMessageText: string | null;
   lastMessageAt: unknown;
   lastMessageCreatedBy?: string | null;
+  deleting?: boolean;
 };
 
 export type ChatMessage = {

@@ -629,7 +629,8 @@ service cloud.firestore {
           "updatedAt",
           "lastMessageText",
           "lastMessageAt",
-          "lastMessageCreatedBy"
+          "lastMessageCreatedBy",
+          "deleting"
         ]) &&
         data.name is string &&
         data.name.size() > 0 &&
@@ -645,6 +646,10 @@ service cloud.firestore {
           !("lastMessageCreatedBy" in data) ||
           data.lastMessageCreatedBy == null ||
           data.lastMessageCreatedBy is string
+        ) &&
+        (
+          !("deleting" in data) ||
+          data.deleting is bool
         );
     }
 
@@ -707,6 +712,24 @@ service cloud.firestore {
           room.type == "FAMILY" ||
           room.createdBy == request.auth.uid ||
           request.auth.uid in room.memberIds
+        );
+    }
+
+    function isChatRoomDeleting(room) {
+      return room.keys().hasAny(["deleting"]) && room.deleting == true;
+    }
+
+    function canDeleteNestedRoomMessages(familyId, roomId) {
+      return roomId is string &&
+        exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId)) &&
+        get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId)).data.type != "FAMILY" &&
+        get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId)).data.createdBy == request.auth.uid &&
+        isChatRoomDeleting(
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId)).data
+        ) &&
+        canAccessNestedChatRoom(
+          familyId,
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId)).data
         );
     }
 
@@ -1199,6 +1222,8 @@ service cloud.firestore {
         request.resource.data.createdBy == resource.data.createdBy &&
         (
           (
+            !isChatRoomDeleting(resource.data) &&
+            !isChatRoomDeleting(request.resource.data) &&
             request.resource.data.memberIds == resource.data.memberIds &&
             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               "lastMessageText",
@@ -1208,6 +1233,7 @@ service cloud.firestore {
             ])
           ) ||
           (
+            !isChatRoomDeleting(resource.data) &&
             isFamilyOwner(familyId) &&
             resource.data.type == "PRIVATE_GROUP" &&
             request.resource.data.memberIds is list &&
@@ -1217,10 +1243,22 @@ service cloud.firestore {
               "memberIds",
               "updatedAt"
             ])
+          ) ||
+          (
+            resource.data.createdBy == request.auth.uid &&
+            resource.data.type != "FAMILY" &&
+            !isChatRoomDeleting(resource.data) &&
+            request.resource.data.deleting == true &&
+            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+              "deleting",
+              "updatedAt"
+            ])
           )
         );
       allow delete: if canAccessNestedChatRoom(familyId, resource.data) &&
-        resource.data.createdBy == request.auth.uid;
+        resource.data.createdBy == request.auth.uid &&
+        resource.data.type != "FAMILY" &&
+        isChatRoomDeleting(resource.data);
     }
 
     match /families/{familyId}/messages/{messageId} {
@@ -1236,6 +1274,9 @@ service cloud.firestore {
         request.resource.data.createdBy == request.auth.uid &&
         isValidMessage(request.resource.data) &&
         exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)) &&
+        !isChatRoomDeleting(
+          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)).data
+        ) &&
         canAccessNestedChatRoom(
           familyId,
           get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)).data
@@ -1274,7 +1315,10 @@ service cloud.firestore {
           )
         );
       allow delete: if signedIn() &&
-        resource.data.createdBy == request.auth.uid;
+        (
+          resource.data.createdBy == request.auth.uid ||
+          canDeleteNestedRoomMessages(familyId, resource.data.roomId)
+        );
     }
 
     match /calendarEvents/{eventId} {

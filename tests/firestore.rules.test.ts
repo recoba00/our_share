@@ -923,6 +923,83 @@ describe("chat message rules", () => {
     }));
   });
 
+  it("lets a private room creator lock and clean the room without exposing family rooms", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: ["alice", "bob"],
+      roomId: "privateRoom",
+      type: "PRIVATE_GROUP",
+    });
+    await seedNestedChatRoom({
+      createdBy: "alice",
+      familyId: "familyA",
+      memberIds: [],
+      roomId: "familyRoom",
+      type: "FAMILY",
+    });
+    await seedNestedMessage({
+      createdBy: "bob",
+      familyId: "familyA",
+      messageId: "bobMessage",
+      roomId: "privateRoom",
+      text: "정리할 메시지",
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const privateRoomRef = doc(
+      aliceDb,
+      "families",
+      "familyA",
+      "chatRooms",
+      "privateRoom"
+    );
+
+    await assertFails(
+      updateDoc(doc(bobDb, "families", "familyA", "chatRooms", "privateRoom"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      updateDoc(doc(aliceDb, "families", "familyA", "chatRooms", "familyRoom"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      deleteDoc(doc(aliceDb, "families", "familyA", "messages", "bobMessage"))
+    );
+    await assertSucceeds(
+      updateDoc(privateRoomRef, {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(
+        doc(bobDb, "families", "familyA", "messages", "lateMessage"),
+        createMessage({
+          createdBy: "bob",
+          familyId: "familyA",
+          messageId: "lateMessage",
+          roomId: "privateRoom",
+          text: "삭제 중 새 메시지",
+        })
+      )
+    );
+    await assertSucceeds(
+      deleteDoc(doc(aliceDb, "families", "familyA", "messages", "bobMessage"))
+    );
+  });
+
   it("allows creators to edit and delete nested text messages only", async () => {
     await seedFamilyWithMembers({
       familyId: "familyA",
@@ -1326,9 +1403,14 @@ describe("MVP family list queries", () => {
     );
     await assertSucceeds(deleteDoc(doc(aliceDb, "families", "familyA", "memos", "memoA")));
     await assertSucceeds(deleteDoc(doc(aliceDb, "families", "familyA", "polls", "pollA")));
+    const roomARef = doc(aliceDb, "families", "familyA", "chatRooms", "roomA");
     await assertSucceeds(
-      deleteDoc(doc(aliceDb, "families", "familyA", "chatRooms", "roomA"))
+      updateDoc(roomARef, {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
     );
+    await assertSucceeds(deleteDoc(roomARef));
     await assertFails(deleteDoc(doc(bobDb, "families", "familyA", "chatRooms", "roomB")));
   });
 

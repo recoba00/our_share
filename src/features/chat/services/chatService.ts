@@ -4,6 +4,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   onSnapshot,
   query,
   runTransaction,
@@ -17,6 +18,10 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
+import {
+  chunkFirestoreWrites,
+  FIRESTORE_SAFE_BATCH_SIZE,
+} from "../../../lib/firebase/firestoreBatch";
 import { getLatestMessagePreview, getTimestampMilliseconds } from "../utils/chatMessagePreview";
 import type { ChatMessage, ChatRoom } from "../types/chatTypes";
 
@@ -209,7 +214,45 @@ export async function deleteChatRoom({
   familyId: string;
   roomId: string;
 }) {
-  await deleteDoc(doc(db, "families", familyId, "chatRooms", roomId));
+  const roomRef = doc(db, "families", familyId, "chatRooms", roomId);
+  const roomSnapshot = await getDoc(roomRef);
+
+  if (!roomSnapshot.exists()) {
+    return;
+  }
+
+  const room = roomSnapshot.data() as ChatRoom;
+
+  if (room.type === "FAMILY") {
+    throw new Error("크루 전체방은 삭제할 수 없어요.");
+  }
+
+  if (!room.deleting) {
+    await updateDoc(roomRef, {
+      deleting: true,
+      updatedAt: serverTimestamp(),
+    });
+  }
+
+  const messagesQuery = query(
+    collection(db, "families", familyId, "messages"),
+    where("roomId", "==", roomId),
+    limit(FIRESTORE_SAFE_BATCH_SIZE)
+  );
+
+  while (true) {
+    const messagesSnapshot = await getDocs(messagesQuery);
+
+    if (messagesSnapshot.empty) {
+      break;
+    }
+
+    const batch = writeBatch(db);
+    messagesSnapshot.docs.forEach((messageDocument) => batch.delete(messageDocument.ref));
+    await batch.commit();
+  }
+
+  await deleteDoc(roomRef);
 }
 
 export async function removeChatRoomMember({
@@ -529,13 +572,15 @@ export async function markRoomMessagesAsRead({
     return;
   }
 
-  const batch = writeBatch(db);
+  for (const messageChunk of chunkFirestoreWrites(unreadMessages)) {
+    const batch = writeBatch(db);
 
-  unreadMessages.forEach((message) => {
-    batch.update(doc(db, "families", familyId, "messages", message.id), {
-      readBy: arrayUnion(userId),
+    messageChunk.forEach((message) => {
+      batch.update(doc(db, "families", familyId, "messages", message.id), {
+        readBy: arrayUnion(userId),
+      });
     });
-  });
 
-  await batch.commit();
+    await batch.commit();
+  }
 }
