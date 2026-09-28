@@ -6,14 +6,18 @@ import {
   getDocs,
   limit,
   onSnapshot,
+  orderBy,
   query,
   runTransaction,
   serverTimestamp,
   setDoc,
+  startAfter,
   updateDoc,
   where,
   writeBatch,
   arrayUnion,
+  type DocumentData,
+  type QueryDocumentSnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
@@ -65,6 +69,16 @@ type SendPollMessageInput = {
   pollId: string;
   pollTitle: string;
   roomId: string;
+};
+
+export const CHAT_MESSAGE_PAGE_SIZE = 40;
+
+export type ChatMessageCursor = QueryDocumentSnapshot<DocumentData>;
+
+export type ChatMessagePage = {
+  cursor: ChatMessageCursor | null;
+  hasMore: boolean;
+  messages: ChatMessage[];
 };
 
 export async function getOrCreateFamilyRoom({
@@ -374,39 +388,70 @@ export function subscribeChatRooms({
   };
 }
 
-export function subscribeMessages({
+export function subscribeRecentMessages({
   familyId,
   onChange,
   onError,
   roomId,
 }: {
   familyId: string;
-  onChange: (messages: ChatMessage[]) => void;
+  onChange: (page: ChatMessagePage) => void;
   onError?: (message: string) => void;
   roomId: string;
 }): Unsubscribe {
   const messagesQuery = query(
     collection(db, "families", familyId, "messages"),
-    where("roomId", "==", roomId)
+    where("roomId", "==", roomId),
+    orderBy("createdAt", "desc"),
+    limit(CHAT_MESSAGE_PAGE_SIZE + 1)
   );
 
   return onSnapshot(
     messagesQuery,
-    (snapshot) => {
-      const messages = snapshot.docs
-        .map((messageDoc) => messageDoc.data() as ChatMessage)
-        .sort(
-          (a, b) =>
-            getTimestampMilliseconds(a.createdAt) -
-            getTimestampMilliseconds(b.createdAt)
-        );
-
-      onChange(messages);
-    },
+    (snapshot) => onChange(readChatMessagePage(snapshot.docs)),
     (error) => {
       onError?.(getFirebaseErrorMessage(error));
     }
   );
+}
+
+export async function loadOlderMessages({
+  cursor,
+  familyId,
+  roomId,
+}: {
+  cursor: ChatMessageCursor;
+  familyId: string;
+  roomId: string;
+}): Promise<ChatMessagePage> {
+  const snapshot = await getDocs(
+    query(
+      collection(db, "families", familyId, "messages"),
+      where("roomId", "==", roomId),
+      orderBy("createdAt", "desc"),
+      startAfter(cursor),
+      limit(CHAT_MESSAGE_PAGE_SIZE + 1)
+    )
+  );
+
+  return readChatMessagePage(snapshot.docs);
+}
+
+function readChatMessagePage(
+  documents: QueryDocumentSnapshot<DocumentData>[]
+): ChatMessagePage {
+  const visibleDocuments = documents.slice(0, CHAT_MESSAGE_PAGE_SIZE);
+
+  return {
+    cursor: visibleDocuments[visibleDocuments.length - 1] ?? null,
+    hasMore: documents.length > CHAT_MESSAGE_PAGE_SIZE,
+    messages: visibleDocuments
+      .map(
+        (messageDocument) =>
+          messageDocument.data({ serverTimestamps: "estimate" }) as ChatMessage
+      )
+      .reverse(),
+  };
 }
 
 export async function sendTextMessage({
@@ -514,7 +559,9 @@ export async function deleteMessage({
   const messagesSnapshot = await getDocs(
     query(
       collection(db, "families", familyId, "messages"),
-      where("roomId", "==", initialMessage.roomId)
+      where("roomId", "==", initialMessage.roomId),
+      orderBy("createdAt", "desc"),
+      limit(2)
     )
   );
   const preview = getLatestMessagePreview(

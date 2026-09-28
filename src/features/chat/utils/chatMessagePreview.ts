@@ -14,11 +14,25 @@ export function getLatestMessagePreview(messages: ChatMessage[]) {
 }
 
 export function getTimestampMilliseconds(value: unknown) {
-  if (!value || typeof value !== "object" || !("seconds" in value)) {
-    return 0;
+  if (value instanceof Date) {
+    return value.getTime();
   }
 
-  const timestamp = value as { seconds: number; nanoseconds?: number };
+  if (typeof value === "number") {
+    return value;
+  }
 
-  return timestamp.seconds * 1000 + (timestamp.nanoseconds ?? 0) / 1_000_000;
+  if (value && typeof value === "object") {
+    if ("toMillis" in value && typeof value.toMillis === "function") {
+      return value.toMillis();
+    }
+
+    if ("seconds" in value && typeof value.seconds === "number") {
+      const timestamp = value as { seconds: number; nanoseconds?: number };
+
+      return timestamp.seconds * 1000 + (timestamp.nanoseconds ?? 0) / 1_000_000;
+    }
+  }
+
+  return 0;
 }

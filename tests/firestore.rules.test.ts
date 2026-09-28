@@ -1094,6 +1094,13 @@ describe("chat message rules", () => {
       type: "FAMILY",
     });
     await seedNestedMessage({
+      createdBy: "alice",
+      familyId: "familyA",
+      messageId: "messageA",
+      roomId: "roomA",
+      text: "페이지 조회 메시지",
+    });
+    await seedNestedMessage({
       createdBy: "bob",
       familyId: "familyA",
       messageId: "bobMessage",
@@ -1500,6 +1507,16 @@ describe("MVP family list queries", () => {
         )
       )
     );
+    await assertSucceeds(
+      getDocs(
+        query(
+          collection(aliceDb, "families", "familyA", "messages"),
+          where("roomId", "==", "roomA"),
+          orderBy("createdAt", "desc"),
+          limit(41)
+        )
+      )
+    );
   });
 
   it("allows creators to delete nested MVP content and blocks other family members", async () => {
@@ -1583,6 +1600,13 @@ describe("MVP family list queries", () => {
       roomId: "familyRoom",
       type: "FAMILY",
     });
+    await seedNestedMessage({
+      createdBy: "alice",
+      familyId: "familyA",
+      messageId: "familyMessage",
+      roomId: "familyRoom",
+      text: "크루 메시지",
+    });
 
     const outsiderDb = testEnv.authenticatedContext("outsider").firestore();
 
@@ -1599,6 +1623,16 @@ describe("MVP family list queries", () => {
         query(
           collection(outsiderDb, "families", "familyA", "chatRooms"),
           where("type", "==", "FAMILY")
+        )
+      )
+    );
+    await assertFails(
+      getDocs(
+        query(
+          collection(outsiderDb, "families", "familyA", "messages"),
+          where("roomId", "==", "familyRoom"),
+          orderBy("createdAt", "desc"),
+          limit(41)
         )
       )
     );

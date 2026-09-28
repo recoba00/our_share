@@ -196,6 +196,16 @@ Firebase Hosting 이전은 완료된 상태다.
 
 두 workflow 모두 Firebase Rules 에뮬레이터 테스트, 서비스 계정 JSON 검증, Rules 배포 순서로 동작한다. 서비스 계정에 `Firebase Rules Admin` 권한이 없으면 Rules 단계에서 실패하므로 IAM 역할을 먼저 추가해야 한다.
 
+## Firestore 인덱스 배포
+
+복합 쿼리 인덱스는 `firestore.indexes.json`에서 관리한다. 인덱스가 필요한 앱 코드를 배포하기 전에 먼저 아래 명령을 실행하고 Firebase Console에서 생성 완료 상태를 확인한다.
+
+```bash
+npx firebase-tools deploy --only firestore:indexes --project our-share-6baf5
+```
+
+인덱스 생성에는 서비스 계정 또는 실행 계정의 `Cloud Datastore Index Admin`(`roles/datastore.indexAdmin`) 권한이 필요하다. 현재 Hosting 자동 배포는 권한 범위를 넓히지 않기 위해 Rules만 게시하며, 인덱스 변경이 있는 릴리스에서만 위 명령을 별도로 실행한다.
+
 ## Firebase Functions 운영 배포
 
 Admin SDK Membership Mirror는 `functions-deploy.yml` 수동 workflow로 배포한다. Functions는 Hosting과 달리 Blaze 요금제와 Cloud Functions 권한이 필요하므로, Blaze 전환을 결정하기 전에는 실행하지 않는다.

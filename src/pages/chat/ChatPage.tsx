@@ -39,14 +39,20 @@ import {
   deleteMessage,
   getOrCreateDirectRoom,
   getOrCreateFamilyRoom,
+  loadOlderMessages,
   markRoomMessagesAsRead,
   sendPollMessage,
   sendTextMessage,
   subscribeChatRooms,
-  subscribeMessages,
+  subscribeRecentMessages,
   updateTextMessage,
+  type ChatMessageCursor,
 } from "../../features/chat/services/chatService";
 import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
+import {
+  getMessagesLeavingRecentWindow,
+  mergeChatMessages,
+} from "../../features/chat/utils/chatMessagePagination";
 import {
   getFamilyMembers,
 } from "../../features/family/services/familyService";
@@ -84,10 +90,20 @@ export function ChatPage() {
   const { roomId } = useParams();
   const { open: openChatMembers, setRoom: setMemberDrawerRoom } = useChatMemberDrawer();
   const [rooms, setRooms] = useState<ChatRoom[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [recentMessages, setRecentMessages] = useState<ChatMessage[]>([]);
+  const [olderMessages, setOlderMessages] = useState<ChatMessage[]>([]);
+  const [olderMessageCursor, setOlderMessageCursor] =
+    useState<ChatMessageCursor | null>(null);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
+  const [loadedMessageRoomKey, setLoadedMessageRoomKey] = useState("");
   const messagesScrollRef = useRef<HTMLDivElement>(null);
   const previousMessageCountRef = useRef(0);
   const previousMessageRoomIdRef = useRef("");
+  const previousRecentMessagesRef = useRef<ChatMessage[]>([]);
+  const hasLoadedOlderMessagesRef = useRef(false);
+  const loadedMessageRoomKeyRef = useRef("");
+  const messageRoomKeyRef = useRef("");
   const shouldScrollToLatestRef = useRef(false);
   const [members, setMembers] = useState<FamilyMemberProfile[]>([]);
   const [memberLoad, setMemberLoad] = useState<{
@@ -127,6 +143,17 @@ export function ChatPage() {
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
     [roomId, rooms, selectedRoomId]
+  );
+  const currentMessageRoomKey =
+    activeFamily?.id && selectedRoom?.id
+      ? `${activeFamily.id}:${selectedRoom.id}`
+      : "";
+  const messages = useMemo(
+    () =>
+      loadedMessageRoomKey === currentMessageRoomKey
+        ? mergeChatMessages(olderMessages, recentMessages)
+        : [],
+    [currentMessageRoomKey, loadedMessageRoomKey, olderMessages, recentMessages]
   );
 
   useEffect(() => {
@@ -215,7 +242,8 @@ export function ChatPage() {
 
       setMemberLoad({ familyId: activeFamily.id, status: "loading" });
       setRooms([]);
-      setMessages([]);
+      setRecentMessages([]);
+      setOlderMessages([]);
       setMembers([]);
       setPolls([]);
       setSelectedRoomId("");
@@ -356,17 +384,62 @@ export function ChatPage() {
   }, [activeFamily, reportError]);
 
   useEffect(() => {
-    if (!activeFamily || !selectedRoom) {
+    previousRecentMessagesRef.current = [];
+    hasLoadedOlderMessagesRef.current = false;
+    const messageRoomKey = currentMessageRoomKey;
+    messageRoomKeyRef.current = messageRoomKey;
+
+    if (!activeFamily?.id || !selectedRoom?.id || !messageRoomKey) {
       return;
     }
 
-    return subscribeMessages({
+    const unsubscribe = subscribeRecentMessages({
       familyId: activeFamily.id,
-      onChange: setMessages,
+      onChange: (page) => {
+        if (messageRoomKeyRef.current !== messageRoomKey) {
+          return;
+        }
+
+        const isFirstPageForRoom =
+          loadedMessageRoomKeyRef.current !== messageRoomKey;
+
+        if (isFirstPageForRoom) {
+          loadedMessageRoomKeyRef.current = messageRoomKey;
+          setLoadedMessageRoomKey(messageRoomKey);
+          setOlderMessages([]);
+          setOlderMessageCursor(page.cursor);
+          setHasOlderMessages(page.hasMore);
+          setIsLoadingOlderMessages(false);
+        } else if (hasLoadedOlderMessagesRef.current) {
+          const messagesLeavingWindow = getMessagesLeavingRecentWindow(
+            previousRecentMessagesRef.current,
+            page.messages
+          );
+
+          if (messagesLeavingWindow.length > 0) {
+            setOlderMessages((current) =>
+              mergeChatMessages(current, messagesLeavingWindow)
+            );
+          }
+        } else {
+          setOlderMessageCursor(page.cursor);
+          setHasOlderMessages(page.hasMore);
+        }
+
+        previousRecentMessagesRef.current = page.messages;
+        setRecentMessages(page.messages);
+      },
       onError: reportError,
       roomId: selectedRoom.id,
     });
-  }, [activeFamily, reportError, selectedRoom]);
+
+    return () => {
+      unsubscribe();
+      if (messageRoomKeyRef.current === messageRoomKey) {
+        messageRoomKeyRef.current = "";
+      }
+    };
+  }, [activeFamily?.id, currentMessageRoomKey, reportError, selectedRoom?.id]);
 
   useEffect(() => {
     const container = messagesScrollRef.current;
@@ -419,6 +492,77 @@ export function ChatPage() {
       userId: user.uid,
     }).catch((error: Error) => reportError(error.message));
   }, [activeFamily, messages, reportError, user]);
+
+  async function handleLoadOlderMessages() {
+    if (
+      !activeFamily ||
+      !selectedRoom ||
+      !olderMessageCursor ||
+      !hasOlderMessages ||
+      isLoadingOlderMessages ||
+      loadedMessageRoomKeyRef.current !== currentMessageRoomKey
+    ) {
+      return;
+    }
+
+    const requestRoomKey = `${activeFamily.id}:${selectedRoom.id}`;
+    const scrollContainer = messagesScrollRef.current;
+    const previousScrollHeight = scrollContainer?.scrollHeight ?? 0;
+    const previousScrollTop = scrollContainer?.scrollTop ?? 0;
+    setIsLoadingOlderMessages(true);
+
+    try {
+      const page = await loadOlderMessages({
+        cursor: olderMessageCursor,
+        familyId: activeFamily.id,
+        roomId: selectedRoom.id,
+      });
+
+      if (messageRoomKeyRef.current !== requestRoomKey) {
+        return;
+      }
+
+      hasLoadedOlderMessagesRef.current = true;
+      setOlderMessages((current) => mergeChatMessages(page.messages, current));
+      setOlderMessageCursor(page.cursor);
+      setHasOlderMessages(page.hasMore);
+
+      window.requestAnimationFrame(() => {
+        const currentContainer = messagesScrollRef.current;
+
+        if (!currentContainer || messageRoomKeyRef.current !== requestRoomKey) {
+          return;
+        }
+
+        currentContainer.scrollTop =
+          previousScrollTop + currentContainer.scrollHeight - previousScrollHeight;
+      });
+    } catch (error) {
+      notify(
+        error instanceof Error ? error.message : "이전 메시지를 불러오지 못했어요.",
+        "error"
+      );
+    } finally {
+      if (messageRoomKeyRef.current === requestRoomKey) {
+        setIsLoadingOlderMessages(false);
+      }
+    }
+  }
+
+  function handleMessagesScroll() {
+    const container = messagesScrollRef.current;
+
+    if (
+      container &&
+      container.scrollTop <= 48 &&
+      container.scrollHeight > container.clientHeight &&
+      hasOlderMessages &&
+      !isLoadingOlderMessages &&
+      loadedMessageRoomKeyRef.current === currentMessageRoomKey
+    ) {
+      void handleLoadOlderMessages();
+    }
+  }
 
   async function handleCreateSecretRoom(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -542,6 +686,11 @@ export function ChatPage() {
         familyId: activeFamily.id,
         messageId: message.id,
       });
+      setRecentMessages((current) => current.filter(({ id }) => id !== message.id));
+      setOlderMessages((current) => current.filter(({ id }) => id !== message.id));
+      previousRecentMessagesRef.current = previousRecentMessagesRef.current.filter(
+        ({ id }) => id !== message.id
+      );
       notify("메시지를 삭제했어요.", "success");
     } catch (error) {
       notify(error instanceof Error ? error.message : "메시지를 삭제하지 못했어요.", "error");
@@ -617,7 +766,8 @@ export function ChatPage() {
       if (selectedRoomId === room.id || roomId === room.id) {
         setSelectedRoomId("");
         navigate("/chat");
-        setMessages([]);
+        setRecentMessages([]);
+        setOlderMessages([]);
       }
       notify("채팅방을 삭제했어요.", "success");
     } catch (error) {
@@ -1094,9 +1244,22 @@ export function ChatPage() {
         </div>
         <div
           className="flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-4 pb-4 pt-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:px-6 lg:mt-4 lg:min-h-0 lg:rounded-2xl lg:bg-slate-50 lg:p-4"
+          onScroll={handleMessagesScroll}
           ref={messagesScrollRef}
         >
           <div className="mt-auto grid gap-3">
+            {loadedMessageRoomKey === currentMessageRoomKey && hasOlderMessages ? (
+              <Button
+                className="mx-auto h-9 rounded-full px-4 text-xs"
+                disabled={isLoadingOlderMessages}
+                loading={isLoadingOlderMessages}
+                onClick={() => void handleLoadOlderMessages()}
+                type="button"
+                variant="secondary"
+              >
+                이전 대화 보기
+              </Button>
+            ) : null}
             {messages.length === 0 ? (
               <p className="text-sm text-[var(--color-text-secondary)]">
                 첫 메시지를 보내 크루 대화를 시작해보세요.

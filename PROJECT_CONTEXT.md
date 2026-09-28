@@ -358,6 +358,8 @@ families/{familyId}/messages/{messageId}
 
 이 구조는 Firestore Security Rules에서 `familyId`를 경로 기준으로 검증해 목록 조회와 저장 권한을 안정적으로 처리하기 위한 MVP 기준 구조다.
 
+채팅 상세는 `messages` 전체를 구독하지 않는다. `roomId`가 같은 메시지를 `createdAt` 내림차순으로 최근 40개만 실시간 구독하고, 사용자가 위로 이동하면 `startAfter` 커서로 과거 내역을 40개씩 추가한다. 이 쿼리는 `firestore.indexes.json`의 `messages(roomId ASC, createdAt DESC)` 복합 인덱스를 사용한다.
+
 `users/{uid}`는 이메일과 약관 동의 기록을 포함하는 비공개 계정 문서이며 본인만 읽고 쓸 수 있다. 멤버 목록에 필요한 이름과 프로필 이미지는 `publicProfiles/{uid}`로 분리하고, 로그인 사용자에게 공개하되 이메일·동의·역할 정보는 저장하지 않는다.
 
 `serviceNotices/{noticeId}`는 운영 공지를 저장한다. 로그인 사용자는 `PUBLISHED` 상태만 조회하고, 고정된 플랫폼 운영 계정만 초안 조회와 생성·수정·삭제를 수행한다. `/admin`은 대시보드·공지·사용자·크루 메뉴로 구성된 백오피스이며, 사용자 화면에는 공개 프로필만 표시하고 이메일·동의 정보가 있는 `users` 문서는 읽지 않는다. 설정의 공지사항 화면은 게시된 문서를 실시간으로 구독한다.
