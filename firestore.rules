@@ -449,6 +449,22 @@ service cloud.firestore {
         );
     }
 
+    function isFamilyDocumentDeleting(data) {
+      return data.keys().hasAny(["deleting"]) && data.deleting == true;
+    }
+
+    function isFamilyDeleting(familyId) {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/families/$(familyId)) &&
+        isFamilyDocumentDeleting(
+          get(/databases/$(database)/documents/families/$(familyId)).data
+        );
+    }
+
+    function canCleanUpFamily(familyId) {
+      return isFamilyOwner(familyId) && isFamilyDeleting(familyId);
+    }
+
     function isFamilyViceOwner(familyId) {
       return isFamilyMember(familyId) &&
         get(membershipPath(familyId)).data.role == "VICE_OWNER";
@@ -923,6 +939,16 @@ service cloud.firestore {
       allow update: if
         (
           isFamilyOwner(familyId) &&
+          request.resource.data.keys().hasOnly([
+            "id",
+            "name",
+            "ownerId",
+            "inviteCode",
+            "viceOwnerIds",
+            "deleting",
+            "createdAt",
+            "updatedAt"
+          ]) &&
           request.resource.data.id == resource.data.id &&
           request.resource.data.inviteCode == resource.data.inviteCode &&
           request.resource.data.createdAt == resource.data.createdAt &&
@@ -930,31 +956,54 @@ service cloud.firestore {
           request.resource.data.name.size() > 0 &&
           request.resource.data.name.size() <= 50 &&
           (
-            request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-              "name",
-              "updatedAt"
-            ]) ||
             (
-              request.resource.data.ownerId == resource.data.ownerId &&
-              request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                "viceOwnerIds",
-                "updatedAt"
-              ]) &&
-              hasValidViceOwnerIds(request.resource.data)
+              !isFamilyDocumentDeleting(resource.data) &&
+              (
+                request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                  "name",
+                  "updatedAt"
+                ]) ||
+                (
+                  request.resource.data.ownerId == resource.data.ownerId &&
+                  request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                    "viceOwnerIds",
+                    "updatedAt"
+                  ]) &&
+                  hasValidViceOwnerIds(request.resource.data)
+                ) ||
+                (
+                  request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+                    "ownerId",
+                    "viceOwnerIds",
+                    "updatedAt"
+                  ]) &&
+                  hasValidViceOwnerIds(request.resource.data) &&
+                  isOwnerTransfer(familyId)
+                )
+              )
             ) ||
             (
+              !isFamilyDocumentDeleting(resource.data) &&
+              request.resource.data.deleting == true &&
               request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-                "ownerId",
-                "viceOwnerIds",
+                "deleting",
                 "updatedAt"
-              ]) &&
-              hasValidViceOwnerIds(request.resource.data) &&
-              isOwnerTransfer(familyId)
+              ])
             )
           )
         ) ||
         (
           isFamilyViceOwner(familyId) &&
+          !isFamilyDocumentDeleting(resource.data) &&
+          request.resource.data.keys().hasOnly([
+            "id",
+            "name",
+            "ownerId",
+            "inviteCode",
+            "viceOwnerIds",
+            "createdAt",
+            "updatedAt"
+          ]) &&
           request.resource.data.id == resource.data.id &&
           request.resource.data.ownerId == resource.data.ownerId &&
           request.resource.data.inviteCode == resource.data.inviteCode &&
@@ -966,7 +1015,8 @@ service cloud.firestore {
           hasValidViceOwnerIds(request.resource.data) &&
           !request.resource.data.viceOwnerIds.hasAny([request.auth.uid])
         );
-      allow delete: if isFamilyOwner(familyId);
+      allow delete: if isFamilyOwner(familyId) &&
+        isFamilyDocumentDeleting(resource.data);
     }
 
     match /familyInvites/{inviteCode} {
@@ -1010,6 +1060,7 @@ service cloud.firestore {
           isFamilyMember(resource.data.familyId) ||
           isFamilyOwner(resource.data.familyId));
       allow create: if signedIn() &&
+        !isFamilyDeleting(request.resource.data.familyId) &&
         memberId == request.resource.data.familyId + "_" + request.auth.uid &&
         request.resource.data.keys().hasOnly([
           "familyId",
@@ -1037,6 +1088,7 @@ service cloud.firestore {
           isCreatingOwnerMembership()
         );
       allow update: if signedIn() &&
+        !isFamilyDeleting(resource.data.familyId) &&
         (
           (
             isFamilyOwner(resource.data.familyId) &&
@@ -1109,72 +1161,84 @@ service cloud.firestore {
     }
 
     match /families/{familyId}/calendarEvents/{eventId} {
+      allow read: if canCleanUpFamily(familyId);
       allow read: if resource.data.visibility == "FAMILY" &&
         isFamilyMember(familyId);
       allow read: if resource.data.visibility == "PRIVATE" &&
         request.auth.uid in resource.data.visibleTo &&
         isFamilyMember(familyId);
-      allow create: if isFamilyMember(familyId) &&
+      allow create: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.id == eventId &&
         request.resource.data.createdBy == request.auth.uid &&
         isValidCalendarEvent(request.resource.data);
-      allow update: if isFamilyMember(familyId) &&
+      allow update: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         resource.data.createdBy == request.auth.uid &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.familyId == familyId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidCalendarEvent(request.resource.data);
-      allow delete: if isFamilyMember(familyId) &&
-        resource.data.createdBy == request.auth.uid;
+      allow delete: if canCleanUpFamily(familyId) ||
+        (isFamilyMember(familyId) && resource.data.createdBy == request.auth.uid);
     }
 
     match /families/{familyId}/memos/{memoId} {
+      allow read: if canCleanUpFamily(familyId);
       allow read: if resource.data.visibility == "FAMILY" &&
         isFamilyMember(familyId);
       allow read: if resource.data.visibility == "PRIVATE" &&
         request.auth.uid in resource.data.visibleTo &&
         isFamilyMember(familyId);
-      allow create: if isFamilyMember(familyId) &&
+      allow create: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.id == memoId &&
         request.resource.data.createdBy == request.auth.uid &&
         isValidMemo(request.resource.data);
-      allow update: if isFamilyMember(familyId) &&
+      allow update: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         resource.data.createdBy == request.auth.uid &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.familyId == familyId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidMemo(request.resource.data);
-      allow delete: if isFamilyMember(familyId) &&
-        resource.data.createdBy == request.auth.uid;
+      allow delete: if canCleanUpFamily(familyId) ||
+        (isFamilyMember(familyId) && resource.data.createdBy == request.auth.uid);
     }
 
     match /families/{familyId}/polls/{pollId} {
-      allow read: if isFamilyMember(familyId);
-      allow create: if isFamilyMember(familyId) &&
+      allow read: if isFamilyMember(familyId) || canCleanUpFamily(familyId);
+      allow create: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.id == pollId &&
         request.resource.data.createdBy == request.auth.uid &&
         isValidPoll(request.resource.data);
-      allow update: if isFamilyMember(familyId) &&
+      allow update: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         resource.data.createdBy == request.auth.uid &&
         request.resource.data.id == resource.data.id &&
         request.resource.data.familyId == familyId &&
         request.resource.data.createdBy == resource.data.createdBy &&
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidPoll(request.resource.data);
-      allow delete: if isFamilyMember(familyId) &&
-        resource.data.createdBy == request.auth.uid;
+      allow delete: if canCleanUpFamily(familyId) ||
+        (isFamilyMember(familyId) && resource.data.createdBy == request.auth.uid);
     }
 
     match /families/{familyId}/pollVotes/{voteId} {
-      allow read: if signedIn() &&
-        exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
-        isFamilyMember(familyId);
+      allow read: if canCleanUpFamily(familyId) ||
+        (
+          signedIn() &&
+          exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
+          isFamilyMember(familyId)
+        );
       allow create, update: if signedIn() &&
+        !isFamilyDeleting(familyId) &&
         voteId == request.resource.data.pollId + "_" + request.auth.uid &&
         request.resource.data.keys().hasOnly([
           "pollId",
@@ -1189,25 +1253,33 @@ service cloud.firestore {
         request.resource.data.selectedOptions.size() <= 20 &&
         exists(/databases/$(database)/documents/families/$(familyId)/polls/$(request.resource.data.pollId)) &&
         isFamilyMember(familyId);
-      allow delete: if isFamilyMember(familyId) &&
-        resource.data.pollId is string &&
-        exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
-        get(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)).data.createdBy == request.auth.uid;
+      allow delete: if canCleanUpFamily(familyId) ||
+        (
+          isFamilyMember(familyId) &&
+          resource.data.pollId is string &&
+          exists(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)) &&
+          get(/databases/$(database)/documents/families/$(familyId)/polls/$(resource.data.pollId)).data.createdBy == request.auth.uid
+        );
     }
 
     match /families/{familyId}/chatRooms/{roomId} {
-      allow get: if canAccessNestedChatRoom(familyId, resource.data) ||
+      allow get: if canCleanUpFamily(familyId) ||
+        canAccessNestedChatRoom(familyId, resource.data) ||
         (
           isFamilyMember(familyId) &&
           !exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(roomId))
         );
-      allow list: if isFamilyMember(familyId) &&
+      allow list: if canCleanUpFamily(familyId) ||
         (
-          resource.data.type == "FAMILY" ||
-          resource.data.createdBy == request.auth.uid ||
-          request.auth.uid in resource.data.memberIds
+          isFamilyMember(familyId) &&
+          (
+            resource.data.type == "FAMILY" ||
+            resource.data.createdBy == request.auth.uid ||
+            request.auth.uid in resource.data.memberIds
+          )
         );
-      allow create: if isFamilyMember(familyId) &&
+      allow create: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.id == roomId &&
         request.resource.data.createdBy == request.auth.uid &&
@@ -1216,7 +1288,8 @@ service cloud.firestore {
           request.resource.data.type == "FAMILY" ||
           request.auth.uid in request.resource.data.memberIds
         );
-      allow update: if canAccessNestedChatRoom(familyId, resource.data) &&
+      allow update: if !isFamilyDeleting(familyId) &&
+        canAccessNestedChatRoom(familyId, resource.data) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.type == resource.data.type &&
         request.resource.data.createdBy == resource.data.createdBy &&
@@ -1255,20 +1328,27 @@ service cloud.firestore {
             ])
           )
         );
-      allow delete: if canAccessNestedChatRoom(familyId, resource.data) &&
-        resource.data.createdBy == request.auth.uid &&
-        resource.data.type != "FAMILY" &&
-        isChatRoomDeleting(resource.data);
+      allow delete: if canCleanUpFamily(familyId) ||
+        (
+          canAccessNestedChatRoom(familyId, resource.data) &&
+          resource.data.createdBy == request.auth.uid &&
+          resource.data.type != "FAMILY" &&
+          isChatRoomDeleting(resource.data)
+        );
     }
 
     match /families/{familyId}/messages/{messageId} {
-      allow read: if signedIn() &&
-        exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)) &&
-        canAccessNestedChatRoom(
-          familyId,
-          get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)).data
+      allow read: if canCleanUpFamily(familyId) ||
+        (
+          signedIn() &&
+          exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)) &&
+          canAccessNestedChatRoom(
+            familyId,
+            get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)).data
+          )
         );
-      allow create: if isFamilyMember(familyId) &&
+      allow create: if !isFamilyDeleting(familyId) &&
+        isFamilyMember(familyId) &&
         request.resource.data.familyId == familyId &&
         request.resource.data.id == messageId &&
         request.resource.data.createdBy == request.auth.uid &&
@@ -1281,7 +1361,8 @@ service cloud.firestore {
           familyId,
           get(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(request.resource.data.roomId)).data
         );
-      allow update: if signedIn() &&
+      allow update: if !isFamilyDeleting(familyId) &&
+        signedIn() &&
         exists(/databases/$(database)/documents/families/$(familyId)/chatRooms/$(resource.data.roomId)) &&
         canAccessNestedChatRoom(
           familyId,
@@ -1314,10 +1395,13 @@ service cloud.firestore {
             ])
           )
         );
-      allow delete: if signedIn() &&
+      allow delete: if canCleanUpFamily(familyId) ||
         (
-          resource.data.createdBy == request.auth.uid ||
-          canDeleteNestedRoomMessages(familyId, resource.data.roomId)
+          signedIn() &&
+          (
+            resource.data.createdBy == request.auth.uid ||
+            canDeleteNestedRoomMessages(familyId, resource.data.roomId)
+          )
         );
     }
 

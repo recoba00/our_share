@@ -649,6 +649,12 @@ describe("family membership rules", () => {
     await assertSucceeds(transfer.commit());
 
     const bobDb = testEnv.authenticatedContext("bob").firestore();
+    await assertSucceeds(
+      updateDoc(doc(bobDb, "families", "familyA"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
     const deleteFamily = writeBatch(bobDb);
     deleteFamily.delete(doc(bobDb, "familyMembers", "familyA_alice"));
     deleteFamily.delete(doc(bobDb, "familyMembers", "familyA_bob"));
@@ -690,6 +696,12 @@ describe("family membership rules", () => {
     });
 
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, "families", "familyA"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
     const members = await getDocs(
       query(collection(aliceDb, "familyMembers"), where("familyId", "==", "familyA"))
     );
@@ -747,6 +759,12 @@ describe("family membership rules", () => {
     });
 
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, "families", "familyA"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
     const members = await getDocs(
       query(collection(aliceDb, "familyMembers"), where("familyId", "==", "familyA"))
     );
@@ -756,6 +774,137 @@ describe("family membership rules", () => {
     batch.delete(doc(aliceDb, "familyInvites", "ABC123"));
 
     await assertSucceeds(batch.commit());
+  });
+
+  it("locks family writes and lets only the owner clean nested data before deletion", async () => {
+    await seedFamilyWithMembers({
+      familyId: "familyA",
+      inviteCode: "ABC123",
+      memberIds: ["alice", "bob"],
+      ownerId: "alice",
+    });
+    await seedNestedCalendarEvent({
+      createdBy: "bob",
+      eventId: "privateEvent",
+      familyId: "familyA",
+      visibility: "PRIVATE",
+      visibleTo: ["bob"],
+    });
+    await seedNestedMemo({
+      createdBy: "bob",
+      familyId: "familyA",
+      memoId: "privateMemo",
+      visibility: "PRIVATE",
+      visibleTo: ["bob"],
+    });
+    await seedNestedPoll({
+      createdBy: "bob",
+      familyId: "familyA",
+      pollId: "pollA",
+    });
+    await seedNestedChatRoom({
+      createdBy: "bob",
+      familyId: "familyA",
+      memberIds: ["bob"],
+      roomId: "privateRoom",
+      type: "PRIVATE_GROUP",
+    });
+    await seedNestedMessage({
+      createdBy: "bob",
+      familyId: "familyA",
+      messageId: "privateMessage",
+      roomId: "privateRoom",
+      text: "크루 삭제 테스트",
+    });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(
+        doc(context.firestore(), "families", "familyA", "pollVotes", "pollA_bob"),
+        {
+          pollId: "pollA",
+          userId: "bob",
+          selectedOptions: ["찬성"],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        }
+      );
+    });
+
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+
+    await assertFails(deleteDoc(doc(aliceDb, "families", "familyA")));
+    await assertFails(
+      updateDoc(doc(bobDb, "families", "familyA"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      deleteDoc(doc(aliceDb, "families", "familyA", "calendarEvents", "privateEvent"))
+    );
+    await assertSucceeds(
+      updateDoc(doc(aliceDb, "families", "familyA"), {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(bobDb, "families", "familyA", "calendarEvents", "lateEvent"), {
+        id: "lateEvent",
+        familyId: "familyA",
+        title: "삭제 중 일정",
+        description: "",
+        startDate: "2026-09-28",
+        endDate: "2026-09-28",
+        allDay: true,
+        category: "FAMILY",
+        repeat: "NONE",
+        isDayOff: false,
+        createdBy: "bob",
+        visibleTo: [],
+        visibility: "FAMILY",
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      })
+    );
+
+    const childCollections = [
+      "calendarEvents",
+      "memos",
+      "polls",
+      "pollVotes",
+      "chatRooms",
+      "messages",
+    ];
+    for (const childCollection of childCollections) {
+      await assertSucceeds(
+        getDocs(collection(aliceDb, "families", "familyA", childCollection))
+      );
+    }
+
+    const deleteNestedData = writeBatch(aliceDb);
+    deleteNestedData.delete(
+      doc(aliceDb, "families", "familyA", "messages", "privateMessage")
+    );
+    deleteNestedData.delete(
+      doc(aliceDb, "families", "familyA", "chatRooms", "privateRoom")
+    );
+    deleteNestedData.delete(
+      doc(aliceDb, "families", "familyA", "pollVotes", "pollA_bob")
+    );
+    deleteNestedData.delete(doc(aliceDb, "families", "familyA", "polls", "pollA"));
+    deleteNestedData.delete(doc(aliceDb, "families", "familyA", "memos", "privateMemo"));
+    deleteNestedData.delete(
+      doc(aliceDb, "families", "familyA", "calendarEvents", "privateEvent")
+    );
+    await assertSucceeds(deleteNestedData.commit());
+
+    const deleteFamily = writeBatch(aliceDb);
+    deleteFamily.delete(doc(aliceDb, "familyMembers", "familyA_alice"));
+    deleteFamily.delete(doc(aliceDb, "familyMembers", "familyA_bob"));
+    deleteFamily.delete(doc(aliceDb, "familyInvites", "ABC123"));
+    deleteFamily.delete(doc(aliceDb, "families", "familyA"));
+    await assertSucceeds(deleteFamily.commit());
   });
 
   it("scopes owner permissions to the selected family", async () => {

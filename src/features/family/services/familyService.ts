@@ -5,6 +5,7 @@ import {
   doc,
   getDoc,
   getDocs,
+  limit,
   query,
   serverTimestamp,
   setDoc,
@@ -14,6 +15,10 @@ import {
 } from "firebase/firestore";
 import { ref, remove, set, update } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
+import {
+  chunkFirestoreWrites,
+  FIRESTORE_SAFE_BATCH_SIZE,
+} from "../../../lib/firebase/firestoreBatch";
 import { chunkFirestoreInValues } from "../../../lib/firebase/firestoreQuery";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 import { MAX_FAMILY_NAME_LENGTH } from "../utils/familyName";
@@ -69,6 +74,14 @@ type JoinFamilyResult = {
 };
 
 const inFlightInviteJoins = new Map<string, Promise<JoinFamilyResult>>();
+const familyChildCollections = [
+  { label: "채팅 메시지", name: "messages" },
+  { label: "채팅방", name: "chatRooms" },
+  { label: "투표 응답", name: "pollVotes" },
+  { label: "투표", name: "polls" },
+  { label: "메모", name: "memos" },
+  { label: "일정", name: "calendarEvents" },
+] as const;
 
 export async function createFamily({ name, owner }: CreateFamilyInput) {
   const normalizedName = name.trim();
@@ -202,8 +215,9 @@ export async function updateFamily({ familyId, name }: UpdateFamilyInput) {
 }
 
 export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
+  const familyRef = doc(db, "families", familyId);
   const familySnapshot = await runFamilyDeleteStep("크루 정보 확인", () =>
-    getDoc(doc(db, "families", familyId))
+    getDoc(familyRef)
   );
 
   if (!familySnapshot.exists()) {
@@ -219,18 +233,38 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
     }
   }
 
+  if (familySnapshot.data().deleting !== true) {
+    await runFamilyDeleteStep("크루 삭제 준비", () =>
+      updateDoc(familyRef, {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+  }
+
   const memberSnapshot = await runFamilyDeleteStep("멤버 정보 확인", () =>
     getDocs(query(collection(db, "familyMembers"), where("familyId", "==", familyId)))
   );
+
+  for (const childCollection of familyChildCollections) {
+    await runFamilyDeleteStep(`${childCollection.label} 정리`, () =>
+      deleteFamilyChildDocuments(familyId, childCollection.name)
+    );
+  }
 
   const inviteCode = familySnapshot.data().inviteCode as string | undefined;
   const inviteRef = inviteCode ? doc(db, "familyInvites", inviteCode) : null;
   const inviteSnapshot = inviteRef
     ? await runFamilyDeleteStep("초대 코드 확인", () => getDoc(inviteRef))
     : null;
+  for (const memberChunk of chunkFirestoreWrites(memberSnapshot.docs)) {
+    const memberBatch = writeBatch(db);
+    memberChunk.forEach((memberDoc) => memberBatch.delete(memberDoc.ref));
+    await runFamilyDeleteStep("멤버 정보 정리", () => memberBatch.commit());
+  }
+
   const batch = writeBatch(db);
-  memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
-  batch.delete(doc(db, "families", familyId));
+  batch.delete(familyRef);
 
   if (inviteRef && inviteSnapshot?.exists()) {
     batch.delete(inviteRef);
@@ -259,6 +293,28 @@ export async function deleteFamily({ familyId, ownerId }: DeleteFamilyInput) {
   } catch (error) {
     console.warn("크루 RTDB 잔여 데이터 정리를 마치지 못했어요.", error);
     return { realtimeCleanupComplete: false };
+  }
+}
+
+async function deleteFamilyChildDocuments(
+  familyId: string,
+  collectionName: (typeof familyChildCollections)[number]["name"]
+) {
+  const childQuery = query(
+    collection(db, "families", familyId, collectionName),
+    limit(FIRESTORE_SAFE_BATCH_SIZE)
+  );
+
+  while (true) {
+    const snapshot = await getDocs(childQuery);
+
+    if (snapshot.empty) {
+      return;
+    }
+
+    const batch = writeBatch(db);
+    snapshot.docs.forEach((document) => batch.delete(document.ref));
+    await batch.commit();
   }
 }
 

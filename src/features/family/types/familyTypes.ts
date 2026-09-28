@@ -7,6 +7,7 @@ export type Family = {
   inviteCode: string;
   role: FamilyRole;
   viceOwnerIds?: string[];
+  deleting?: boolean;
   createdAt: unknown;
 };
 
