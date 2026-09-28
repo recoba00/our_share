@@ -561,6 +561,7 @@ export function ChatPage() {
     try {
       shouldScrollToLatestRef.current = true;
       const pollId = await createPoll({
+        chatRoomId: selectedRoom.id,
         createdBy: user.uid,
         description: pollDescription,
         familyId: activeFamily.id,

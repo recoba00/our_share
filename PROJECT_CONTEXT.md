@@ -68,6 +68,7 @@ Firebase 사용.
 - Realtime Database: 실시간 위치, 접속 상태, 기기 상태 저장
 - Firebase Storage: MVP에서는 사용하지 않고 후순위로 보류
 - Cloud Functions: MVP에서는 에뮬레이터 테스트만 유지하고 운영 배포를 보류한다. Cloud Functions 운영 배포는 Blaze 요금제가 필요하므로 무료 Spark 운영 범위에 포함하지 않는다.
+- Firebase Cloud Messaging: 웹 푸시 권한과 기기 토큰 등록, 서비스워커 수신을 사용한다. 채팅·일정·투표·메모 생성 이벤트의 자동 발송은 신뢰할 수 있는 서버 환경이 필요하므로 Functions 코드만 준비하고 Spark 운영에서는 비활성화한다.
 
 ## 외부 연동
 
@@ -186,7 +187,7 @@ liveLocations/{familyId}/{userId}
 - battery
 - charging
 
-PWA의 백그라운드 위치 업데이트는 OS 제약이 있으므로 MVP에서는 앱 활성 상태 위치 공유를 우선 구현한다. 백그라운드 지속 위치 추적이 반드시 필요할 경우 React Native, Capacitor, Native 앱 전환을 검토한다.
+PWA는 앱이 열려 있거나 운영체제가 백그라운드 탭을 유지하는 동안 `watchPosition`으로 위치를 갱신한다. 앱이나 브라우저가 완전히 종료되면 서비스워커에서 위치 센서를 사용할 수 없어 갱신이 중단된다. 완전 종료 뒤에도 지속 추적이 반드시 필요하면 명시적 동의·상시 알림·배터리 정책을 갖춘 React Native, Capacitor 또는 Native 앱으로 전환한다.
 
 ### 일정
 

@@ -65,13 +65,14 @@ https://our-share-6baf5.web.app/
 1. 저장소 checkout
 2. Node.js 설치
 3. `npm ci`
-4. `npm run lint`
-5. `npm run test:ui-feedback`
-6. `npm run test:rules`
-7. `npm run build:firebase`
-8. `npm run test:dist:firebase`
-9. Firebase Hosting live 채널 배포
-10. `npm run test:hosting`
+4. `npm ci --prefix functions`
+5. `npm run lint`
+6. 애플리케이션·Functions 단위 테스트
+7. `npm run test:rules`
+8. `npm run build:firebase`
+9. `npm run test:dist:firebase`
+10. Firebase Hosting live 채널 배포
+11. `npm run test:hosting`
 
 GitHub Repository Secrets에 Firebase 배포용 서비스 계정 JSON을 등록해야 한다.
 
@@ -208,6 +209,10 @@ Admin SDK Membership Mirror는 `functions-deploy.yml` 수동 workflow로 배포�
 GitHub Actions에서 `Firebase Functions Deploy` workflow를 `Run workflow`로 실행한다. workflow는 Functions build, emulator sync test, `firebase deploy --only functions` 순서로 동작한다.
 
 Functions가 운영 배포되고 미러 동기화를 확인한 뒤에만 클라이언트의 RTDB membership mirror 직접 쓰기를 제거한다. 그 전까지는 신규 가입·역할 변경·탈퇴 직후 위치 접근이 끊기지 않도록 현재 fallback을 유지한다.
+
+채팅·일정·투표·메모 자동 푸시 트리거도 같은 Functions 코드에 포함되어 있다. 웹 앱은 FCM 기기 등록과 서비스워커 수신까지 배포하지만, Functions를 배포하지 않은 Spark 운영 상태에서는 앱이 열려 있을 때의 브라우저 알림만 동작한다. 앱이 완전히 종료된 뒤의 이벤트 푸시는 Blaze 전환과 Functions 배포 후 활성화된다.
+
+FCM Web Push의 VAPID 공개 키는 클라이언트 식별용 공개 값이며 비밀번호나 서비스 계정 키가 아니다. 발송 권한이 있는 서비스 계정 JSON과 Admin SDK 자격 증명은 브라우저 코드나 저장소에 넣지 않는다.
 
 ## PWA
 

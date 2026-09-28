@@ -3,6 +3,18 @@ export function registerServiceWorker() {
     return;
   }
 
+  navigator.serviceWorker.addEventListener("message", (event) => {
+    if (event.data?.type !== "NAVIGATE" || typeof event.data.url !== "string") {
+      return;
+    }
+
+    const targetUrl = new URL(event.data.url, window.location.origin);
+
+    if (targetUrl.origin === window.location.origin) {
+      window.location.assign(targetUrl.href);
+    }
+  });
+
   window.addEventListener("load", () => {
     navigator.serviceWorker
       .register(`${import.meta.env.BASE_URL}sw.js`, { updateViaCache: "none" })

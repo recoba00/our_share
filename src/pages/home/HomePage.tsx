@@ -69,10 +69,6 @@ import { subscribeFamilyLocations } from "../../features/location/services/locat
 import type { LiveLocation } from "../../features/location/types/locationTypes";
 import { subscribeMemos } from "../../features/memo/services/memoService";
 import type { Memo } from "../../features/memo/types/memoTypes";
-import {
-  getNotificationPermission,
-  notifyDashboardReminders,
-} from "../../features/notification/services/notificationService";
 import { subscribePolls } from "../../features/poll/services/pollService";
 import type { Poll } from "../../features/poll/types/pollTypes";
 import type { ModerationReportTarget } from "../../features/moderation/utils/moderationReportTarget";
@@ -314,19 +310,6 @@ export function HomePage() {
       unsubscribes.forEach((unsubscribe) => unsubscribe());
     };
   }, [activeFamily, handleFamilyDataError, user]);
-
-  useEffect(() => {
-    if (!activeFamily || !user || getNotificationPermission() !== "granted") {
-      return;
-    }
-
-    notifyDashboardReminders({
-      events: calendarEvents,
-      familyId: activeFamily.id,
-      polls,
-      userId: user.uid,
-    });
-  }, [activeFamily, calendarEvents, polls, user]);
 
   useEffect(() => {
     if (!locationShareMessage) {

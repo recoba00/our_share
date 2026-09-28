@@ -13,6 +13,7 @@ export type ChatRoom = {
   updatedAt: unknown;
   lastMessageText: string | null;
   lastMessageAt: unknown;
+  lastMessageCreatedBy?: string | null;
 };
 
 export type ChatMessage = {

@@ -7,6 +7,8 @@ const windowsNpmCliPath =
 const checks = [
   ["npm", ["run", "lint"], "Lint"],
   ["npm", ["run", "test:unit"], "Unit tests"],
+  ["npm", ["run", "test:functions:unit"], "Functions unit tests"],
+  ["npm", ["run", "build:functions"], "Functions type build"],
   ["npm", ["run", "test:ui-feedback"], "UI feedback"],
   ["npm", ["run", "test:rules"], "Firebase rules"],
   ["npm", ["run", "build:firebase"], "Production build"],

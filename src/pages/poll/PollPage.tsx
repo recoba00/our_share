@@ -3,8 +3,11 @@ import {
   ChartBar,
   ChatCircleDots,
   CheckCircle,
+  LockKey,
   Plus,
   Trash,
+  User,
+  UsersThree,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -61,7 +64,9 @@ export function PollPage() {
   );
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string[]>>({});
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [sharingPoll, setSharingPoll] = useState<Poll | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isSendingPoll, setIsSendingPoll] = useState(false);
   const pollRequestIdRef = useRef(0);
   const normalizedOptions = getNormalizedPollOptions(options);
   const hasDuplicateOptions = hasDuplicatePollOptions(options);
@@ -223,27 +228,37 @@ export function PollPage() {
     }
   }
 
-  async function handleSendPollToChat(poll: Poll) {
-    if (!user || !family || !selectedRoomId) {
+  function openChatRoomPicker(poll: Poll) {
+    setSelectedRoomId((currentRoomId) =>
+      rooms.some((room) => room.id === currentRoomId)
+        ? currentRoomId
+        : rooms[0]?.id ?? ""
+    );
+    setSharingPoll(poll);
+  }
+
+  async function handleSendPollToChat() {
+    if (!user || !family || !sharingPoll || !selectedRoomId) {
       notify("투표를 보낼 채팅방을 골라주세요.", "info");
       return;
     }
 
-    setIsLoading(true);
+    setIsSendingPoll(true);
 
     try {
       await sendPollMessage({
         createdBy: user.uid,
         familyId: family.id,
-        pollId: poll.id,
-        pollTitle: poll.title,
+        pollId: sharingPoll.id,
+        pollTitle: sharingPoll.title,
         roomId: selectedRoomId,
       });
+      setSharingPoll(null);
       notify("투표를 채팅방에 보냈어요.", "success");
     } catch (error) {
       notify(getErrorMessage(error), "error");
     } finally {
-      setIsLoading(false);
+      setIsSendingPoll(false);
     }
   }
 
@@ -395,22 +410,6 @@ export function PollPage() {
                 : `제목과 후보 ${type === "DATE" ? "날짜" : "항목"} 2개 이상이 필요합니다.`}
             </p>
           ) : null}
-          {family ? (
-            <label className="grid gap-2 text-sm font-semibold">
-              전송할 채팅방
-              <select
-                className="h-11 rounded-xl border border-[var(--color-border)] bg-[var(--color-surface)] px-4 text-sm font-normal text-[var(--color-text-primary)] outline-none transition focus:border-brand focus:ring-4 focus:ring-emerald-100"
-                onChange={(event) => setSelectedRoomId(event.target.value)}
-                value={selectedRoomId}
-              >
-                {rooms.map((room) => (
-                  <option key={room.id} value={room.id}>
-                    {room.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-          ) : null}
         </div>
     </>
   );
@@ -424,6 +423,83 @@ export function PollPage() {
         title="투표 만들기"
       >
         {createPollForm}
+      </ActionLayer>
+      <ActionLayer
+        desktop
+        isOpen={Boolean(sharingPoll)}
+        onClose={() => setSharingPoll(null)}
+        title="채팅방으로 보내기"
+      >
+        <section className="grid gap-4">
+          <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+            <p className="text-xs font-semibold text-brand">보낼 투표</p>
+            <h2 className="mt-1 truncate text-base font-semibold">
+              {sharingPoll?.title ?? "투표"}
+            </h2>
+          </div>
+
+          <div>
+            <h3 className="text-base font-semibold">채팅방을 골라주세요</h3>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              선택한 채팅방에 투표 카드가 메시지로 전송돼요.
+            </p>
+          </div>
+
+          {rooms.length > 0 ? (
+            <div className="grid gap-2">
+              {rooms.map((room) => {
+                const isSelected = selectedRoomId === room.id;
+
+                return (
+                  <button
+                    aria-pressed={isSelected}
+                    className={`flex min-w-0 items-center gap-3 rounded-2xl p-4 text-left transition-[background-color,transform] duration-200 active:scale-[0.99] ${
+                      isSelected
+                        ? "bg-brand-soft"
+                        : "bg-[var(--color-surface-muted)] hover:bg-brand-soft/60"
+                    }`}
+                    key={room.id}
+                    onClick={() => setSelectedRoomId(room.id)}
+                    type="button"
+                  >
+                    <span className="grid size-10 shrink-0 place-items-center rounded-full bg-[var(--color-surface)] text-brand">
+                      <ChatRoomTypeIcon room={room} />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <strong className="block truncate text-sm">{room.name}</strong>
+                      <span className="mt-1 block text-xs text-[var(--color-text-secondary)]">
+                        {getChatRoomTypeLabel(room)}
+                      </span>
+                    </span>
+                    <CheckCircle
+                      className={isSelected ? "text-brand" : "text-[var(--color-text-secondary)]/40"}
+                      size={22}
+                      weight={isSelected ? "fill" : "regular"}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="rounded-2xl bg-[var(--color-surface-muted)] p-5 text-center">
+              <p className="text-sm font-semibold">보낼 수 있는 채팅방이 없어요.</p>
+              <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                채팅에서 방을 만든 뒤 다시 시도해주세요.
+              </p>
+            </div>
+          )}
+
+          <Button
+            className="w-full"
+            disabled={!selectedRoomId || isSendingPoll}
+            loading={isSendingPoll}
+            onClick={() => void handleSendPollToChat()}
+            type="button"
+          >
+            <ChatCircleDots size={18} weight="regular" />
+            선택한 채팅방에 보내기
+          </Button>
+        </section>
       </ActionLayer>
 
     <DesktopWorkspace sidebar={<Card className="hidden lg:block">{createPollForm}</Card>}>
@@ -457,12 +533,11 @@ export function PollPage() {
             <PollCard
               key={poll.id}
               onSelect={toggleOption}
-              onSendPoll={handleSendPollToChat}
+              onSendPoll={openChatRoomPicker}
               onDelete={handleDeletePoll}
               onVote={handleVote}
               isLoading={isLoading}
               poll={poll}
-              roomSelected={Boolean(selectedRoomId)}
               selected={selectedOptions[poll.id] ?? []}
               votes={votes[poll.id] ?? []}
             />
@@ -481,7 +556,6 @@ function PollCard({
   onSendPoll,
   onVote,
   poll,
-  roomSelected,
   selected,
   votes,
 }: {
@@ -491,7 +565,6 @@ function PollCard({
   onSendPoll: (poll: Poll) => void;
   onVote: (poll: Poll) => void;
   poll: Poll;
-  roomSelected: boolean;
   selected: string[];
   votes: PollVote[];
 }) {
@@ -520,8 +593,7 @@ function PollCard({
         </div>
         <div className="flex gap-2">
           <Button
-            disabled={!roomSelected || isLoading}
-            loading={isLoading}
+            disabled={isLoading}
             onClick={() => onSendPoll(poll)}
             variant="secondary"
           >
@@ -572,6 +644,30 @@ function PollCard({
       </Button>
     </Card>
   );
+}
+
+function ChatRoomTypeIcon({ room }: { room: ChatRoom }) {
+  if (room.type === "DIRECT") {
+    return <User size={20} weight="regular" />;
+  }
+
+  if (room.type === "PRIVATE_GROUP") {
+    return <LockKey size={20} weight="regular" />;
+  }
+
+  return <UsersThree size={20} weight="regular" />;
+}
+
+function getChatRoomTypeLabel(room: ChatRoom) {
+  if (room.type === "DIRECT") {
+    return "1:1 채팅";
+  }
+
+  if (room.type === "PRIVATE_GROUP") {
+    return "비밀방";
+  }
+
+  return "크루 전체방";
 }
 
 function ChoiceButton({

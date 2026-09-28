@@ -137,6 +137,35 @@ service cloud.firestore {
         data.updatedAt is timestamp;
     }
 
+    function isValidPushDevice(data, deviceId) {
+      return data.keys().hasOnly([
+          "deviceId",
+          "enabled",
+          "platform",
+          "token",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.keys().hasAll([
+          "deviceId",
+          "enabled",
+          "platform",
+          "token",
+          "createdAt",
+          "updatedAt"
+        ]) &&
+        data.deviceId == deviceId &&
+        data.enabled == true &&
+        data.platform is string &&
+        data.platform.size() > 0 &&
+        data.platform.size() <= 30 &&
+        data.token is string &&
+        data.token.size() > 20 &&
+        data.token.size() <= 4096 &&
+        data.createdAt is timestamp &&
+        data.updatedAt is timestamp;
+    }
+
     function isValidServiceNotice(data, noticeId) {
       return data.keys().hasOnly([
           "id",
@@ -599,7 +628,8 @@ service cloud.firestore {
           "createdAt",
           "updatedAt",
           "lastMessageText",
-          "lastMessageAt"
+          "lastMessageAt",
+          "lastMessageCreatedBy"
         ]) &&
         data.name is string &&
         data.name.size() > 0 &&
@@ -610,7 +640,12 @@ service cloud.firestore {
           data.type == "PRIVATE_GROUP"
         ) &&
         data.memberIds is list &&
-        data.memberIds.size() <= 50;
+        data.memberIds.size() <= 50 &&
+        (
+          !("lastMessageCreatedBy" in data) ||
+          data.lastMessageCreatedBy == null ||
+          data.lastMessageCreatedBy is string
+        );
     }
 
     function isValidMessage(data) {
@@ -686,6 +721,22 @@ service cloud.firestore {
         request.resource.data.createdAt == resource.data.createdAt &&
         isValidPrivateUser(request.resource.data, userId);
       allow delete: if signedIn() && request.auth.uid == userId;
+
+      match /pushDevices/{deviceId} {
+        allow read: if signedIn() && request.auth.uid == userId;
+        allow create: if signedIn() &&
+          request.auth.uid == userId &&
+          request.resource.data.createdAt == request.time &&
+          request.resource.data.updatedAt == request.time &&
+          isValidPushDevice(request.resource.data, deviceId);
+        allow update: if signedIn() &&
+          request.auth.uid == userId &&
+          request.resource.data.deviceId == resource.data.deviceId &&
+          request.resource.data.createdAt == resource.data.createdAt &&
+          request.resource.data.updatedAt == request.time &&
+          isValidPushDevice(request.resource.data, deviceId);
+        allow delete: if signedIn() && request.auth.uid == userId;
+      }
     }
 
     match /publicProfiles/{userId} {
@@ -1152,6 +1203,7 @@ service cloud.firestore {
             request.resource.data.diff(resource.data).affectedKeys().hasOnly([
               "lastMessageText",
               "lastMessageAt",
+              "lastMessageCreatedBy",
               "updatedAt"
             ])
           ) ||
@@ -1330,6 +1382,7 @@ service cloud.firestore {
         request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           "lastMessageText",
           "lastMessageAt",
+          "lastMessageCreatedBy",
           "updatedAt"
         ]);
       allow delete: if canAccessChatRoom(resource.data) &&

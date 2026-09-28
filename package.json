@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build && node scripts/stamp-service-worker.mjs",
     "build:firebase": "tsc -b && vite build --base=/ && node scripts/stamp-service-worker.mjs",
+    "build:functions": "npm --prefix functions run build",
     "preview": "vite preview",
     "lint": "eslint .",
     "test:unit": "vitest run tests/pollDraft.test.ts tests/familyName.test.ts tests/chatMessagePreview.test.ts tests/firebaseErrorMessage.test.ts tests/platformAdmin.test.ts tests/moderationReportTarget.test.ts tests/adminAuditFilters.test.ts",
@@ -17,7 +18,8 @@
     "test:release": "node scripts/run-mvp-readiness.mjs",
     "test:mvp": "npm run test:release",
     "test:rules": "node scripts/run-firestore-rules-tests.mjs",
-    "test:functions": "node scripts/run-functions-emulator-tests.mjs"
+    "test:functions": "node scripts/run-functions-emulator-tests.mjs",
+    "test:functions:unit": "npm --prefix functions test"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

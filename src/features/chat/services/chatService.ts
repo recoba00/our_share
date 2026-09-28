@@ -88,6 +88,7 @@ export async function getOrCreateFamilyRoom({
     updatedAt: serverTimestamp(),
     lastMessageText: null,
     lastMessageAt: null,
+    lastMessageCreatedBy: null,
   });
 
   return roomId;
@@ -123,6 +124,7 @@ export async function createSecretRoom({
     updatedAt: serverTimestamp(),
     lastMessageText: null,
     lastMessageAt: null,
+    lastMessageCreatedBy: null,
   });
 
   return roomRef.id;
@@ -158,6 +160,7 @@ export async function getOrCreateDirectRoom({
     updatedAt: serverTimestamp(),
     lastMessageText: null,
     lastMessageAt: null,
+    lastMessageCreatedBy: null,
   });
 
   return roomId;
@@ -193,6 +196,7 @@ export async function createPrivateGroupRoom({
     updatedAt: serverTimestamp(),
     lastMessageText: null,
     lastMessageAt: null,
+    lastMessageCreatedBy: null,
   });
 
   return roomRef.id;
@@ -391,6 +395,7 @@ export async function sendTextMessage({
   await updateDoc(doc(db, "families", familyId, "chatRooms", roomId), {
     lastMessageText: normalizedText,
     lastMessageAt: serverTimestamp(),
+    lastMessageCreatedBy: createdBy,
     updatedAt: serverTimestamp(),
   });
 }
@@ -426,6 +431,7 @@ export async function sendPollMessage({
   await updateDoc(doc(db, "families", familyId, "chatRooms", roomId), {
     lastMessageText: messageText,
     lastMessageAt: serverTimestamp(),
+    lastMessageCreatedBy: createdBy,
     updatedAt: serverTimestamp(),
   });
 }
@@ -498,6 +504,7 @@ export async function deleteMessage({
         transaction.update(roomRef, {
           lastMessageText: preview.text,
           lastMessageAt: preview.createdAt,
+          lastMessageCreatedBy: preview.createdBy,
           updatedAt: serverTimestamp(),
         });
       }

@@ -22,6 +22,7 @@ import {
 } from "firebase/firestore";
 import { auth, db, googleProvider, realtimeDb } from "../../../lib/firebase/app";
 import { getStoredRequiredConsent } from "../../compliance/consentStorage";
+import { disablePushNotifications } from "../../notification/services/pushNotificationService";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -51,6 +52,7 @@ export async function logout() {
 
   if (user) {
     try {
+      await disablePushNotifications(user.uid);
       const memberSnapshot = await getDocs(
         query(collection(db, "familyMembers"), where("userId", "==", user.uid))
       );
@@ -89,6 +91,11 @@ export async function deleteAccount({
   const memberSnapshot = await getDocs(
     query(collection(db, "familyMembers"), where("userId", "==", user.uid))
   );
+  const pushDeviceSnapshot = await getDocs(collection(db, "users", user.uid, "pushDevices"));
+
+  await disablePushNotifications(user.uid).catch(() => {
+    // 계정 삭제는 브라우저 토큰 해제 실패와 무관하게 계속한다.
+  });
 
   await Promise.all(
     memberSnapshot.docs.map((memberDoc) =>
@@ -100,6 +107,7 @@ export async function deleteAccount({
   batch.delete(doc(db, "users", user.uid));
   batch.delete(doc(db, "publicProfiles", user.uid));
   memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
+  pushDeviceSnapshot.docs.forEach((deviceDoc) => batch.delete(deviceDoc.ref));
   await batch.commit();
 
   await Promise.all(

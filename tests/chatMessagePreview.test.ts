@@ -26,11 +26,16 @@ describe("getLatestMessagePreview", () => {
     expect(preview).toEqual({
       text: "최신 메시지",
       createdAt: { seconds: 20, nanoseconds: 0 },
+      createdBy: "member-1",
     });
   });
 
   it("clears the preview when the last message is deleted", () => {
-    expect(getLatestMessagePreview([])).toEqual({ text: null, createdAt: null });
+    expect(getLatestMessagePreview([])).toEqual({
+      text: null,
+      createdAt: null,
+      createdBy: null,
+    });
   });
 
   it("does not mutate the queried message list", () => {

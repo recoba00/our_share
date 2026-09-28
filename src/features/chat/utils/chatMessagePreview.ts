@@ -9,6 +9,7 @@ export function getLatestMessagePreview(messages: ChatMessage[]) {
   return {
     text: latestMessage?.text ?? null,
     createdAt: latestMessage?.createdAt ?? null,
+    createdBy: latestMessage?.createdBy ?? null,
   };
 }
 

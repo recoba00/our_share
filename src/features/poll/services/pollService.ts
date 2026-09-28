@@ -17,6 +17,7 @@ import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMess
 import type { Poll, PollType, PollVote } from "../types/pollTypes";
 
 type CreatePollInput = {
+  chatRoomId?: string | null;
   createdBy: string;
   description: string;
   familyId: string;
@@ -46,7 +47,7 @@ export async function createPoll(input: CreatePollInput) {
   await setDoc(pollRef, {
     id: pollRef.id,
     familyId: input.familyId,
-    chatRoomId: null,
+    chatRoomId: input.chatRoomId ?? null,
     title: input.title.trim(),
     description: input.description.trim(),
     type: input.type,

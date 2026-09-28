@@ -6,6 +6,7 @@ import { BottomNavigation } from "../navigation/BottomNavigation";
 import { ChatMemberDrawerProvider } from "../chat/ChatMemberDrawerProvider";
 import { useAuth } from "../../features/auth/useAuth";
 import { savePendingInviteCode } from "../../features/family/services/pendingInviteService";
+import { NotificationManager } from "../notification/NotificationManager";
 
 export function AppLayout({ children }: PropsWithChildren) {
   const { pathname } = useLocation();
@@ -56,6 +57,7 @@ export function AppLayout({ children }: PropsWithChildren) {
   return (
     <ChatMemberDrawerProvider>
       <div className="min-h-dvh bg-[var(--color-background)] text-[var(--color-text-primary)]">
+        <NotificationManager />
         <div className="mx-auto flex min-h-dvh w-full max-w-screen-2xl flex-col">
           <AppHeader />
           <main

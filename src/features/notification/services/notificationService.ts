@@ -34,14 +34,16 @@ export async function requestNotificationPermission() {
   return Notification.requestPermission();
 }
 
-export function sendBrowserNotification({
+export async function sendBrowserNotification({
   body,
   tag,
   title,
+  url = import.meta.env.BASE_URL,
 }: {
   body: string;
   tag: string;
   title: string;
+  url?: string;
 }) {
   if (getNotificationAvailability() !== "SUPPORTED") {
     return false;
@@ -51,16 +53,36 @@ export function sendBrowserNotification({
     return false;
   }
 
-  new Notification(title, {
-    body,
-    icon: `${import.meta.env.BASE_URL}pwa-icon.svg`,
-    tag,
-  });
+  try {
+    if ("serviceWorker" in navigator) {
+      const registration = await navigator.serviceWorker.ready;
+      await registration.showNotification(title, {
+        badge: `${import.meta.env.BASE_URL}pwa-icon-192.png`,
+        body,
+        data: { url },
+        icon: `${import.meta.env.BASE_URL}pwa-icon-192.png`,
+        tag,
+      });
+    } else {
+      new Notification(title, {
+        body,
+        icon: `${import.meta.env.BASE_URL}pwa-icon-192.png`,
+        tag,
+      });
+    }
+
+    const badgeNavigator = navigator as Navigator & {
+      setAppBadge?: (count?: number) => Promise<void>;
+    };
+    void badgeNavigator.setAppBadge?.(1);
+  } catch {
+    return false;
+  }
 
   return true;
 }
 
-export function notifyDashboardReminders({
+export async function notifyDashboardReminders({
   events,
   familyId,
   polls,
@@ -88,7 +110,7 @@ export function notifyDashboardReminders({
     }
 
     if (
-      sendBrowserNotification({
+      await sendBrowserNotification({
         body: event.isDayOff ? "오늘 휴무일로 체크된 일정이에요." : "오늘 예정된 일정이에요.",
         tag: reminderKey,
         title: event.title,
@@ -112,7 +134,7 @@ export function notifyDashboardReminders({
     }
 
     if (
-      sendBrowserNotification({
+      await sendBrowserNotification({
         body: poll.closesAt ? `${formatDate(poll.closesAt)} 마감 예정인 투표예요.` : "마감 예정 투표예요.",
         tag: reminderKey,
         title: poll.title,

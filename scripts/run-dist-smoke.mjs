@@ -203,6 +203,16 @@ function validateServiceWorker() {
   if (serviceWorker.includes("__OUR_SHARE_BUILD_ID__")) {
     failures.push("service worker build marker was not stamped.");
   }
+
+  for (const pushMarker of [
+    "firebase-messaging-compat.js",
+    "onBackgroundMessage",
+    'notificationclick',
+  ]) {
+    if (!serviceWorker.includes(pushMarker)) {
+      failures.push(`service worker is missing push support: ${pushMarker}`);
+    }
+  }
 }
 
 function toDistFilePath(assetPath) {

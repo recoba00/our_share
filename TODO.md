@@ -205,6 +205,7 @@
 - [x] 화면 전환 중에도 위치 공유 추적 유지
 - [x] OS가 브라우저를 강제 정지한 상태의 백그라운드 위치 추적 검토
   > PWA 웹에서는 OS 강제 종료 후 GPS와 `watchPosition` 실행을 보장할 수 없다. 현재는 활성 앱·백그라운드 탭에서 이동 감지와 화면 재진입 동기화를 제공하고, 지속 추적이 필요하면 React Native·Capacitor·Native 앱 전환을 검토한다.
+- [ ] 앱 완전 종료 후 지속 위치가 필요할 때 Native/Capacitor 백그라운드 위치 모듈 도입
 
 ## Calendar
 
@@ -247,6 +248,7 @@
 - [x] Date Poll
 - [x] Result
 - [x] Send Poll to Chat Room
+- [x] Poll Chat Room Selection Layer and Send Flow
 
 ## Chat
 
@@ -275,11 +277,16 @@
 ## Notification
 
 - [x] Browser Notification Permission
+- [x] 설정 화면 기기별 푸시 알림 등록·해제
+- [x] FCM 토큰 사용자별 기기 문서 저장 및 보안 규칙
+- [x] 서비스워커 백그라운드 푸시 수신과 알림 클릭 딥링크
+- [x] 앱 실행 중 채팅·일정·투표·메모 새 항목 브라우저 알림
 - [x] Header Notification List
 - [x] Today Calendar Reminder
 - [x] Poll Closing Soon Reminder
 - [x] Duplicate Reminder Guard
-- [ ] Push Notification with Cloud Functions Later
+- [ ] Cloud Functions 이벤트 푸시 운영 배포
+  > 발송 코드와 단위 테스트는 준비했다. Spark 무료 요금제에서는 Functions 운영 배포가 불가능하므로 Blaze 전환을 별도 승인하기 전까지 배포하지 않는다.
 
 ## Compliance / Operations
 

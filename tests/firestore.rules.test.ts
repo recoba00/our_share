@@ -102,6 +102,40 @@ describe("private and public profile rules", () => {
   });
 });
 
+describe("push device rules", () => {
+  it("allows users to manage only their own validated device registrations", async () => {
+    const aliceDb = testEnv.authenticatedContext("alice").firestore();
+    const bobDb = testEnv.authenticatedContext("bob").firestore();
+    const deviceRef = doc(aliceDb, "users", "alice", "pushDevices", "device-a");
+    const device = {
+      deviceId: "device-a",
+      enabled: true,
+      platform: "WEB",
+      token: "valid-fcm-registration-token-value",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await assertSucceeds(setDoc(deviceRef, device));
+    await assertSucceeds(getDoc(deviceRef));
+    await assertFails(getDoc(doc(bobDb, "users", "alice", "pushDevices", "device-a")));
+    await assertFails(
+      setDoc(doc(bobDb, "users", "alice", "pushDevices", "device-b"), {
+        ...device,
+        deviceId: "device-b",
+      })
+    );
+    await assertFails(
+      setDoc(doc(aliceDb, "users", "alice", "pushDevices", "polluted"), {
+        ...device,
+        deviceId: "polluted",
+        isAdmin: true,
+      })
+    );
+    await assertSucceeds(deleteDoc(deviceRef));
+  });
+});
+
 describe("service notice rules", () => {
   it("lets signed-in users query published notices but hides drafts", async () => {
     await seedServiceNotice("published", "PUBLISHED");

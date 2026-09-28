@@ -12,7 +12,7 @@ import {
   Wrench,
 } from "@phosphor-icons/react";
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { BottomSheet } from "../../components/common/BottomSheet";
 import { Button } from "../../components/common/Button";
@@ -31,6 +31,13 @@ import { buildInfo, getShortCommit } from "../../lib/app/buildInfo";
 import { useAdminAccess } from "../../features/admin/useAdminAccess";
 import { ServiceNoticesView } from "../../components/compliance/ServiceNoticesView";
 import { ModerationReportLayer } from "../../components/moderation/ModerationReportLayer";
+import { notificationPermissionChangedEvent } from "../../components/notification/NotificationManager";
+import {
+  disablePushNotifications,
+  enablePushNotifications,
+  getPushNotificationState,
+  type PushNotificationState,
+} from "../../features/notification/services/pushNotificationService";
 
 export function SettingsPage() {
   const { user } = useAuth();
@@ -43,6 +50,53 @@ export function SettingsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [activeDocument, setActiveDocument] = useState<PolicyDocumentId | null>(null);
   const [isReportOpen, setIsReportOpen] = useState(false);
+  const [pushState, setPushState] = useState<PushNotificationState>("disabled");
+  const [isUpdatingPush, setIsUpdatingPush] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    void getPushNotificationState().then((state) => {
+      if (isMounted) {
+        setPushState(state);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  async function handlePushToggle() {
+    if (!user || isUpdatingPush) {
+      return;
+    }
+
+    setIsUpdatingPush(true);
+
+    try {
+      if (pushState === "enabled") {
+        await disablePushNotifications(user.uid);
+        setPushState("disabled");
+        showToast({ message: "이 기기의 알림을 껐어요.", variant: "success" });
+      } else {
+        await enablePushNotifications(user.uid);
+        setPushState("enabled");
+        showToast({ message: "이 기기에서 새 소식을 알려드릴게요.", variant: "success" });
+      }
+
+      window.dispatchEvent(new Event(notificationPermissionChangedEvent));
+    } catch (error) {
+      const nextState = await getPushNotificationState();
+      setPushState(nextState);
+      showToast({
+        message: error instanceof Error ? error.message : "알림 설정을 바꾸지 못했어요.",
+        variant: "error",
+      });
+    } finally {
+      setIsUpdatingPush(false);
+    }
+  }
 
   async function handleDeleteAccount() {
     if (!user) {
@@ -146,6 +200,30 @@ export function SettingsPage() {
 
             <section className="grid gap-2">
               <h3 className="text-base font-semibold">서비스</h3>
+              <div className="rounded-2xl bg-[var(--color-surface-muted)] p-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <Bell className="mt-0.5 shrink-0 text-brand" size={20} weight="regular" />
+                    <div className="min-w-0">
+                      <strong className="block text-sm">푸시 알림</strong>
+                      <span className="mt-1 block text-sm leading-5 text-[var(--color-text-secondary)]">
+                        {getPushStateDescription(pushState)}
+                      </span>
+                    </div>
+                  </div>
+                  {pushState !== "unsupported" && pushState !== "blocked" ? (
+                    <Button
+                      className="h-9 shrink-0 px-3"
+                      loading={isUpdatingPush}
+                      onClick={() => void handlePushToggle()}
+                      type="button"
+                      variant={pushState === "enabled" ? "secondary" : "primary"}
+                    >
+                      {pushState === "enabled" ? "끄기" : "켜기"}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
               <SettingsActionRow
                 description="서비스 변경과 새 소식을 확인해요."
                 icon={<Bell size={20} weight="regular" />}
@@ -203,7 +281,10 @@ export function SettingsPage() {
               <h3 className="text-lg font-semibold">계정</h3>
               <SettingRow label="프로필 이미지" value="Google photoURL 또는 직접 입력 URL 사용" />
               <SettingRow label="파일 업로드" value="MVP에서는 Firebase Storage 보류" />
-              <SettingRow label="알림" value="브라우저 알림 기반 MVP" />
+              <SettingRow
+                label="백그라운드 위치"
+                value="앱이 실행 중일 때 갱신하며, 완전히 종료하면 위치 공유가 멈춰요."
+              />
             </section>
           </div>
 
@@ -242,6 +323,22 @@ export function SettingsPage() {
       />
     </>
   );
+}
+
+function getPushStateDescription(state: PushNotificationState) {
+  if (state === "enabled") {
+    return "채팅과 나와 관련된 새 소식을 이 기기에서 받아요.";
+  }
+
+  if (state === "blocked") {
+    return "알림이 차단됐어요. 기기나 브라우저 설정에서 허용해주세요.";
+  }
+
+  if (state === "unsupported") {
+    return "이 환경에서는 푸시를 사용할 수 없어요. iPhone은 홈 화면에 설치한 뒤 켜주세요.";
+  }
+
+  return "알림을 켜면 새 채팅과 일정, 투표, 메모를 놓치지 않아요.";
 }
 
 function SettingsActionRow({
