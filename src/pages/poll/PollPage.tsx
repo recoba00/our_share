@@ -208,6 +208,7 @@ export function PollPage() {
 
     return subscribeChatRooms({
       familyId: family.id,
+      limitCount: 80,
       onChange: (nextRooms) => {
         setRooms(nextRooms);
         setSelectedRoomId((currentRoomId) => currentRoomId || nextRooms[0]?.id || "");

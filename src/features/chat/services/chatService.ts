@@ -27,6 +27,7 @@ import {
   FIRESTORE_SAFE_BATCH_SIZE,
 } from "../../../lib/firebase/firestoreBatch";
 import { getLatestMessagePreview, getTimestampMilliseconds } from "../utils/chatMessagePreview";
+import { mergeChatRooms } from "../utils/chatRoomPagination";
 import type { ChatMessage, ChatRoom } from "../types/chatTypes";
 
 type CreateSecretRoomInput = {
@@ -72,8 +73,27 @@ type SendPollMessageInput = {
 };
 
 export const CHAT_MESSAGE_PAGE_SIZE = 40;
+export const CHAT_ROOM_PAGE_SIZE = 30;
 
 export type ChatMessageCursor = QueryDocumentSnapshot<DocumentData>;
+export type ChatRoomCursor = QueryDocumentSnapshot<DocumentData>;
+
+export type ChatRoomPageInfo = {
+  cursors: {
+    created: ChatRoomCursor | null;
+    family: ChatRoomCursor | null;
+    member: ChatRoomCursor | null;
+  };
+  hasMore: {
+    created: boolean;
+    family: boolean;
+    member: boolean;
+  };
+};
+
+export type ChatRoomPage = ChatRoomPageInfo & {
+  rooms: ChatRoom[];
+};
 
 export type ChatMessagePage = {
   cursor: ChatMessageCursor | null;
@@ -111,6 +131,20 @@ export async function getOrCreateFamilyRoom({
   });
 
   return roomId;
+}
+
+export async function getChatRoom({
+  familyId,
+  roomId,
+}: {
+  familyId: string;
+  roomId: string;
+}) {
+  const roomSnapshot = await getDoc(
+    doc(db, "families", familyId, "chatRooms", roomId)
+  );
+
+  return roomSnapshot.exists() ? (roomSnapshot.data() as ChatRoom) : null;
 }
 
 export async function createSecretRoom({
@@ -302,43 +336,67 @@ export async function removeChatRoomMember({
 
 export function subscribeChatRooms({
   familyId,
+  limitCount = CHAT_ROOM_PAGE_SIZE,
   onChange,
   onError,
+  onPageInfo,
   userId,
 }: {
   familyId: string;
+  limitCount?: number;
   onChange: (rooms: ChatRoom[]) => void;
   onError?: (message: string) => void;
+  onPageInfo?: (pageInfo: ChatRoomPageInfo) => void;
   userId: string;
 }): Unsubscribe {
+  const roomsCollection = collection(db, "families", familyId, "chatRooms");
   const familyRoomsQuery = query(
-    collection(db, "families", familyId, "chatRooms"),
-    where("type", "==", "FAMILY")
+    roomsCollection,
+    where("type", "==", "FAMILY"),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount + 1)
   );
   const createdRoomsQuery = query(
-    collection(db, "families", familyId, "chatRooms"),
-    where("createdBy", "==", userId)
+    roomsCollection,
+    where("createdBy", "==", userId),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount + 1)
   );
   const memberRoomsQuery = query(
-    collection(db, "families", familyId, "chatRooms"),
-    where("memberIds", "array-contains", userId)
+    roomsCollection,
+    where("memberIds", "array-contains", userId),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount + 1)
   );
-  const roomBuckets = new Map<string, ChatRoom[]>();
+  const roomBuckets = new Map<ChatRoomBucketKey, ChatRoomBucket>();
 
   function emitMergedRooms() {
-    const rooms = [...roomBuckets.values()]
-      .flat()
-      .filter(
-        (room, index, allRooms) =>
-          allRooms.findIndex((nextRoom) => nextRoom.id === room.id) === index
-      )
-      .sort(
-        (a, b) =>
-          getTimestampMilliseconds(b.updatedAt) -
-          getTimestampMilliseconds(a.updatedAt)
-      );
+    if (roomBuckets.size < 3) {
+      return;
+    }
+
+    const createdBucket = roomBuckets.get("created") as ChatRoomBucket;
+    const familyBucket = roomBuckets.get("family") as ChatRoomBucket;
+    const memberBucket = roomBuckets.get("member") as ChatRoomBucket;
+    const rooms = mergeChatRooms(
+      familyBucket.rooms,
+      createdBucket.rooms,
+      memberBucket.rooms
+    );
 
     onChange(rooms);
+    onPageInfo?.({
+      cursors: {
+        created: createdBucket.cursor,
+        family: familyBucket.cursor,
+        member: memberBucket.cursor,
+      },
+      hasMore: {
+        created: createdBucket.hasMore,
+        family: familyBucket.hasMore,
+        member: memberBucket.hasMore,
+      },
+    });
   }
 
   const unsubscribeFamilyRooms = onSnapshot(
@@ -346,7 +404,7 @@ export function subscribeChatRooms({
     (snapshot) => {
       roomBuckets.set(
         "family",
-        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+        readChatRoomBucket(snapshot.docs, limitCount)
       );
       emitMergedRooms();
     },
@@ -359,7 +417,7 @@ export function subscribeChatRooms({
     (snapshot) => {
       roomBuckets.set(
         "created",
-        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+        readChatRoomBucket(snapshot.docs, limitCount)
       );
       emitMergedRooms();
     },
@@ -372,7 +430,7 @@ export function subscribeChatRooms({
     (snapshot) => {
       roomBuckets.set(
         "member",
-        snapshot.docs.map((roomDoc) => roomDoc.data() as ChatRoom)
+        readChatRoomBucket(snapshot.docs, limitCount)
       );
       emitMergedRooms();
     },
@@ -385,6 +443,111 @@ export function subscribeChatRooms({
     unsubscribeFamilyRooms();
     unsubscribeCreatedRooms();
     unsubscribeMemberRooms();
+  };
+}
+
+export async function loadOlderChatRooms({
+  familyId,
+  pageInfo,
+  pageSize = CHAT_ROOM_PAGE_SIZE,
+  userId,
+}: {
+  familyId: string;
+  pageInfo: ChatRoomPageInfo;
+  pageSize?: number;
+  userId: string;
+}): Promise<ChatRoomPage> {
+  const roomsCollection = collection(db, "families", familyId, "chatRooms");
+  const [familySnapshot, createdSnapshot, memberSnapshot] = await Promise.all([
+    pageInfo.hasMore.family && pageInfo.cursors.family
+      ? getDocs(
+          query(
+            roomsCollection,
+            where("type", "==", "FAMILY"),
+            orderBy("updatedAt", "desc"),
+            startAfter(pageInfo.cursors.family),
+            limit(pageSize + 1)
+          )
+        )
+      : null,
+    pageInfo.hasMore.created && pageInfo.cursors.created
+      ? getDocs(
+          query(
+            roomsCollection,
+            where("createdBy", "==", userId),
+            orderBy("updatedAt", "desc"),
+            startAfter(pageInfo.cursors.created),
+            limit(pageSize + 1)
+          )
+        )
+      : null,
+    pageInfo.hasMore.member && pageInfo.cursors.member
+      ? getDocs(
+          query(
+            roomsCollection,
+            where("memberIds", "array-contains", userId),
+            orderBy("updatedAt", "desc"),
+            startAfter(pageInfo.cursors.member),
+            limit(pageSize + 1)
+          )
+        )
+      : null,
+  ]);
+  const familyBucket = familySnapshot
+    ? readChatRoomBucket(familySnapshot.docs, pageSize)
+    : emptyChatRoomBucket();
+  const createdBucket = createdSnapshot
+    ? readChatRoomBucket(createdSnapshot.docs, pageSize)
+    : emptyChatRoomBucket();
+  const memberBucket = memberSnapshot
+    ? readChatRoomBucket(memberSnapshot.docs, pageSize)
+    : emptyChatRoomBucket();
+
+  return {
+    cursors: {
+      created: createdBucket.cursor,
+      family: familyBucket.cursor,
+      member: memberBucket.cursor,
+    },
+    hasMore: {
+      created: createdBucket.hasMore,
+      family: familyBucket.hasMore,
+      member: memberBucket.hasMore,
+    },
+    rooms: mergeChatRooms(
+      familyBucket.rooms,
+      createdBucket.rooms,
+      memberBucket.rooms
+    ),
+  };
+}
+
+type ChatRoomBucketKey = "created" | "family" | "member";
+
+type ChatRoomBucket = {
+  cursor: ChatRoomCursor | null;
+  hasMore: boolean;
+  rooms: ChatRoom[];
+};
+
+function readChatRoomBucket(
+  documents: QueryDocumentSnapshot<DocumentData>[],
+  pageSize: number
+): ChatRoomBucket {
+  const visibleDocuments = documents.slice(0, pageSize);
+
+  return {
+    cursor: visibleDocuments[visibleDocuments.length - 1] ?? null,
+    hasMore: documents.length > pageSize,
+    rooms: visibleDocuments.map((roomDocument) => roomDocument.data() as ChatRoom),
+  };
+}
+
+function emptyChatRoomBucket(): ChatRoomBucket {
+  return {
+    cursor: null,
+    hasMore: false,
+    rooms: [],
   };
 }
 

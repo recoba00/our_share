@@ -358,7 +358,7 @@ families/{familyId}/messages/{messageId}
 
 이 구조는 Firestore Security Rules에서 `familyId`를 경로 기준으로 검증해 목록 조회와 저장 권한을 안정적으로 처리하기 위한 MVP 기준 구조다.
 
-채팅 상세는 `messages` 전체를 구독하지 않는다. `roomId`가 같은 메시지를 `createdAt` 내림차순으로 최근 40개만 실시간 구독하고, 사용자가 위로 이동하면 `startAfter` 커서로 과거 내역을 40개씩 추가한다. 이 쿼리는 `firestore.indexes.json`의 `messages(roomId ASC, createdAt DESC)` 복합 인덱스를 사용한다.
+채팅 상세는 `messages` 전체를 구독하지 않는다. `roomId`가 같은 메시지를 `createdAt` 내림차순으로 최근 40개만 실시간 구독하고, 사용자가 위로 이동하면 `startAfter` 커서로 과거 내역을 40개씩 추가한다. 채팅방 목록도 공개 전체방·내가 만든 방·내가 참여한 방을 각각 `updatedAt` 내림차순 최신 30개로 제한하고, 이전 목록은 각 접근 경로의 커서로 추가한다. 오래된 방 URL은 해당 문서만 직접 확인해 페이지 목록 범위와 무관하게 열 수 있다. 관련 쿼리는 `firestore.indexes.json`의 채팅 메시지 및 채팅방 복합 인덱스를 사용한다.
 
 캘린더는 화면에 렌더링하는 월간 6주 범위와 해당 범위에 겹치는 일반 일정만 조회하고, 매년 반복 일정은 별도 제한 쿼리로 합친다. 메모는 공개·개인 범위별 최신 30개를 실시간 구독하고 과거 항목은 각 범위의 `updatedAt` 커서로 추가한다. 투표는 최신 20개를 먼저 읽고 `createdAt` 커서로 이전 페이지를 불러온다. 홈·헤더·알림·채팅은 각 UI에 필요한 개수만 별도로 구독한다. 관련 복합 인덱스는 `firestore.indexes.json`에서 관리하며 앱 코드보다 먼저 운영 프로젝트에 배포한다.
 

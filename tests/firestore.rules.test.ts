@@ -1504,7 +1504,9 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "chatRooms"),
-          where("type", "==", "FAMILY")
+          where("type", "==", "FAMILY"),
+          orderBy("updatedAt", "desc"),
+          limit(31)
         )
       )
     );
@@ -1512,7 +1514,9 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "chatRooms"),
-          where("createdBy", "==", "alice")
+          where("createdBy", "==", "alice"),
+          orderBy("updatedAt", "desc"),
+          limit(31)
         )
       )
     );
@@ -1520,7 +1524,9 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "chatRooms"),
-          where("memberIds", "array-contains", "alice")
+          where("memberIds", "array-contains", "alice"),
+          orderBy("updatedAt", "desc"),
+          limit(31)
         )
       )
     );

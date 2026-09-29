@@ -294,6 +294,7 @@ export function HomePage() {
       }),
       subscribeChatRooms({
         familyId: activeFamily.id,
+        limitCount: 6,
         onChange: setChatRooms,
         onError: (message) => handleFamilyDataError(activeFamily.id, message),
         userId: user.uid,

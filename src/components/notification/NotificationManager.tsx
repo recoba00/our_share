@@ -126,6 +126,7 @@ export function NotificationManager() {
       unsubscribes.push(
         chatService.subscribeChatRooms({
           familyId,
+          limitCount: 20,
           onChange: (rooms) =>
             notifyChangedRooms(rooms, userId, baseUrl, pathnameRef, roomStateRef),
           userId,

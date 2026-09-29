@@ -37,8 +37,10 @@ import {
   createSecretRoom,
   deleteChatRoom,
   deleteMessage,
+  getChatRoom,
   getOrCreateDirectRoom,
   getOrCreateFamilyRoom,
+  loadOlderChatRooms,
   loadOlderMessages,
   markRoomMessagesAsRead,
   sendPollMessage,
@@ -47,12 +49,17 @@ import {
   subscribeRecentMessages,
   updateTextMessage,
   type ChatMessageCursor,
+  type ChatRoomPageInfo,
 } from "../../features/chat/services/chatService";
 import type { ChatMessage, ChatRoom } from "../../features/chat/types/chatTypes";
 import {
   getMessagesLeavingRecentWindow,
   mergeChatMessages,
 } from "../../features/chat/utils/chatMessagePagination";
+import {
+  getChatRoomsLeavingRecentWindow,
+  mergeChatRooms,
+} from "../../features/chat/utils/chatRoomPagination";
 import {
   getFamilyMembers,
 } from "../../features/family/services/familyService";
@@ -89,7 +96,13 @@ export function ChatPage() {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const { open: openChatMembers, setRoom: setMemberDrawerRoom } = useChatMemberDrawer();
-  const [rooms, setRooms] = useState<ChatRoom[]>([]);
+  const [recentRooms, setRecentRooms] = useState<ChatRoom[]>([]);
+  const [olderRooms, setOlderRooms] = useState<ChatRoom[]>([]);
+  const [roomPageInfo, setRoomPageInfo] =
+    useState<ChatRoomPageInfo>(emptyChatRoomPageInfo);
+  const [isLoadingOlderRooms, setIsLoadingOlderRooms] = useState(false);
+  const previousRecentRoomsRef = useRef<ChatRoom[]>([]);
+  const hasLoadedOlderRoomsRef = useRef(false);
   const [recentMessages, setRecentMessages] = useState<ChatMessage[]>([]);
   const [olderMessages, setOlderMessages] = useState<ChatMessage[]>([]);
   const [olderMessageCursor, setOlderMessageCursor] =
@@ -139,6 +152,10 @@ export function ChatPage() {
   const reportError = useCallback(
     (message: string) => showToast({ message, variant: "error" }),
     [showToast]
+  );
+  const rooms = useMemo(
+    () => mergeChatRooms(recentRooms, olderRooms),
+    [olderRooms, recentRooms]
   );
   const selectedRoom = useMemo(
     () => rooms.find((room) => room.id === (roomId ?? selectedRoomId)) ?? (!roomId ? rooms[0] : undefined),
@@ -241,7 +258,12 @@ export function ChatPage() {
       }
 
       setMemberLoad({ familyId: activeFamily.id, status: "loading" });
-      setRooms([]);
+      setRecentRooms([]);
+      setOlderRooms([]);
+      setRoomPageInfo(emptyChatRoomPageInfo);
+      setIsLoadingOlderRooms(false);
+      previousRecentRoomsRef.current = [];
+      hasLoadedOlderRoomsRef.current = false;
       setRecentMessages([]);
       setOlderMessages([]);
       setMembers([]);
@@ -365,11 +387,54 @@ export function ChatPage() {
 
     return subscribeChatRooms({
       familyId: activeFamily.id,
-      onChange: setRooms,
+      onChange: (nextRooms) => {
+        if (hasLoadedOlderRoomsRef.current) {
+          const roomsLeavingWindow = getChatRoomsLeavingRecentWindow(
+            previousRecentRoomsRef.current,
+            nextRooms
+          );
+
+          if (roomsLeavingWindow.length > 0) {
+            setOlderRooms((current) => mergeChatRooms(current, roomsLeavingWindow));
+          }
+        }
+
+        previousRecentRoomsRef.current = nextRooms;
+        setRecentRooms(nextRooms);
+      },
       onError: reportError,
+      onPageInfo: (nextPageInfo) => {
+        if (!hasLoadedOlderRoomsRef.current) {
+          setRoomPageInfo(nextPageInfo);
+        }
+      },
       userId: user.uid,
     });
   }, [activeFamily, reportError, user]);
+
+  useEffect(() => {
+    if (!activeFamily?.id || !roomId || rooms.some((room) => room.id === roomId)) {
+      return;
+    }
+
+    let active = true;
+
+    void getChatRoom({ familyId: activeFamily.id, roomId })
+      .then((room) => {
+        if (active && room) {
+          setOlderRooms((current) => mergeChatRooms(current, [room]));
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          reportError(getErrorMessage(error));
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeFamily?.id, reportError, roomId, rooms]);
 
   useEffect(() => {
     if (!activeFamily) {
@@ -493,6 +558,40 @@ export function ChatPage() {
       userId: user.uid,
     }).catch((error: Error) => reportError(error.message));
   }, [activeFamily, messages, reportError, user]);
+
+  async function handleLoadOlderRooms() {
+    if (
+      !activeFamily ||
+      !user ||
+      isLoadingOlderRooms ||
+      (!roomPageInfo.hasMore.created &&
+        !roomPageInfo.hasMore.family &&
+        !roomPageInfo.hasMore.member)
+    ) {
+      return;
+    }
+
+    setIsLoadingOlderRooms(true);
+
+    try {
+      const page = await loadOlderChatRooms({
+        familyId: activeFamily.id,
+        pageInfo: roomPageInfo,
+        userId: user.uid,
+      });
+
+      hasLoadedOlderRoomsRef.current = true;
+      setOlderRooms((current) => mergeChatRooms(current, page.rooms));
+      setRoomPageInfo({ cursors: page.cursors, hasMore: page.hasMore });
+    } catch (error) {
+      notify(
+        error instanceof Error ? error.message : "이전 채팅방을 불러오지 못했어요.",
+        "error"
+      );
+    } finally {
+      setIsLoadingOlderRooms(false);
+    }
+  }
 
   async function handleLoadOlderMessages() {
     if (
@@ -764,6 +863,11 @@ export function ChatPage() {
         familyId: activeFamily.id,
         roomId: room.id,
       });
+      setRecentRooms((current) => current.filter(({ id }) => id !== room.id));
+      setOlderRooms((current) => current.filter(({ id }) => id !== room.id));
+      previousRecentRoomsRef.current = previousRecentRoomsRef.current.filter(
+        ({ id }) => id !== room.id
+      );
       if (selectedRoomId === room.id || roomId === room.id) {
         setSelectedRoomId("");
         navigate("/chat");
@@ -1207,6 +1311,20 @@ export function ChatPage() {
                 </div>
               ))
             )}
+            {roomPageInfo.hasMore.created ||
+            roomPageInfo.hasMore.family ||
+            roomPageInfo.hasMore.member ? (
+              <Button
+                className="mt-2 w-full"
+                disabled={isLoadingOlderRooms}
+                loading={isLoadingOlderRooms}
+                onClick={() => void handleLoadOlderRooms()}
+                type="button"
+                variant="secondary"
+              >
+                이전 채팅방 더 보기
+              </Button>
+            ) : null}
           </div>
         </div>
 
@@ -1621,6 +1739,11 @@ function PollMessageCard({
     </div>
   );
 }
+
+const emptyChatRoomPageInfo: ChatRoomPageInfo = {
+  cursors: { created: null, family: null, member: null },
+  hasMore: { created: false, family: false, member: false },
+};
 
 function getErrorMessage(error: unknown) {
   if (error instanceof Error) {

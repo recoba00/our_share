@@ -4,6 +4,11 @@ import {
   getCalendarGridRange,
   isEventVisibleOnDate,
 } from "../src/features/calendar/utils/calendarEventUtils";
+import type { ChatRoom } from "../src/features/chat/types/chatTypes";
+import {
+  getChatRoomsLeavingRecentWindow,
+  mergeChatRooms,
+} from "../src/features/chat/utils/chatRoomPagination";
 import type { Memo } from "../src/features/memo/types/memoTypes";
 import { mergeMemos } from "../src/features/memo/utils/memoPagination";
 
@@ -42,6 +47,30 @@ describe("memo data windows", () => {
   });
 });
 
+describe("chat room data windows", () => {
+  it("merges overlapping access buckets without duplicate rooms", () => {
+    const family = createChatRoom("family", 30);
+    const direct = createChatRoom("direct", 20);
+    const privateRoom = createChatRoom("private", 10);
+
+    expect(
+      mergeChatRooms([family, privateRoom], [direct, privateRoom]).map((room) => room.id)
+    ).toEqual(["family", "direct", "private"]);
+  });
+
+  it("keeps rooms pushed out of the recent real-time window", () => {
+    const previousBoundary = createChatRoom("boundary", 20);
+    const nextNewest = createChatRoom("newest", 40);
+
+    expect(
+      getChatRoomsLeavingRecentWindow(
+        [createChatRoom("recent", 30), previousBoundary],
+        [nextNewest, createChatRoom("recent", 30)]
+      ).map((room) => room.id)
+    ).toEqual(["boundary"]);
+  });
+});
+
 function createCalendarEvent(
   overrides: Pick<CalendarEvent, "endDate" | "repeat" | "startDate">
 ): CalendarEvent {
@@ -77,5 +106,20 @@ function createMemo(id: string, seconds: number): Memo {
     updatedAt: { seconds },
     visibleTo: [],
     visibility: "FAMILY",
+  };
+}
+
+function createChatRoom(id: string, seconds: number): ChatRoom {
+  return {
+    createdAt: { seconds },
+    createdBy: "user-1",
+    familyId: "crew-1",
+    id,
+    lastMessageAt: { seconds },
+    lastMessageText: id,
+    memberIds: ["user-1"],
+    name: id,
+    type: "PRIVATE_GROUP",
+    updatedAt: { seconds },
   };
 }

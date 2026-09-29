@@ -107,6 +107,7 @@ export function AppHeader() {
         }),
         chatService.subscribeChatRooms({
           familyId: activeFamilyId,
+          limitCount: 6,
           onChange: setNotificationChatRooms,
           userId,
         }),

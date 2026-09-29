@@ -206,7 +206,7 @@ npx firebase-tools deploy --only firestore:indexes --project our-share-6baf5
 
 인덱스 생성에는 서비스 계정 또는 실행 계정의 `Cloud Datastore Index Admin`(`roles/datastore.indexAdmin`) 권한이 필요하다. 현재 Hosting 자동 배포는 권한 범위를 넓히지 않기 위해 Rules만 게시하며, 인덱스 변경이 있는 릴리스에서만 위 명령을 별도로 실행한다.
 
-현재 인덱스는 채팅 메시지 페이지네이션, 캘린더 범위·최근 일정 조회, 메모 최신순 페이지네이션을 지원한다. 인덱스가 준비되기 전에 해당 앱 코드를 먼저 배포하면 Firestore가 인덱스 필요 오류를 반환하므로 반드시 위 순서를 유지한다.
+현재 인덱스는 채팅 메시지·채팅방 목록 페이지네이션, 캘린더 범위·최근 일정 조회, 메모 최신순 페이지네이션을 지원한다. 채팅방 목록은 `type + updatedAt`, `createdBy + updatedAt`, `memberIds(array-contains) + updatedAt` 인덱스를 사용한다. 인덱스가 준비되기 전에 해당 앱 코드를 먼저 배포하면 Firestore가 인덱스 필요 오류를 반환하므로 반드시 위 순서를 유지한다.
 
 ## Firebase Functions 운영 배포
 
