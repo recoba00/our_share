@@ -1445,7 +1445,13 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "calendarEvents"),
-          where("visibility", "==", "FAMILY")
+          where("visibility", "==", "FAMILY"),
+          where("repeat", "==", "NONE"),
+          where("startDate", "<=", "2026-10-10"),
+          where("endDate", ">=", "2026-08-30"),
+          orderBy("startDate", "asc"),
+          orderBy("endDate", "asc"),
+          limit(250)
         )
       )
     );
@@ -1454,7 +1460,13 @@ describe("MVP family list queries", () => {
         query(
           collection(aliceDb, "families", "familyA", "calendarEvents"),
           where("visibility", "==", "PRIVATE"),
-          where("visibleTo", "array-contains", "alice")
+          where("visibleTo", "array-contains", "alice"),
+          where("repeat", "==", "NONE"),
+          where("startDate", "<=", "2026-10-10"),
+          where("endDate", ">=", "2026-08-30"),
+          orderBy("startDate", "asc"),
+          orderBy("endDate", "asc"),
+          limit(250)
         )
       )
     );
@@ -1462,7 +1474,9 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "memos"),
-          where("visibility", "==", "FAMILY")
+          where("visibility", "==", "FAMILY"),
+          orderBy("updatedAt", "desc"),
+          limit(31)
         )
       )
     );
@@ -1471,7 +1485,9 @@ describe("MVP family list queries", () => {
         query(
           collection(aliceDb, "families", "familyA", "memos"),
           where("visibility", "==", "PRIVATE"),
-          where("visibleTo", "array-contains", "alice")
+          where("visibleTo", "array-contains", "alice"),
+          orderBy("updatedAt", "desc"),
+          limit(31)
         )
       )
     );
@@ -1479,7 +1495,8 @@ describe("MVP family list queries", () => {
       getDocs(
         query(
           collection(aliceDb, "families", "familyA", "polls"),
-          orderBy("createdAt", "desc")
+          orderBy("createdAt", "desc"),
+          limit(21)
         )
       )
     );
