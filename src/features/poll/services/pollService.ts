@@ -3,13 +3,18 @@ import {
   deleteDoc,
   doc,
   getDocs,
+  limit,
   onSnapshot,
   orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   where,
   writeBatch,
+  type DocumentData,
+  type QueryConstraint,
+  type QueryDocumentSnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
@@ -26,6 +31,16 @@ type CreatePollInput = {
   options: string[];
   title: string;
   type: PollType;
+};
+
+export const POLL_PAGE_SIZE = 20;
+
+export type PollCursor = QueryDocumentSnapshot<DocumentData>;
+
+export type PollPage = {
+  cursor: PollCursor | null;
+  hasMore: boolean;
+  polls: Poll[];
 };
 
 export async function createPoll(input: CreatePollInput) {
@@ -99,33 +114,58 @@ export async function deletePoll({
   }
 }
 
-export async function getPolls(familyId: string): Promise<Poll[]> {
-  const pollsQuery = query(
-    collection(db, "families", familyId, "polls"),
-    orderBy("createdAt", "desc")
-  );
-  const snapshot = await getDocs(pollsQuery);
+export async function getPollPage({
+  cursor,
+  familyId,
+  pageSize = POLL_PAGE_SIZE,
+}: {
+  cursor?: PollCursor | null;
+  familyId: string;
+  pageSize?: number;
+}): Promise<PollPage> {
+  const pollConstraints: QueryConstraint[] = [orderBy("createdAt", "desc")];
 
-  return snapshot.docs.map((pollDoc) => pollDoc.data() as Poll);
+  if (cursor) {
+    pollConstraints.push(startAfter(cursor));
+  }
+
+  const snapshot = await getDocs(
+    query(
+      collection(db, "families", familyId, "polls"),
+      ...pollConstraints,
+      limit(pageSize + 1)
+    )
+  );
+  const visibleDocuments = snapshot.docs.slice(0, pageSize);
+
+  return {
+    cursor: visibleDocuments[visibleDocuments.length - 1] ?? null,
+    hasMore: snapshot.docs.length > pageSize,
+    polls: visibleDocuments.map((pollDoc) => pollDoc.data() as Poll),
+  };
 }
 
 export function subscribePolls({
   familyId,
+  limitCount = 40,
   onChange,
   onError,
 }: {
   familyId: string;
+  limitCount?: number;
   onChange: (polls: Poll[]) => void;
   onError?: (message: string) => void;
 }): Unsubscribe {
-  const pollsQuery = query(collection(db, "families", familyId, "polls"));
+  const pollsQuery = query(
+    collection(db, "families", familyId, "polls"),
+    orderBy("createdAt", "desc"),
+    limit(limitCount)
+  );
 
   return onSnapshot(
     pollsQuery,
     (snapshot) => {
-      const polls = snapshot.docs
-        .map((pollDoc) => pollDoc.data() as Poll)
-        .sort((a, b) => getTime(b.createdAt) - getTime(a.createdAt));
+      const polls = snapshot.docs.map((pollDoc) => pollDoc.data() as Poll);
 
       onChange(polls);
     },
@@ -193,12 +233,4 @@ export async function getPollVotes(
       acc[vote.pollId] = [...(acc[vote.pollId] ?? []), vote];
       return acc;
     }, {});
-}
-
-function getTime(value: unknown) {
-  if (value && typeof value === "object" && "seconds" in value) {
-    return Number((value as { seconds: number }).seconds) * 1000;
-  }
-
-  return 0;
 }

@@ -56,6 +56,7 @@ import type {
 import { subscribeCalendarEvents } from "../../features/calendar/services/calendarService";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
 import {
+  getCalendarGridRange,
   getDDayLabel,
   getThisMonthEvents,
 } from "../../features/calendar/utils/calendarEventUtils";
@@ -280,11 +281,15 @@ export function HomePage() {
       return;
     }
 
+    const calendarRange = getCalendarGridRange(new Date());
+
     const unsubscribes = [
       subscribeCalendarEvents({
+        endDate: calendarRange.endDate,
         familyId: activeFamily.id,
         onChange: setCalendarEvents,
         onError: (message) => handleFamilyDataError(activeFamily.id, message),
+        startDate: calendarRange.startDate,
         userId: user.uid,
       }),
       subscribeChatRooms({
@@ -295,12 +300,14 @@ export function HomePage() {
       }),
       subscribeMemos({
         familyId: activeFamily.id,
+        limitCount: 6,
         onChange: setMemos,
         onError: (message) => handleFamilyDataError(activeFamily.id, message),
         userId: user.uid,
       }),
       subscribePolls({
         familyId: activeFamily.id,
+        limitCount: 6,
         onChange: setPolls,
         onError: (message) => handleFamilyDataError(activeFamily.id, message),
       }),

@@ -20,6 +20,15 @@ export function createMonthDays(viewDate: Date) {
   });
 }
 
+export function getCalendarGridRange(viewDate: Date) {
+  const monthDays = createMonthDays(viewDate);
+
+  return {
+    endDate: monthDays[monthDays.length - 1].key,
+    startDate: monthDays[0].key,
+  };
+}
+
 export function getThisMonthEvents(events: CalendarEvent[], baseDate = new Date()) {
   const viewDate = new Date(baseDate.getFullYear(), baseDate.getMonth(), 1);
 
@@ -48,7 +57,9 @@ export function isEventVisibleOnDate(event: CalendarEvent, date: Date) {
     const start = event.startDate.slice(5);
     const end = event.endDate.slice(5);
     const monthDay = target.slice(5);
-    return start <= monthDay && monthDay <= end;
+    return start <= end
+      ? start <= monthDay && monthDay <= end
+      : monthDay >= start || monthDay <= end;
   }
 
   return event.startDate <= target && target <= event.endDate;

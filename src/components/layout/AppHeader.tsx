@@ -25,6 +25,7 @@ import { FamilyRoleIndicator } from "../common/FamilyRoleIndicator";
 import { SegmentedControl } from "../common/SegmentedControl";
 import type { Family } from "../../features/family/types/familyTypes";
 import type { CalendarEvent } from "../../features/calendar/types/calendarTypes";
+import { getCalendarGridRange } from "../../features/calendar/utils/calendarEventUtils";
 import type { ChatRoom } from "../../features/chat/types/chatTypes";
 import type { Memo } from "../../features/memo/types/memoTypes";
 import type { Poll } from "../../features/poll/types/pollTypes";
@@ -87,14 +88,21 @@ export function AppHeader() {
         return;
       }
 
+      const calendarRange = getCalendarGridRange(new Date());
+
       unsubscribes.push(
         calendarService.subscribeCalendarEvents({
+          endDate: calendarRange.endDate,
           familyId: activeFamilyId,
+          maxRangeItems: 12,
+          maxRecurringItems: 12,
           onChange: setNotificationCalendarEvents,
+          startDate: calendarRange.startDate,
           userId,
         }),
         pollService.subscribePolls({
           familyId: activeFamilyId,
+          limitCount: 6,
           onChange: setNotificationPolls,
         }),
         chatService.subscribeChatRooms({
@@ -104,6 +112,7 @@ export function AppHeader() {
         }),
         memoService.subscribeMemos({
           familyId: activeFamilyId,
+          limitCount: 6,
           onChange: setNotificationMemos,
           userId,
         })

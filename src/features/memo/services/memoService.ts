@@ -2,16 +2,23 @@ import {
   collection,
   deleteDoc,
   doc,
+  getDocs,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
   setDoc,
+  startAfter,
   where,
+  type DocumentData,
+  type QueryDocumentSnapshot,
   type Unsubscribe,
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
 import type { Memo, MemoType } from "../types/memoTypes";
+import { mergeMemos } from "../utils/memoPagination";
 
 type CreateMemoInput = {
   content: string;
@@ -20,6 +27,25 @@ type CreateMemoInput = {
   password: string;
   title: string;
   type: MemoType;
+};
+
+export const MEMO_PAGE_SIZE = 30;
+
+export type MemoCursor = QueryDocumentSnapshot<DocumentData>;
+
+export type MemoPageInfo = {
+  cursors: {
+    private: MemoCursor | null;
+    public: MemoCursor | null;
+  };
+  hasMore: {
+    private: boolean;
+    public: boolean;
+  };
+};
+
+export type MemoPage = MemoPageInfo & {
+  memos: Memo[];
 };
 
 export async function createMemo(input: CreateMemoInput) {
@@ -76,36 +102,54 @@ export async function deleteMemo({
 
 export function subscribeMemos({
   familyId,
+  limitCount = MEMO_PAGE_SIZE,
   onChange,
   onError,
+  onPageInfo,
   userId,
 }: {
   familyId: string;
+  limitCount?: number;
   onChange: (memos: Memo[]) => void;
   onError?: (message: string) => void;
+  onPageInfo?: (pageInfo: MemoPageInfo) => void;
   userId: string;
 }): Unsubscribe {
   const publicMemosQuery = query(
     collection(db, "families", familyId, "memos"),
-    where("visibility", "==", "FAMILY")
+    where("visibility", "==", "FAMILY"),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount + 1)
   );
   const privateMemosQuery = query(
     collection(db, "families", familyId, "memos"),
     where("visibility", "==", "PRIVATE"),
-    where("visibleTo", "array-contains", userId)
+    where("visibleTo", "array-contains", userId),
+    orderBy("updatedAt", "desc"),
+    limit(limitCount + 1)
   );
-  const memoBuckets = new Map<string, Memo[]>();
+  const memoBuckets = new Map<"private" | "public", MemoBucket>();
 
   function emitMergedMemos() {
-    const memos = [...memoBuckets.values()]
-      .flat()
-      .filter(
-        (memo, index, allMemos) =>
-          allMemos.findIndex((nextMemo) => nextMemo.id === memo.id) === index
-      )
-      .sort((a, b) => getTime(b.updatedAt) - getTime(a.updatedAt));
+    if (memoBuckets.size < 2) {
+      return;
+    }
+
+    const publicBucket = memoBuckets.get("public") as MemoBucket;
+    const privateBucket = memoBuckets.get("private") as MemoBucket;
+    const memos = mergeMemos(publicBucket.memos, privateBucket.memos);
 
     onChange(memos);
+    onPageInfo?.({
+      cursors: {
+        private: privateBucket.cursor,
+        public: publicBucket.cursor,
+      },
+      hasMore: {
+        private: privateBucket.hasMore,
+        public: publicBucket.hasMore,
+      },
+    });
   }
 
   const unsubscribePublicMemos = onSnapshot(
@@ -113,7 +157,7 @@ export function subscribeMemos({
     (snapshot) => {
       memoBuckets.set(
         "public",
-        snapshot.docs.map((memoDoc) => memoDoc.data() as Memo)
+        readMemoBucket(snapshot.docs, limitCount)
       );
       emitMergedMemos();
     },
@@ -126,7 +170,7 @@ export function subscribeMemos({
     (snapshot) => {
       memoBuckets.set(
         "private",
-        snapshot.docs.map((memoDoc) => memoDoc.data() as Memo)
+        readMemoBucket(snapshot.docs, limitCount)
       );
       emitMergedMemos();
     },
@@ -138,6 +182,90 @@ export function subscribeMemos({
   return () => {
     unsubscribePublicMemos();
     unsubscribePrivateMemos();
+  };
+}
+
+export async function loadOlderMemos({
+  familyId,
+  pageInfo,
+  pageSize = MEMO_PAGE_SIZE,
+  userId,
+}: {
+  familyId: string;
+  pageInfo: MemoPageInfo;
+  pageSize?: number;
+  userId: string;
+}): Promise<MemoPage> {
+  const memosCollection = collection(db, "families", familyId, "memos");
+  const [publicSnapshot, privateSnapshot] = await Promise.all([
+    pageInfo.hasMore.public && pageInfo.cursors.public
+      ? getDocs(
+          query(
+            memosCollection,
+            where("visibility", "==", "FAMILY"),
+            orderBy("updatedAt", "desc"),
+            startAfter(pageInfo.cursors.public),
+            limit(pageSize + 1)
+          )
+        )
+      : null,
+    pageInfo.hasMore.private && pageInfo.cursors.private
+      ? getDocs(
+          query(
+            memosCollection,
+            where("visibility", "==", "PRIVATE"),
+            where("visibleTo", "array-contains", userId),
+            orderBy("updatedAt", "desc"),
+            startAfter(pageInfo.cursors.private),
+            limit(pageSize + 1)
+          )
+        )
+      : null,
+  ]);
+  const publicBucket = publicSnapshot
+    ? readMemoBucket(publicSnapshot.docs, pageSize)
+    : emptyMemoBucket();
+  const privateBucket = privateSnapshot
+    ? readMemoBucket(privateSnapshot.docs, pageSize)
+    : emptyMemoBucket();
+
+  return {
+    cursors: {
+      private: privateBucket.cursor,
+      public: publicBucket.cursor,
+    },
+    hasMore: {
+      private: privateBucket.hasMore,
+      public: publicBucket.hasMore,
+    },
+    memos: mergeMemos(publicBucket.memos, privateBucket.memos),
+  };
+}
+
+type MemoBucket = {
+  cursor: MemoCursor | null;
+  hasMore: boolean;
+  memos: Memo[];
+};
+
+function readMemoBucket(
+  documents: QueryDocumentSnapshot<DocumentData>[],
+  pageSize: number
+): MemoBucket {
+  const visibleDocuments = documents.slice(0, pageSize);
+
+  return {
+    cursor: visibleDocuments[visibleDocuments.length - 1] ?? null,
+    hasMore: documents.length > pageSize,
+    memos: visibleDocuments.map((memoDoc) => memoDoc.data() as Memo),
+  };
+}
+
+function emptyMemoBucket(): MemoBucket {
+  return {
+    cursor: null,
+    hasMore: false,
+    memos: [],
   };
 }
 
@@ -254,12 +382,4 @@ function toArrayBuffer(value: Uint8Array) {
     value.byteOffset,
     value.byteOffset + value.byteLength
   ) as ArrayBuffer;
-}
-
-function getTime(value: unknown) {
-  if (value && typeof value === "object" && "seconds" in value) {
-    return Number((value as { seconds: number }).seconds) * 1000;
-  }
-
-  return 0;
 }

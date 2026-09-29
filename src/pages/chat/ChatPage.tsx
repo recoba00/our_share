@@ -378,6 +378,7 @@ export function ChatPage() {
 
     return subscribePolls({
       familyId: activeFamily.id,
+      limitCount: 80,
       onChange: setPolls,
       onError: reportError,
     });

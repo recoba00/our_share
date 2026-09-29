@@ -1,4 +1,5 @@
 import type { CalendarEvent } from "../../calendar/types/calendarTypes";
+import { isEventVisibleOnDate } from "../../calendar/utils/calendarEventUtils";
 import type { Poll } from "../../poll/types/pollTypes";
 
 export type NotificationAvailability =
@@ -149,8 +150,7 @@ export async function notifyDashboardReminders({
 }
 
 function isTodayEvent(event: CalendarEvent) {
-  const today = toDateKey(new Date());
-  return event.startDate <= today && event.endDate >= today;
+  return isEventVisibleOnDate(event, new Date());
 }
 
 function isClosingSoonPoll(poll: Poll) {

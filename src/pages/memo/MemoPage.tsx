@@ -1,6 +1,6 @@
 import { Eye, LockKey, NotePencil, Plus, Trash } from "@phosphor-icons/react";
 import type { FormEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ActionLayer, MobileCreateButton } from "../../components/common/ActionLayer";
 import { AnimatedCheckbox } from "../../components/common/AnimatedCheckbox";
 import { Button } from "../../components/common/Button";
@@ -15,10 +15,14 @@ import { useAuth } from "../../features/auth/useAuth";
 import {
   createMemo,
   deleteMemo,
+  loadOlderMemos,
+  MEMO_PAGE_SIZE,
   revealSensitiveMemo,
   subscribeMemos,
+  type MemoPageInfo,
 } from "../../features/memo/services/memoService";
 import type { Memo, MemoType } from "../../features/memo/types/memoTypes";
+import { mergeMemos } from "../../features/memo/utils/memoPagination";
 import { useFamily } from "../../features/family/useFamily";
 import { truncateFamilyName } from "../../features/family/utils/familyName";
 
@@ -27,7 +31,10 @@ export function MemoPage() {
   const { activeFamily, isLoading: isFamilyLoading } = useFamily();
   const { confirm } = useConfirmDialog();
   const { showToast } = useToast();
-  const [memos, setMemos] = useState<Memo[]>([]);
+  const [recentMemos, setRecentMemos] = useState<Memo[]>([]);
+  const [olderMemos, setOlderMemos] = useState<Memo[]>([]);
+  const [memoPageInfo, setMemoPageInfo] = useState<MemoPageInfo>(emptyMemoPageInfo);
+  const [isLoadingOlderMemos, setIsLoadingOlderMemos] = useState(false);
   const [selectedMemoId, setSelectedMemoId] = useState("");
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
@@ -36,6 +43,13 @@ export function MemoPage() {
   const [revealPassword, setRevealPassword] = useState("");
   const [revealedContent, setRevealedContent] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const hasLoadedOlderMemosRef = useRef(false);
+  const previousRecentMemosRef = useRef<Memo[]>([]);
+
+  const memos = useMemo(
+    () => mergeMemos(recentMemos, olderMemos),
+    [olderMemos, recentMemos]
+  );
 
   const selectedMemo = useMemo(
     () => memos.find((memo) => memo.id === selectedMemoId) ?? memos[0],
@@ -47,13 +61,81 @@ export function MemoPage() {
       return;
     }
 
-    return subscribeMemos({
+    hasLoadedOlderMemosRef.current = false;
+    previousRecentMemosRef.current = [];
+    let cancelled = false;
+
+    queueMicrotask(() => {
+      if (cancelled) {
+        return;
+      }
+
+      setRecentMemos([]);
+      setOlderMemos([]);
+      setMemoPageInfo(emptyMemoPageInfo);
+    });
+
+    const unsubscribe = subscribeMemos({
       familyId: activeFamily.id,
-      onChange: setMemos,
+      limitCount: MEMO_PAGE_SIZE,
+      onChange: (nextMemos) => {
+        if (hasLoadedOlderMemosRef.current) {
+          const nextMemoIds = new Set(nextMemos.map((memo) => memo.id));
+          const memosLeavingRecentWindow = previousRecentMemosRef.current.filter(
+            (memo) => !nextMemoIds.has(memo.id)
+          );
+
+          if (memosLeavingRecentWindow.length > 0) {
+            setOlderMemos((current) => mergeMemos(current, memosLeavingRecentWindow));
+          }
+        }
+
+        previousRecentMemosRef.current = nextMemos;
+        setRecentMemos(nextMemos);
+      },
       onError: (message) => showToast({ message, variant: "error" }),
+      onPageInfo: (nextPageInfo) => {
+        if (!hasLoadedOlderMemosRef.current) {
+          setMemoPageInfo(nextPageInfo);
+        }
+      },
       userId: user.uid,
     });
+
+    return () => {
+      cancelled = true;
+      unsubscribe();
+    };
   }, [activeFamily, showToast, user]);
+
+  async function handleLoadOlderMemos() {
+    if (
+      !activeFamily ||
+      !user ||
+      isLoadingOlderMemos ||
+      (!memoPageInfo.hasMore.public && !memoPageInfo.hasMore.private)
+    ) {
+      return;
+    }
+
+    setIsLoadingOlderMemos(true);
+
+    try {
+      const page = await loadOlderMemos({
+        familyId: activeFamily.id,
+        pageInfo: memoPageInfo,
+        userId: user.uid,
+      });
+
+      hasLoadedOlderMemosRef.current = true;
+      setOlderMemos((current) => mergeMemos(current, page.memos));
+      setMemoPageInfo({ cursors: page.cursors, hasMore: page.hasMore });
+    } catch (error) {
+      notify(error instanceof Error ? error.message : "이전 메모를 불러오지 못했어요.", "error");
+    } finally {
+      setIsLoadingOlderMemos(false);
+    }
+  }
 
   async function handleCreateMemo(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -283,6 +365,18 @@ export function MemoPage() {
               </div>
             ))
           )}
+          {memoPageInfo.hasMore.public || memoPageInfo.hasMore.private ? (
+            <Button
+              className="w-full"
+              disabled={isLoadingOlderMemos}
+              loading={isLoadingOlderMemos}
+              onClick={() => void handleLoadOlderMemos()}
+              type="button"
+              variant="secondary"
+            >
+              이전 메모 더 보기
+            </Button>
+          ) : null}
         </div>
 
         {selectedMemo ? (
@@ -334,3 +428,8 @@ export function MemoPage() {
     </>
   );
 }
+
+const emptyMemoPageInfo: MemoPageInfo = {
+  cursors: { private: null, public: null },
+  hasMore: { private: false, public: false },
+};

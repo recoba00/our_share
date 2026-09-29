@@ -130,8 +130,9 @@ export function NotificationManager() {
             notifyChangedRooms(rooms, userId, baseUrl, pathnameRef, roomStateRef),
           userId,
         }),
-        calendarService.subscribeCalendarEvents({
+        calendarService.subscribeRecentCalendarEvents({
           familyId,
+          limitCount: 20,
           onChange: (events) => {
             notifyNewItems({
               body: (event) => event.title,
@@ -149,6 +150,7 @@ export function NotificationManager() {
         }),
         pollService.subscribePolls({
           familyId,
+          limitCount: 20,
           onChange: (polls) => {
             notifyNewItems({
               body: (poll) => poll.title,
@@ -165,6 +167,7 @@ export function NotificationManager() {
         }),
         memoService.subscribeMemos({
           familyId,
+          limitCount: 20,
           onChange: (memos) => {
             notifyNewItems({
               body: (memo) =>

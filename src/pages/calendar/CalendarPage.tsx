@@ -37,6 +37,7 @@ import type {
 } from "../../features/calendar/types/calendarTypes";
 import {
   createMonthDays,
+  getCalendarGridRange,
   getDDayLabel,
   isEventVisibleInMonth,
   isEventVisibleOnDate,
@@ -89,6 +90,7 @@ export function CalendarPage() {
   );
 
   const monthDays = useMemo(() => createMonthDays(viewDate), [viewDate]);
+  const calendarRange = useMemo(() => getCalendarGridRange(viewDate), [viewDate]);
   const monthEvents = useMemo(
     () => events.filter((event) => isEventVisibleInMonth(event, viewDate)),
     [events, viewDate]
@@ -105,12 +107,14 @@ export function CalendarPage() {
     }
 
     return subscribeCalendarEvents({
+      endDate: calendarRange.endDate,
       familyId: activeFamily.id,
       onChange: setEvents,
       onError: reportError,
+      startDate: calendarRange.startDate,
       userId: user.uid,
     });
-  }, [activeFamily, reportError, user]);
+  }, [activeFamily, calendarRange.endDate, calendarRange.startDate, reportError, user]);
 
   async function handleSaveEvent(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

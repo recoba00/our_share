@@ -34,8 +34,9 @@ import { PollOptionEditor } from "../../features/poll/components/PollOptionEdito
 import {
   createPoll,
   deletePoll,
-  getPolls,
+  getPollPage,
   getPollVotes,
+  type PollCursor,
   votePoll,
 } from "../../features/poll/services/pollService";
 import type { Poll, PollType, PollVote } from "../../features/poll/types/pollTypes";
@@ -66,6 +67,9 @@ export function PollPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [sharingPoll, setSharingPoll] = useState<Poll | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingOlderPolls, setIsLoadingOlderPolls] = useState(false);
+  const [olderPollCursor, setOlderPollCursor] = useState<PollCursor | null>(null);
+  const [hasOlderPolls, setHasOlderPolls] = useState(false);
   const [isSendingPoll, setIsSendingPoll] = useState(false);
   const pollRequestIdRef = useRef(0);
   const normalizedOptions = getNormalizedPollOptions(options);
@@ -95,19 +99,26 @@ export function PollPage() {
       if (!family) {
         if (isCurrentRequest()) {
           setPolls([]);
+          setOlderPollCursor(null);
+          setHasOlderPolls(false);
           setRooms([]);
           setSelectedRoomId("");
         }
         return;
       }
 
-      const nextPolls = await getPolls(family.id);
+      const pollPage = await getPollPage({ familyId: family.id });
       if (!isCurrentRequest()) {
         return;
       }
 
-      setPolls(nextPolls);
-      const nextVotes = await getPollVotes(family.id, nextPolls.map((poll) => poll.id));
+      setPolls(pollPage.polls);
+      setOlderPollCursor(pollPage.cursor);
+      setHasOlderPolls(pollPage.hasMore);
+      const nextVotes = await getPollVotes(
+        family.id,
+        pollPage.polls.map((poll) => poll.id)
+      );
       if (!isCurrentRequest()) {
         return;
       }
@@ -145,6 +156,40 @@ export function PollPage() {
       }
     }
   }, [family, notify]);
+
+  async function handleLoadOlderPolls() {
+    if (!family || !olderPollCursor || !hasOlderPolls || isLoadingOlderPolls) {
+      return;
+    }
+
+    const requestFamilyId = family.id;
+    const requestId = pollRequestIdRef.current;
+    setIsLoadingOlderPolls(true);
+
+    try {
+      const pollPage = await getPollPage({
+        cursor: olderPollCursor,
+        familyId: requestFamilyId,
+      });
+      const nextVotes = await getPollVotes(
+        requestFamilyId,
+        pollPage.polls.map((poll) => poll.id)
+      );
+
+      if (pollRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setPolls((current) => mergePolls(current, pollPage.polls));
+      setVotes((current) => ({ ...current, ...nextVotes }));
+      setOlderPollCursor(pollPage.cursor);
+      setHasOlderPolls(pollPage.hasMore);
+    } catch (error) {
+      notify(getErrorMessage(error), "error");
+    } finally {
+      setIsLoadingOlderPolls(false);
+    }
+  }
 
   useEffect(() => {
     if (!user) {
@@ -543,10 +588,31 @@ export function PollPage() {
             />
           ))
         )}
+        {hasOlderPolls ? (
+          <Button
+            className="w-full"
+            disabled={isLoadingOlderPolls}
+            loading={isLoadingOlderPolls}
+            onClick={() => void handleLoadOlderPolls()}
+            type="button"
+            variant="secondary"
+          >
+            이전 투표 더 보기
+          </Button>
+        ) : null}
       </section>
     </DesktopWorkspace>
     </>
   );
+}
+
+function mergePolls(...pollGroups: Poll[][]) {
+  return pollGroups
+    .flat()
+    .filter(
+      (poll, index, allPolls) =>
+        allPolls.findIndex((nextPoll) => nextPoll.id === poll.id) === index
+    );
 }
 
 function PollCard({
