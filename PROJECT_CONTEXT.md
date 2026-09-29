@@ -469,6 +469,7 @@ Post-MVP 서버 전환 정책:
 - `onCreate`, `onUpdate`, `onDelete` 트리거로 RTDB `familyMembers/{familyId}/{userId}`를 생성/갱신/삭제한다.
 - 동기화 실패는 Cloud Logging에 기록하고 재시도 가능한 구조로 둔다.
 - 가족 구성원 권한의 최종 원본은 계속 Firestore로 유지한다.
+- 로그아웃은 RTDB `liveLocations`, `onlinePresence`, `deviceStatus`만 정리하고 `familyMembers` 권한 미러는 유지한다. 권한 미러는 크루 탈퇴·내보내기·크루 삭제·계정 삭제처럼 실제 멤버십이 끝날 때만 제거한다.
 
 현재 상태:
 

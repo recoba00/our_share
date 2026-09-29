@@ -23,6 +23,7 @@ import {
 import { auth, db, googleProvider, realtimeDb } from "../../../lib/firebase/app";
 import { getStoredRequiredConsent } from "../../compliance/consentStorage";
 import { disablePushNotifications } from "../../notification/services/pushNotificationService";
+import { getUserSessionRealtimePaths } from "../utils/authRealtimeCleanup";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -60,11 +61,6 @@ export async function logout() {
       await Promise.all(
         memberSnapshot.docs.map((memberDoc) =>
           clearUserRealtimeData(memberDoc.data().familyId as string, user.uid)
-        )
-      );
-      await Promise.all(
-        memberSnapshot.docs.map((memberDoc) =>
-          remove(ref(realtimeDb, `familyMembers/${memberDoc.data().familyId}/${user.uid}`))
         )
       );
     } catch {
@@ -119,11 +115,11 @@ export async function deleteAccount({
 }
 
 async function clearUserRealtimeData(familyId: string, userId: string) {
-  await Promise.all([
-    remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`)),
-    remove(ref(realtimeDb, `onlinePresence/${familyId}/${userId}`)),
-    remove(ref(realtimeDb, `deviceStatus/${familyId}/${userId}`)),
-  ]);
+  await Promise.all(
+    getUserSessionRealtimePaths(familyId, userId).map((path) =>
+      remove(ref(realtimeDb, path))
+    )
+  );
 }
 
 export async function syncUserProfile(user: User) {
