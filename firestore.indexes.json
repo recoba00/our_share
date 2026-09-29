@@ -39,6 +39,14 @@
       ]
     },
     {
+      "collectionGroup": "serviceNotices",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
+        { "fieldPath": "publishedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "calendarEvents",
       "queryScope": "COLLECTION",
       "fields": [

@@ -1,9 +1,14 @@
 import {
   collection,
   doc,
+  getCountFromServer,
+  getDocs,
+  limit,
   onSnapshot,
+  orderBy,
   query,
   serverTimestamp,
+  startAfter,
   writeBatch,
   where,
   type DocumentData,
@@ -19,33 +24,125 @@ import { appendAdminAuditLog } from "./adminAuditService";
 import type { AdminAuditActor } from "../types/adminAuditTypes";
 
 const serviceNoticesCollection = collection(db, "serviceNotices");
+export const ADMIN_NOTICE_PAGE_SIZE = 30;
+export const PUBLISHED_NOTICE_PAGE_SIZE = 20;
+
+export type ServiceNoticeCursor = QueryDocumentSnapshot<DocumentData> | null;
+
+export type ServiceNoticePageInfo = {
+  cursor: ServiceNoticeCursor;
+  hasMore: boolean;
+};
+
+export type ServiceNoticePage = ServiceNoticePageInfo & {
+  notices: ServiceNotice[];
+};
 
 export function subscribePublishedServiceNotices({
+  limitCount = PUBLISHED_NOTICE_PAGE_SIZE,
   onChange,
   onError,
+  onPageInfo,
 }: {
+  limitCount?: number;
   onChange: (notices: ServiceNotice[]) => void;
   onError?: (message: string) => void;
+  onPageInfo?: (pageInfo: ServiceNoticePageInfo) => void;
 }) {
   return onSnapshot(
-    query(serviceNoticesCollection, where("status", "==", "PUBLISHED")),
-    (snapshot) => onChange(sortNotices(snapshot.docs.map(readServiceNotice))),
+    query(
+      serviceNoticesCollection,
+      where("status", "==", "PUBLISHED"),
+      orderBy("publishedAt", "desc"),
+      limit(limitCount + 1)
+    ),
+    (snapshot) => {
+      const page = readServiceNoticePage(snapshot.docs, limitCount);
+      onChange(page.notices);
+      onPageInfo?.({ cursor: page.cursor, hasMore: page.hasMore });
+    },
     (error) => onError?.(getFirebaseErrorMessage(error))
   );
 }
 
 export function subscribeAdminServiceNotices({
+  limitCount = ADMIN_NOTICE_PAGE_SIZE,
   onChange,
   onError,
+  onPageInfo,
 }: {
+  limitCount?: number;
   onChange: (notices: ServiceNotice[]) => void;
   onError?: (message: string) => void;
+  onPageInfo?: (pageInfo: ServiceNoticePageInfo) => void;
 }) {
   return onSnapshot(
-    serviceNoticesCollection,
-    (snapshot) => onChange(sortNotices(snapshot.docs.map(readServiceNotice))),
+    query(
+      serviceNoticesCollection,
+      orderBy("updatedAt", "desc"),
+      limit(limitCount + 1)
+    ),
+    (snapshot) => {
+      const page = readServiceNoticePage(snapshot.docs, limitCount);
+      onChange(page.notices);
+      onPageInfo?.({ cursor: page.cursor, hasMore: page.hasMore });
+    },
     (error) => onError?.(getFirebaseErrorMessage(error))
   );
+}
+
+export async function loadOlderPublishedServiceNotices({
+  cursor,
+  pageSize = PUBLISHED_NOTICE_PAGE_SIZE,
+}: {
+  cursor: QueryDocumentSnapshot<DocumentData>;
+  pageSize?: number;
+}): Promise<ServiceNoticePage> {
+  const snapshot = await getDocs(
+    query(
+      serviceNoticesCollection,
+      where("status", "==", "PUBLISHED"),
+      orderBy("publishedAt", "desc"),
+      startAfter(cursor),
+      limit(pageSize + 1)
+    )
+  );
+
+  return readServiceNoticePage(snapshot.docs, pageSize);
+}
+
+export async function loadOlderAdminServiceNotices({
+  cursor,
+  pageSize = ADMIN_NOTICE_PAGE_SIZE,
+}: {
+  cursor: QueryDocumentSnapshot<DocumentData>;
+  pageSize?: number;
+}): Promise<ServiceNoticePage> {
+  const snapshot = await getDocs(
+    query(
+      serviceNoticesCollection,
+      orderBy("updatedAt", "desc"),
+      startAfter(cursor),
+      limit(pageSize + 1)
+    )
+  );
+
+  return readServiceNoticePage(snapshot.docs, pageSize);
+}
+
+export async function loadServiceNoticeCounts() {
+  const [allCount, publishedCount] = await Promise.all([
+    getCountFromServer(serviceNoticesCollection),
+    getCountFromServer(
+      query(serviceNoticesCollection, where("status", "==", "PUBLISHED"))
+    ),
+  ]);
+  const published = publishedCount.data().count;
+
+  return {
+    draft: Math.max(0, allCount.data().count - published),
+    published,
+  };
 }
 
 export async function createServiceNotice({
@@ -164,10 +261,15 @@ function readServiceNotice(snapshot: QueryDocumentSnapshot<DocumentData>): Servi
   };
 }
 
-function sortNotices(notices: ServiceNotice[]) {
-  return [...notices].sort((first, second) => {
-    const firstTime = first.publishedAt?.toMillis() ?? first.updatedAt?.toMillis() ?? 0;
-    const secondTime = second.publishedAt?.toMillis() ?? second.updatedAt?.toMillis() ?? 0;
-    return secondTime - firstTime;
-  });
+function readServiceNoticePage(
+  documents: QueryDocumentSnapshot<DocumentData>[],
+  pageSize: number
+): ServiceNoticePage {
+  const visibleDocuments = documents.slice(0, pageSize);
+
+  return {
+    cursor: visibleDocuments[visibleDocuments.length - 1] ?? null,
+    hasMore: documents.length > pageSize,
+    notices: visibleDocuments.map(readServiceNotice),
+  };
 }

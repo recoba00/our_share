@@ -1,18 +1,49 @@
-import { useEffect, useState } from "react";
-import { subscribePublishedServiceNotices } from "../../features/admin/services/serviceNoticeService";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "../common/Button";
+import {
+  loadOlderPublishedServiceNotices,
+  subscribePublishedServiceNotices,
+  type ServiceNoticePageInfo,
+} from "../../features/admin/services/serviceNoticeService";
 import type { ServiceNotice } from "../../features/admin/types/serviceNoticeTypes";
+import {
+  getNoticesLeavingRecentWindow,
+  mergeServiceNotices,
+} from "../../features/admin/utils/serviceNoticePagination";
 import { policyDocuments } from "../../features/compliance/policyDocuments";
 
 export function ServiceNoticesView() {
-  const [notices, setNotices] = useState<ServiceNotice[]>([]);
+  const [recentNotices, setRecentNotices] = useState<ServiceNotice[]>([]);
+  const [olderNotices, setOlderNotices] = useState<ServiceNotice[]>([]);
+  const [pageInfo, setPageInfo] = useState<ServiceNoticePageInfo>(emptyPageInfo);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingOlder, setIsLoadingOlder] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const previousRecentNoticesRef = useRef<ServiceNotice[]>([]);
+  const hasLoadedOlderRef = useRef(false);
+  const notices = useMemo(
+    () => mergeServiceNotices("publishedAt", recentNotices, olderNotices),
+    [olderNotices, recentNotices]
+  );
 
-  useEffect(
-    () =>
-      subscribePublishedServiceNotices({
+  useEffect(() => {
+    const unsubscribe = subscribePublishedServiceNotices({
         onChange: (nextNotices) => {
-          setNotices(nextNotices);
+          if (hasLoadedOlderRef.current) {
+            const noticesLeavingWindow = getNoticesLeavingRecentWindow(
+              previousRecentNoticesRef.current,
+              nextNotices
+            );
+
+            if (noticesLeavingWindow.length > 0) {
+              setOlderNotices((current) =>
+                mergeServiceNotices("publishedAt", current, noticesLeavingWindow)
+              );
+            }
+          }
+
+          previousRecentNoticesRef.current = nextNotices;
+          setRecentNotices(nextNotices);
           setErrorMessage("");
           setIsLoading(false);
         },
@@ -20,9 +51,38 @@ export function ServiceNoticesView() {
           setErrorMessage(message);
           setIsLoading(false);
         },
-      }),
-    []
-  );
+        onPageInfo: (nextPageInfo) => {
+          if (!hasLoadedOlderRef.current) {
+            setPageInfo(nextPageInfo);
+          }
+        },
+      });
+
+    return unsubscribe;
+  }, []);
+
+  async function handleLoadOlder() {
+    if (!pageInfo.cursor || !pageInfo.hasMore || isLoadingOlder) {
+      return;
+    }
+
+    setIsLoadingOlder(true);
+
+    try {
+      const page = await loadOlderPublishedServiceNotices({ cursor: pageInfo.cursor });
+      hasLoadedOlderRef.current = true;
+      setOlderNotices((current) =>
+        mergeServiceNotices("publishedAt", current, page.notices)
+      );
+      setPageInfo({ cursor: page.cursor, hasMore: page.hasMore });
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : "이전 공지를 불러오지 못했어요."
+      );
+    } finally {
+      setIsLoadingOlder(false);
+    }
+  }
 
   return (
     <div className="policy-scroll-mask">
@@ -63,10 +123,24 @@ export function ServiceNoticesView() {
             </p>
           </article>
         ))}
+        {pageInfo.hasMore ? (
+          <Button
+            className="w-full"
+            disabled={isLoadingOlder}
+            loading={isLoadingOlder}
+            onClick={() => void handleLoadOlder()}
+            type="button"
+            variant="secondary"
+          >
+            이전 공지 더 보기
+          </Button>
+        ) : null}
       </div>
     </div>
   );
 }
+
+const emptyPageInfo: ServiceNoticePageInfo = { cursor: null, hasMore: false };
 
 function formatNoticeDate(timestamp: ServiceNotice["publishedAt"]) {
   if (!timestamp) {

@@ -146,7 +146,9 @@ describe("service notice rules", () => {
 
     const publishedQuery = query(
       collection(memberDb, "serviceNotices"),
-      where("status", "==", "PUBLISHED")
+      where("status", "==", "PUBLISHED"),
+      orderBy("publishedAt", "desc"),
+      limit(21)
     );
     const snapshot = await assertSucceeds(getDocs(publishedQuery));
 

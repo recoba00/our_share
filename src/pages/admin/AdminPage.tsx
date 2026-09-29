@@ -19,6 +19,7 @@ import {
 import {
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type ReactNode,
@@ -45,8 +46,11 @@ import {
 import {
   createServiceNotice,
   deleteServiceNotice,
+  loadOlderAdminServiceNotices,
+  loadServiceNoticeCounts,
   subscribeAdminServiceNotices,
   updateServiceNotice,
+  type ServiceNoticePageInfo,
 } from "../../features/admin/services/serviceNoticeService";
 import type {
   AdminCrew,
@@ -58,6 +62,10 @@ import type {
   ServiceNoticeDraft,
   ServiceNoticeStatus,
 } from "../../features/admin/types/serviceNoticeTypes";
+import {
+  getNoticesLeavingRecentWindow,
+  mergeServiceNotices,
+} from "../../features/admin/utils/serviceNoticePagination";
 import { useAuth } from "../../features/auth/useAuth";
 import { isPlatformAdmin } from "../../features/admin/platformAdmin";
 import { useAdminAccess } from "../../features/admin/useAdminAccess";
@@ -86,6 +94,11 @@ const emptyDraft: ServiceNoticeDraft = {
   body: "",
   status: "DRAFT",
   title: "",
+};
+
+const emptyNoticePageInfo: ServiceNoticePageInfo = {
+  cursor: null,
+  hasMore: false,
 };
 
 const emptyDashboard: AdminDashboardData = {
@@ -121,7 +134,14 @@ export function AdminPage() {
   const [activeSection, setActiveSection] = useState<AdminSection>("dashboard");
   const [dashboard, setDashboard] = useState<AdminDashboardData>(emptyDashboard);
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
-  const [notices, setNotices] = useState<ServiceNotice[]>([]);
+  const [recentNotices, setRecentNotices] = useState<ServiceNotice[]>([]);
+  const [olderNotices, setOlderNotices] = useState<ServiceNotice[]>([]);
+  const [noticePageInfo, setNoticePageInfo] =
+    useState<ServiceNoticePageInfo>(emptyNoticePageInfo);
+  const [noticeCounts, setNoticeCounts] = useState({ draft: 0, published: 0 });
+  const [isLoadingOlderNotices, setIsLoadingOlderNotices] = useState(false);
+  const previousRecentNoticesRef = useRef<ServiceNotice[]>([]);
+  const hasLoadedOlderNoticesRef = useRef(false);
   const [visibleStatus, setVisibleStatus] = useState<ServiceNoticeStatus>("PUBLISHED");
   const [isDashboardLoading, setIsDashboardLoading] = useState(true);
   const [isNoticesLoading, setIsNoticesLoading] = useState(true);
@@ -163,18 +183,44 @@ export function AdminPage() {
     () => navigationItems.filter((item) => !item.permission || permissions[item.permission]),
     [permissions]
   );
+  const notices = useMemo(
+    () => mergeServiceNotices("updatedAt", recentNotices, olderNotices),
+    [olderNotices, recentNotices]
+  );
 
   useEffect(
     () =>
       subscribeAdminServiceNotices({
         onChange: (nextNotices) => {
-          setNotices(nextNotices);
+          if (hasLoadedOlderNoticesRef.current) {
+            const noticesLeavingWindow = getNoticesLeavingRecentWindow(
+              previousRecentNoticesRef.current,
+              nextNotices
+            );
+
+            if (noticesLeavingWindow.length > 0) {
+              setOlderNotices((current) =>
+                mergeServiceNotices("updatedAt", current, noticesLeavingWindow)
+              );
+            }
+          }
+
+          previousRecentNoticesRef.current = nextNotices;
+          setRecentNotices(nextNotices);
           setNoticeError("");
           setIsNoticesLoading(false);
+          void loadServiceNoticeCounts()
+            .then(setNoticeCounts)
+            .catch(() => undefined);
         },
         onError: (message) => {
           setNoticeError(message);
           setIsNoticesLoading(false);
+        },
+        onPageInfo: (nextPageInfo) => {
+          if (!hasLoadedOlderNoticesRef.current) {
+            setNoticePageInfo(nextPageInfo);
+          }
         },
       }),
     []
@@ -290,8 +336,8 @@ export function AdminPage() {
     };
   }, [activeSection, appliedCrewSearch, crewCursor, crewsRefreshKey]);
 
-  const publishedCount = notices.filter((notice) => notice.status === "PUBLISHED").length;
-  const draftCount = notices.length - publishedCount;
+  const publishedCount = noticeCounts.published;
+  const draftCount = noticeCounts.draft;
   const filteredNotices = useMemo(
     () => notices.filter((notice) => notice.status === visibleStatus),
     [notices, visibleStatus]
@@ -339,6 +385,33 @@ export function AdminPage() {
     setIsEditorOpen(true);
   }
 
+  async function handleLoadOlderNotices() {
+    if (
+      !noticePageInfo.cursor ||
+      !noticePageInfo.hasMore ||
+      isLoadingOlderNotices
+    ) {
+      return;
+    }
+
+    setIsLoadingOlderNotices(true);
+
+    try {
+      const page = await loadOlderAdminServiceNotices({
+        cursor: noticePageInfo.cursor,
+      });
+      hasLoadedOlderNoticesRef.current = true;
+      setOlderNotices((current) =>
+        mergeServiceNotices("updatedAt", current, page.notices)
+      );
+      setNoticePageInfo({ cursor: page.cursor, hasMore: page.hasMore });
+    } catch (error) {
+      setNoticeError(getFirebaseErrorMessage(error));
+    } finally {
+      setIsLoadingOlderNotices(false);
+    }
+  }
+
   function openEditEditor(notice: ServiceNotice) {
     setEditingNotice(notice);
     setDraft({ body: notice.body, status: notice.status, title: notice.title });
@@ -357,6 +430,9 @@ export function AdminPage() {
     try {
       if (editingNotice) {
         await updateServiceNotice({ actor, draft, noticeId: editingNotice.id });
+        setOlderNotices((current) =>
+          current.filter((notice) => notice.id !== editingNotice.id)
+        );
         showToast({ message: "공지를 수정했어요.", variant: "success" });
       } else {
         await createServiceNotice({ actor, draft });
@@ -394,6 +470,18 @@ export function AdminPage() {
 
     try {
       await deleteServiceNotice({ actor, noticeId: notice.id, title: notice.title });
+      setRecentNotices((current) =>
+        current.filter((currentNotice) => currentNotice.id !== notice.id)
+      );
+      setOlderNotices((current) =>
+        current.filter((currentNotice) => currentNotice.id !== notice.id)
+      );
+      previousRecentNoticesRef.current = previousRecentNoticesRef.current.filter(
+        (currentNotice) => currentNotice.id !== notice.id
+      );
+      void loadServiceNoticeCounts()
+        .then(setNoticeCounts)
+        .catch(() => undefined);
       showToast({ message: "공지를 삭제했어요.", variant: "success" });
     } catch (error) {
       showToast({
@@ -552,10 +640,13 @@ export function AdminPage() {
               draftCount={draftCount}
               errorMessage={noticeError}
               filteredNotices={filteredNotices}
+              hasMore={noticePageInfo.hasMore}
               isLoading={isNoticesLoading}
+              isLoadingOlder={isLoadingOlderNotices}
               onCreate={openCreateEditor}
               onDelete={handleDelete}
               onEdit={openEditEditor}
+              onLoadOlder={() => void handleLoadOlderNotices()}
               onStatusChange={setVisibleStatus}
               publishedCount={publishedCount}
               visibleStatus={visibleStatus}
@@ -851,10 +942,13 @@ function NoticesPanel({
   draftCount,
   errorMessage,
   filteredNotices,
+  hasMore,
   isLoading,
+  isLoadingOlder,
   onCreate,
   onDelete,
   onEdit,
+  onLoadOlder,
   onStatusChange,
   publishedCount,
   visibleStatus,
@@ -862,10 +956,13 @@ function NoticesPanel({
   draftCount: number;
   errorMessage: string;
   filteredNotices: ServiceNotice[];
+  hasMore: boolean;
   isLoading: boolean;
+  isLoadingOlder: boolean;
   onCreate: () => void;
   onDelete: (notice: ServiceNotice) => Promise<void>;
   onEdit: (notice: ServiceNotice) => void;
+  onLoadOlder: () => void;
   onStatusChange: (status: ServiceNoticeStatus) => void;
   publishedCount: number;
   visibleStatus: ServiceNoticeStatus;
@@ -932,6 +1029,20 @@ function NoticesPanel({
             </article>
           ))}
         </div>
+        {hasMore ? (
+          <div className="border-t border-[var(--color-border)] p-4">
+            <Button
+              className="w-full"
+              disabled={isLoadingOlder}
+              loading={isLoadingOlder}
+              onClick={onLoadOlder}
+              type="button"
+              variant="secondary"
+            >
+              이전 공지 더 보기
+            </Button>
+          </div>
+        ) : null}
       </section>
     </AdminContent>
   );

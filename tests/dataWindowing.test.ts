@@ -1,4 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { Timestamp } from "firebase/firestore";
+import type { ServiceNotice } from "../src/features/admin/types/serviceNoticeTypes";
+import {
+  getNoticesLeavingRecentWindow,
+  mergeServiceNotices,
+} from "../src/features/admin/utils/serviceNoticePagination";
 import type { CalendarEvent } from "../src/features/calendar/types/calendarTypes";
 import {
   getCalendarGridRange,
@@ -71,6 +77,31 @@ describe("chat room data windows", () => {
   });
 });
 
+describe("service notice data windows", () => {
+  it("merges recent and older notices without duplicates", () => {
+    const newest = createServiceNotice("newest", 30);
+    const boundary = createServiceNotice("boundary", 20);
+    const older = createServiceNotice("older", 10);
+
+    expect(
+      mergeServiceNotices("updatedAt", [newest, boundary], [boundary, older]).map(
+        (notice) => notice.id
+      )
+    ).toEqual(["newest", "boundary", "older"]);
+  });
+
+  it("keeps notices pushed out of the recent real-time window", () => {
+    const boundary = createServiceNotice("boundary", 20);
+
+    expect(
+      getNoticesLeavingRecentWindow(
+        [createServiceNotice("recent", 30), boundary],
+        [createServiceNotice("newest", 40), createServiceNotice("recent", 30)]
+      ).map((notice) => notice.id)
+    ).toEqual(["boundary"]);
+  });
+});
+
 function createCalendarEvent(
   overrides: Pick<CalendarEvent, "endDate" | "repeat" | "startDate">
 ): CalendarEvent {
@@ -121,5 +152,20 @@ function createChatRoom(id: string, seconds: number): ChatRoom {
     name: id,
     type: "PRIVATE_GROUP",
     updatedAt: { seconds },
+  };
+}
+
+function createServiceNotice(id: string, seconds: number): ServiceNotice {
+  const timestamp = Timestamp.fromMillis(seconds * 1000);
+
+  return {
+    body: id,
+    createdAt: timestamp,
+    createdBy: "admin-1",
+    id,
+    publishedAt: timestamp,
+    status: "PUBLISHED",
+    title: id,
+    updatedAt: timestamp,
   };
 }
