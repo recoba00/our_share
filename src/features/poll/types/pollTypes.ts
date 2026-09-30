@@ -12,6 +12,7 @@ export type Poll = {
   anonymous: boolean;
   closesAt: string | null;
   resultVisibility: "ALWAYS" | "AFTER_VOTE" | "AFTER_CLOSE";
+  deleting?: boolean;
   createdBy: string;
   createdAt: unknown;
   updatedAt: unknown;

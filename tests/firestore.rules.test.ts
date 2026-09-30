@@ -1261,6 +1261,7 @@ describe("poll vote rules", () => {
     const aliceDb = testEnv.authenticatedContext("alice").firestore();
     const bobDb = testEnv.authenticatedContext("bob").firestore();
     const voteRef = doc(bobDb, "families", "familyA", "pollVotes", "pollA_bob");
+    const pollRef = doc(aliceDb, "families", "familyA", "polls", "pollA");
 
     await assertSucceeds(
       setDoc(voteRef, {
@@ -1272,10 +1273,25 @@ describe("poll vote rules", () => {
       })
     );
     await assertFails(deleteDoc(voteRef));
+    await assertSucceeds(
+      updateDoc(pollRef, {
+        deleting: true,
+        updatedAt: serverTimestamp(),
+      })
+    );
+    await assertFails(
+      setDoc(doc(bobDb, "families", "familyA", "pollVotes", "pollA_bob"), {
+        pollId: "pollA",
+        userId: "bob",
+        selectedOptions: ["다른 날짜"],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+    );
 
     const deleteBatch = writeBatch(aliceDb);
     deleteBatch.delete(doc(aliceDb, "families", "familyA", "pollVotes", "pollA_bob"));
-    deleteBatch.delete(doc(aliceDb, "families", "familyA", "polls", "pollA"));
+    deleteBatch.delete(pollRef);
     await assertSucceeds(deleteBatch.commit());
   });
 });

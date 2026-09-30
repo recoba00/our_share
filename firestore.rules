@@ -608,6 +608,7 @@ service cloud.firestore {
           "anonymous",
           "closesAt",
           "resultVisibility",
+          "deleting",
           "createdBy",
           "createdAt",
           "updatedAt"
@@ -627,10 +628,18 @@ service cloud.firestore {
         data.multipleChoice is bool &&
         data.anonymous is bool &&
         (
+          !("deleting" in data) ||
+          data.deleting is bool
+        ) &&
+        (
           data.resultVisibility == "ALWAYS" ||
           data.resultVisibility == "AFTER_VOTE" ||
           data.resultVisibility == "AFTER_CLOSE"
         );
+    }
+
+    function isPollDeleting(data) {
+      return data.keys().hasAny(["deleting"]) && data.deleting == true;
     }
 
     function isValidChatRoom(data) {
@@ -1252,6 +1261,9 @@ service cloud.firestore {
         request.resource.data.selectedOptions.size() > 0 &&
         request.resource.data.selectedOptions.size() <= 20 &&
         exists(/databases/$(database)/documents/families/$(familyId)/polls/$(request.resource.data.pollId)) &&
+        !isPollDeleting(
+          get(/databases/$(database)/documents/families/$(familyId)/polls/$(request.resource.data.pollId)).data
+        ) &&
         isFamilyMember(familyId);
       allow delete: if canCleanUpFamily(familyId) ||
         (
@@ -1486,6 +1498,9 @@ service cloud.firestore {
         request.resource.data.selectedOptions.size() > 0 &&
         request.resource.data.selectedOptions.size() <= 20 &&
         exists(/databases/$(database)/documents/polls/$(request.resource.data.pollId)) &&
+        !isPollDeleting(
+          get(/databases/$(database)/documents/polls/$(request.resource.data.pollId)).data
+        ) &&
         isFamilyMember(
           get(/databases/$(database)/documents/polls/$(request.resource.data.pollId)).data.familyId
         );

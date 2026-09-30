@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   setDoc,
   startAfter,
+  updateDoc,
   where,
   writeBatch,
   type DocumentData,
@@ -19,6 +20,7 @@ import {
 } from "firebase/firestore";
 import { db } from "../../../lib/firebase/app";
 import { getFirebaseErrorMessage } from "../../../lib/firebase/firebaseErrorMessage";
+import { FIRESTORE_SAFE_BATCH_SIZE } from "../../../lib/firebase/firestoreBatch";
 import { chunkFirestoreInValues } from "../../../lib/firebase/firestoreQuery";
 import type { Poll, PollType, PollVote } from "../types/pollTypes";
 
@@ -87,31 +89,30 @@ export async function deletePoll({
   familyId: string;
   pollId: string;
 }) {
+  const pollRef = doc(db, "families", familyId, "polls", pollId);
+  await updateDoc(pollRef, {
+    deleting: true,
+    updatedAt: serverTimestamp(),
+  });
+
   const votesQuery = query(
     collection(db, "families", familyId, "pollVotes"),
-    where("pollId", "==", pollId)
+    where("pollId", "==", pollId),
+    limit(FIRESTORE_SAFE_BATCH_SIZE)
   );
-  const votesSnapshot = await getDocs(votesQuery);
-  const voteDocuments = votesSnapshot.docs;
-  const batchSize = 450;
 
-  if (voteDocuments.length === 0) {
-    await deleteDoc(doc(db, "families", familyId, "polls", pollId));
-    return;
-  }
-
-  for (let offset = 0; offset < voteDocuments.length; offset += batchSize) {
-    const batch = writeBatch(db);
-    const voteChunk = voteDocuments.slice(offset, offset + batchSize);
-
-    voteChunk.forEach((voteDocument) => batch.delete(voteDocument.ref));
-
-    if (offset + voteChunk.length === voteDocuments.length) {
-      batch.delete(doc(db, "families", familyId, "polls", pollId));
+  while (true) {
+    const votesSnapshot = await getDocs(votesQuery);
+    if (votesSnapshot.empty) {
+      break;
     }
 
+    const batch = writeBatch(db);
+    votesSnapshot.docs.forEach((voteDocument) => batch.delete(voteDocument.ref));
     await batch.commit();
   }
+
+  await deleteDoc(pollRef);
 }
 
 export async function getPollPage({
@@ -184,6 +185,10 @@ export async function votePoll({
   selectedOptions: string[];
   userId: string;
 }) {
+  if (poll.deleting) {
+    throw new Error("삭제 중인 투표예요.");
+  }
+
   const normalizedSelections = poll.multipleChoice
     ? selectedOptions
     : selectedOptions.slice(0, 1);
