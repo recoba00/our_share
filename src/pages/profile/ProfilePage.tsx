@@ -110,7 +110,7 @@ export function ProfilePage() {
 
     const confirmed = await confirm({
       confirmLabel: "크루 삭제",
-      description: `${familyName} 크루와 멤버 연결을 삭제해요. 기존 일정·메모·투표·채팅 기록은 남지만 더 이상 볼 수 없어요.`,
+      description: `${familyName} 크루와 일정·메모·투표·채팅 기록을 모두 삭제해요. 삭제하면 되돌릴 수 없어요.`,
       title: `'${familyName}' 크루를 삭제할까요?`,
       tone: "danger",
     });

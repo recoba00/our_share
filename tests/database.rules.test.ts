@@ -137,6 +137,44 @@ describe("Realtime Database family membership mirror rules", () => {
     await assertSucceeds(remove(ref(aliceDb, "familyMembers/familyA/bob")));
     await assertSucceeds(remove(ref(aliceDb, "familyMembers/familyA/alice")));
   });
+
+  it("allows a member to atomically clear their mirror and runtime data when leaving", async () => {
+    await seedFamilyMembersMirror({
+      familyId: "familyA",
+      members: [
+        ["alice", "OWNER"],
+        ["bob", "MEMBER"],
+      ],
+    });
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+      await set(ref(db, "liveLocations/familyA/bob"), createLiveLocation());
+      await set(ref(db, "onlinePresence/familyA/bob"), { status: "online" });
+      await set(ref(db, "deviceStatus/familyA/bob"), { battery: 80 });
+    });
+
+    const bobDb = testEnv.authenticatedContext("bob").database();
+    await assertSucceeds(
+      update(ref(bobDb), {
+        "familyMembers/familyA/bob": null,
+        "liveLocations/familyA/bob": null,
+        "onlinePresence/familyA/bob": null,
+        "deviceStatus/familyA/bob": null,
+      })
+    );
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      const db = context.database();
+      for (const path of [
+        "familyMembers/familyA/bob",
+        "liveLocations/familyA/bob",
+        "onlinePresence/familyA/bob",
+        "deviceStatus/familyA/bob",
+      ]) {
+        expect((await get(ref(db, path))).exists()).toBe(false);
+      }
+    });
+  });
 });
 
 describe("Realtime Database live location rules", () => {

@@ -9,7 +9,7 @@ import {
   updateProfile,
   type User,
 } from "firebase/auth";
-import { remove, ref } from "firebase/database";
+import { ref, update } from "firebase/database";
 import {
   collection,
   doc,
@@ -21,9 +21,14 @@ import {
   writeBatch,
 } from "firebase/firestore";
 import { auth, db, googleProvider, realtimeDb } from "../../../lib/firebase/app";
+import {
+  chunkFirestoreWrites,
+  FIRESTORE_SAFE_BATCH_SIZE,
+} from "../../../lib/firebase/firestoreBatch";
+import { getUserSessionRealtimeRemovalUpdates } from "../../../lib/firebase/realtimeCleanup";
 import { getStoredRequiredConsent } from "../../compliance/consentStorage";
+import { leaveFamily } from "../../family/services/familyService";
 import { disablePushNotifications } from "../../notification/services/pushNotificationService";
-import { getUserSessionRealtimePaths } from "../utils/authRealtimeCleanup";
 
 export function subscribeAuthState(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
@@ -89,37 +94,49 @@ export async function deleteAccount({
   );
   const pushDeviceSnapshot = await getDocs(collection(db, "users", user.uid, "pushDevices"));
 
+  if (memberSnapshot.docs.some((memberDoc) => memberDoc.data().role === "OWNER")) {
+    throw new Error("크루장인 크루를 먼저 삭제한 뒤 탈퇴할 수 있어요.");
+  }
+
+  const familySnapshots = await Promise.all(
+    memberSnapshot.docs.map((memberDoc) =>
+      getDoc(doc(db, "families", memberDoc.data().familyId as string))
+    )
+  );
+  if (familySnapshots.some((familySnapshot) => familySnapshot.data()?.ownerId === user.uid)) {
+    throw new Error("크루장인 크루를 먼저 삭제한 뒤 탈퇴할 수 있어요.");
+  }
+
   await disablePushNotifications(user.uid).catch(() => {
     // 계정 삭제는 브라우저 토큰 해제 실패와 무관하게 계속한다.
   });
 
-  await Promise.all(
-    memberSnapshot.docs.map((memberDoc) =>
-      clearUserRealtimeData(memberDoc.data().familyId as string, user.uid)
-    )
-  );
+  for (const memberDoc of memberSnapshot.docs) {
+    await leaveFamily({
+      familyId: memberDoc.data().familyId as string,
+      userId: user.uid,
+    });
+  }
 
-  const batch = writeBatch(db);
-  batch.delete(doc(db, "users", user.uid));
-  batch.delete(doc(db, "publicProfiles", user.uid));
-  memberSnapshot.docs.forEach((memberDoc) => batch.delete(memberDoc.ref));
-  pushDeviceSnapshot.docs.forEach((deviceDoc) => batch.delete(deviceDoc.ref));
-  await batch.commit();
-
-  await Promise.all(
-    memberSnapshot.docs.map((memberDoc) =>
-      remove(ref(realtimeDb, `familyMembers/${memberDoc.data().familyId}/${user.uid}`))
-    )
+  const pushDeviceChunks = chunkFirestoreWrites(
+    pushDeviceSnapshot.docs,
+    FIRESTORE_SAFE_BATCH_SIZE
   );
+  for (const pushDeviceChunk of pushDeviceChunks) {
+    const pushDeviceBatch = writeBatch(db);
+    pushDeviceChunk.forEach((deviceDoc) => pushDeviceBatch.delete(deviceDoc.ref));
+    await pushDeviceBatch.commit();
+  }
+
+  const profileBatch = writeBatch(db);
+  profileBatch.delete(doc(db, "users", user.uid));
+  profileBatch.delete(doc(db, "publicProfiles", user.uid));
+  await profileBatch.commit();
   await deleteUser(user);
 }
 
 async function clearUserRealtimeData(familyId: string, userId: string) {
-  await Promise.all(
-    getUserSessionRealtimePaths(familyId, userId).map((path) =>
-      remove(ref(realtimeDb, path))
-    )
-  );
+  await update(ref(realtimeDb), getUserSessionRealtimeRemovalUpdates(familyId, userId));
 }
 
 export async function syncUserProfile(user: User) {

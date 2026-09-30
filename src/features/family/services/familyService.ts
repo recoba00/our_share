@@ -13,13 +13,14 @@ import {
   where,
   writeBatch,
 } from "firebase/firestore";
-import { ref, remove, set, update } from "firebase/database";
+import { ref, set, update } from "firebase/database";
 import { db, realtimeDb } from "../../../lib/firebase/app";
 import {
   chunkFirestoreWrites,
   FIRESTORE_SAFE_BATCH_SIZE,
 } from "../../../lib/firebase/firestoreBatch";
 import { chunkFirestoreInValues } from "../../../lib/firebase/firestoreQuery";
+import { getMemberRealtimeRemovalUpdates } from "../../../lib/firebase/realtimeCleanup";
 import type { FamilyMemberProfile, FamilyRole } from "../types/familyTypes";
 import { MAX_FAMILY_NAME_LENGTH } from "../utils/familyName";
 
@@ -351,9 +352,6 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
     throw new Error("크루장은 바로 나갈 수 없어요. 크루를 삭제하거나 권한을 넘겨주세요.");
   }
 
-  await clearMemberRealtimeData(familyId, userId);
-  await remove(ref(realtimeDb, `familyMembers/${familyId}/${userId}`));
-
   const familySnapshot = await getDoc(familyRef);
   const batch = writeBatch(db);
   batch.delete(memberRef);
@@ -368,15 +366,49 @@ export async function leaveFamily({ familyId, userId }: LeaveFamilyInput) {
     });
   }
 
-  await batch.commit();
+  await removeMemberRealtimeState(familyId, userId);
+
+  try {
+    await batch.commit();
+  } catch (error) {
+    await restoreMemberRealtimeRole({
+      familyId,
+      role: memberSnapshot.data().role as FamilyRole,
+      userId,
+    });
+    throw error;
+  }
 }
 
-async function clearMemberRealtimeData(familyId: string, userId: string) {
-  await Promise.all([
-    remove(ref(realtimeDb, `liveLocations/${familyId}/${userId}`)),
-    remove(ref(realtimeDb, `onlinePresence/${familyId}/${userId}`)),
-    remove(ref(realtimeDb, `deviceStatus/${familyId}/${userId}`)),
-  ]);
+async function removeMemberRealtimeState(familyId: string, userId: string) {
+  await update(
+    ref(realtimeDb),
+    getMemberRealtimeRemovalUpdates([{ familyId, userId }])
+  );
+}
+
+async function restoreMemberRealtimeRole({
+  familyId,
+  role,
+  userId,
+}: {
+  familyId: string;
+  role: FamilyRole;
+  userId: string;
+}) {
+  try {
+    await writeFamilyMemberRoleMirror({ familyId, role, userId });
+  } catch (restoreError) {
+    if (role !== "OWNER" && role !== "MEMBER") {
+      try {
+        await writeFamilyMemberRoleMirror({ familyId, role: "MEMBER", userId });
+        return;
+      } catch (fallbackError) {
+        console.error("멤버 권한 미러의 기본 역할 복구에 실패했어요.", fallbackError);
+      }
+    }
+    console.error("멤버 권한 미러를 복구하지 못했어요.", restoreError);
+  }
 }
 
 export async function getFamiliesForUser(userId: string) {
@@ -688,26 +720,21 @@ export async function deleteFamilyMember({
     });
   }
 
-  await runFamilyDeleteStep("멤버 삭제", () => batch.commit());
-
-  const targetMirrorRef = ref(realtimeDb, `familyMembers/${familyId}/${targetUserId}`);
-  let realtimeCleanupComplete = true;
-
+  await runFamilyDeleteStep("실시간 멤버 정보 정리", () =>
+    removeMemberRealtimeState(familyId, targetUserId)
+  );
   try {
-    await clearMemberRealtimeData(familyId, targetUserId);
+    await runFamilyDeleteStep("멤버 삭제", () => batch.commit());
   } catch (error) {
-    realtimeCleanupComplete = false;
-    console.warn("멤버 위치·접속 데이터 정리를 마치지 못했어요.", error);
+    await restoreMemberRealtimeRole({
+      familyId,
+      role: targetRole,
+      userId: targetUserId,
+    });
+    throw error;
   }
 
-  try {
-    await remove(targetMirrorRef);
-  } catch (error) {
-    realtimeCleanupComplete = false;
-    console.warn("멤버 권한 미러 정리를 마치지 못했어요.", error);
-  }
-
-  return { realtimeCleanupComplete };
+  return { realtimeCleanupComplete: true };
 }
 
 async function upsertFamilyMember({
